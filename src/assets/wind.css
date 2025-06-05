@@ -1,0 +1,131 @@
+@import url("./fonts/geist/geist.css");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: 2 103 107;
+  --secondary: 107 42 0;
+  --toast: 76 187 23;
+  --dark: 64 72 79;
+  --text-clr: var(--dark);
+  --base-clr: 103 103 105;
+  --base-clr2: 245 245 255;
+  --base-clr3: 30 30 30;
+
+  --drawer-width: 17rem;
+  --navbar-height: 3rem;
+}
+
+.orange {
+  --primary: 253 116 1;
+}
+.brown {
+  --primary: 187 93 39;
+}
+.violet {
+  --primary: 81 21 140;
+}
+.forestGreen {
+  --primary: 37 110 21;
+}
+.deepskyblue {
+  --primary: 0 191 255;
+}
+.mediumblue {
+  --primary: 0 0 255;
+}
+.indigo {
+  --primary: 75 0 130;
+}
+body {
+  font-family: "Geist", ui-sans-serif, poppins, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  font-optical-sizing: auto;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  font-synthesis-weight: none;
+  font-variation-settings: "wdth" 100, "YTLC" 500;
+  font-style: normal;
+  @apply text-text-clr text-sm;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+* {
+  scrollbar-width: thin;
+}
+
+.show-scrollbar {
+  overflow: auto;
+  padding: 0 0.15rem;
+}
+
+.show-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background-color: theme("colors.text-clr");
+  visibility: hidden;
+}
+
+.show-scrollbar:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
+}
+
+.show-scrollbar::-webkit-scrollbar {
+  width: 4px !important;
+  height: 4px !important;
+}
+
+*:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+button:focus {
+  box-shadow: 0px 0px 0px 2px theme("colors.primary");
+}
+
+i,
+svg {
+  pointer-events: none;
+}
+
+/* RIpple aEffect */
+
+.__ripple {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.__ripple .__ripple_child {
+  z-index: -1;
+  position: absolute;
+  width: 0px;
+  height: 0px;
+  background-color: #ddd;
+  filter: contrast(0.4);
+  border-radius: 99999px;
+  transform: translate3d(-50%, -50%, 0);
+  pointer-events: none;
+}
+
+.__ripple_animation {
+  top: var(--y);
+  left: var(--x);
+  animation: ripple 0.4s ease-out;
+}
+
+@keyframes ripple {
+  100% {
+    width: var(--btnWidth);
+    height: var(--btnWidth);
+    opacity: 0;
+  }
+}

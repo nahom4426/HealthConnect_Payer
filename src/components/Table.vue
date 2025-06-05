@@ -1,0 +1,182 @@
+<script setup>
+import DataTable from "./DataTable.vue";
+import { inject, ref, useAttrs, watch } from "vue";
+import GenericTableRow from "./GenericTableRow.vue";
+import TableRowSkeleton from "./TableRowSkeleton.vue";
+import icons from "@/utils/icons";
+
+const emit = defineEmits([
+  "row",
+  "action:certificate",
+  "action:delete",
+  "action:review",
+  "action:suspend",
+  "action:edit",
+  "bottom",
+]);
+
+const props = defineProps({
+  showPagination: {
+    type: Boolean,
+    default: true,
+  },
+  rowCom: Object,
+  actionHide: String,
+  headers: {
+    type: [Array, Object],
+    required: true,
+  },
+  rows: {
+    type: Array,
+    default: [],
+  },
+  lastCol: { type: Boolean, default: false },
+  firstCol: { type: Boolean, default: false },
+  placeholder: String,
+  photoRow: Object,
+  cells: Object,
+  actions: Array,
+  exceptions: Array,
+  length: Number,
+  Fallback: {
+    type: Object,
+    default: TableRowSkeleton,
+  },
+  pending: Boolean,
+});
+
+function toUpper(str) {
+  let words = str.split(" ");
+  if (words.length == 0) return str;
+
+  for (let i = 1; i < words.length; i++) {
+    words[0] += words[i].charAt(0).toUpperCase() + words[i].substring(1);
+  }
+
+  return words[0];
+}
+
+const spec = ref({ head: [], row: [] });
+
+function format() {
+  if (Array.isArray(props.headers)) {
+    spec.value.head = props.headers;
+
+    const res = props.headers.reduce((state, el) => {
+      const temp = el.toLowerCase();
+      state.push(toUpper(temp));
+      return state;
+    }, []);
+
+    spec.value.row = res.filter((el) => el != "modify");
+  } else {
+    spec.value.head = props.headers?.head || [];
+    spec.value.row = props.headers?.row || [];
+  }
+}
+
+format();
+
+watch(
+  () => props.headers,
+  () => {
+    format();
+  }
+);
+
+const nextPage = inject("next", null);
+const previousPage = inject("previous", null);
+</script>
+<template>
+  <DataTable
+    :lastCol="props.lastCol"
+    :firstCol="props.firstCol"
+    class="bg-table-clr border border-white/10"
+    :headers="spec.head"
+  >
+    <template v-if="lastCol" #lastColHeader="{ row }">
+      <slot name="lastColHeader" :row="row" />
+    </template>
+    <template v-if="rowCom">
+      <component
+        :is="rowCom"
+        v-bind="{
+          cells: cells,
+          headKeys: spec.head,
+          rowData: rows,
+          rowKeys: spec.row,
+        }"
+      />
+    </template>
+    <template v-else>
+      <GenericTableRow
+        @row="(row) => emit('row', row)"
+        :firstCol="props.firstCol"
+        :lastCol="props.lastCol"
+        :head-keys="spec.head"
+        :row-data="rows"
+        :row-keys="spec.row"
+        :cells="cells"
+      >
+        <template v-if="firstCol" #select="{ row }">
+          <slot name="select" :row="row" />
+        </template>
+        <template v-if="lastCol" #lastCol="{ row }">
+          <slot name="lastCol" :row="row" />
+        </template>
+
+        <template #actions="{ row }">
+          <slot name="actions" :row="row" />
+        </template>
+      </GenericTableRow>
+      <tr v-if="!rows?.length && !pending">
+        <td :colspan="spec.head.length + 1">
+          <slot name="placeholder">
+            <div class="flex flex-col gap-2 items-center">
+              <div
+                class="flex-1 w-full flex justify-center py-5 h-full size-28 *:h-56"
+                v-html="icons.no_data"
+              />
+              <p class="text-xl">
+                {{ placeholder ? placeholder : "No Data Found" }}
+              </p>
+            </div>
+          </slot>
+        </td>
+      </tr>
+    </template>
+    <template v-if="pending">
+      <component
+        :cols="spec.head.length + 1"
+        :key="num"
+        v-for="num in 25"
+        :is="Fallback"
+      />
+    </template>
+  </DataTable>
+  <div
+    class="mb-2 flex justify-end gap-4 p-2 items-center"
+    v-if="!pending && showPagination"
+  >
+    <button
+      @click="previousPage"
+      class="flex gap-2 items-center border border-primary px-4 py-1 rounded text-text-clr"
+    >
+      <!-- <i v-html="icons.previous" /> -->
+      <span>Previous</span>
+    </button>
+    <!-- <select @change="send(parseInt($event.target.value))" class="w-16 h-8 pl-2">
+      <option selected value="25">25</option>
+      <option value="50">50</option>
+      <option value="75">75</option>
+      <option value="100">100</option>
+    </select> -->
+    <button
+      class="flex gap-2 items-center border border-primary px-4 py-1 rounded text-text-clr"
+      @click="nextPage"
+    >
+      <span>Next</span>
+      <!-- <i v-html="icons.next" /> -->
+    </button>
+  </div>
+</template>
