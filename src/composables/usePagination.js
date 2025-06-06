@@ -177,6 +177,7 @@ export function usePagination(options = {}) {
   provide("page", pagination.page);
   provide("totalPages", pagination.totalPages);
   provide("searching", searching);
+  provide("send", send);
 
   const page = computed(() => {
     return searching.value
@@ -185,6 +186,8 @@ export function usePagination(options = {}) {
   });
 
   function send() {
+    console.log("ss");
+
     pagination.reset();
     searchPagination.reset();
     fetch();
