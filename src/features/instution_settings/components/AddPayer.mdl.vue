@@ -65,7 +65,6 @@ async function handleSubmit(formValues: any) {
     
     if (result.success) {
       closeModal();
-      toasted(true, 'Payer added successfully');
       router.push('/payer_list');
     } else {
       throw new Error(result.error || 'Registration failed');

@@ -1,13 +1,33 @@
 import ApiService from "@/service/ApiService";
 import type { AsyncResponse } from "@/types/interface";
 import type { Provider } from "../store/payerContractStore";
-
+import { useAuthStore } from '@/stores/auth';
 const api = new ApiService();
-const basePath = '/provider';
+const basePath = '/payer-provider-contract';
+
+// File: d:\Health\refactored-healthConnect-main\refactored-healthConnect-main\src\features\payer_contracts\api\payerContractApi.ts
+
+ // Make sure to import the auth store
 
 export function getProviders(query = {}) {
-  return api.addAuthenticationHeader().get<Provider[]>(`${basePath}/list`, {
-    params: query
+  const authStore = useAuthStore();
+  const payerUuid = authStore.auth?.user?.payerUuid; // Get payerUuid from auth store
+
+  if (!payerUuid) {
+    throw new Error('Payer UUID not found in auth store');
+  }
+
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://192.168.100.82:8198/api/v1/healthConnect';
+  const endpoint = `${baseUrl}/payer-provider-contract`;
+
+  return api.addAuthenticationHeader().get<Provider[]>(endpoint, {
+    params: {
+      payerUuid,
+      page: 0,
+      size: 10,
+      sort: 'startDate,desc',
+      ...query
+    }
   });
 }
 

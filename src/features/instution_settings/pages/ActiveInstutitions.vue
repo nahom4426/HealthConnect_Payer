@@ -8,9 +8,7 @@ import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
 import { addToast } from "@/toast";
 import { openModal } from "@customizer/modal-x";
-
 import { useApiRequest } from "@/composables/useApiRequest";
-
 import { changeInstitutionStatus, deleteInstitutionStatus } from "../api/institutionSettingsApi";
 import StatusRow from "../components/StatusRow.vue";
 import { useInstitutions } from "../store/InstitutionsStore";

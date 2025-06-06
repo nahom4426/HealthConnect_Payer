@@ -3,15 +3,13 @@ import { ref, defineEmits } from "vue";
 import { useRouter } from 'vue-router';
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import ActiveProvidersDataProvider from "../components/payerContractDataProvider.vue";
+import payerContractDataProvider from "../components/payerContractDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
-
 import { changeProviderStatus, deleteProvider } from "../api/payerContractApi";
 import { addToast } from "@/toast";
-
 import { useApiRequest } from "@/composables/useApiRequest";
-import StatusRow from "@/components/StatusRow.vue";
+import StatusRow from "../components/StatusRow.vue";
 import { openModal } from "@customizer/modal-x";
 import { useProviders } from "../store/payerContractStore";
 // Define emits to handle the navigate event
@@ -190,7 +188,7 @@ function handleAddProvider() {
     </template>
     <!-- Content -->
     <template #default="{ search }">
-      <ActiveProvidersDataProvider 
+      <payerContractDataProvider 
         ref="dataProvider"
         :search="search" 
         v-slot="{ providers, pending, currentPage, itemsPerPage, totalPages }"
@@ -225,9 +223,8 @@ function handleAddProvider() {
             />
           </template>
         </Table>
-      </ActiveProvidersDataProvider>
+      </payerContractDataProvider>
     </template>
   </DefaultPage>
-  
- 
+
 </template>

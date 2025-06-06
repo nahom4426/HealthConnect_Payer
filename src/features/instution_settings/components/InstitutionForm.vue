@@ -310,7 +310,7 @@ const categoryOptions = [
               validation="required"
               :attributes="{
                 placeholder: 'Enter phone number',
-                class: 'px-8 my-2 bg-[#F9F9FD]',
+                class: 'px-14 my-2 bg-[#F9F9FD]',
                 required: true
               }"
             />
