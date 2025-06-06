@@ -29,7 +29,7 @@ async function fetchProviders() {
       page: currentPage.value,
       limit: itemsPerPage.value,
       search: props.search || '',
-      status: 'ACTIVE'
+      // status: 'ACTIVE'
     };
     
     console.log("Fetching providers with params:", params);
