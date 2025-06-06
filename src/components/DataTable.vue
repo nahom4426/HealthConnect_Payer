@@ -30,7 +30,7 @@ const totalPages = inject("totalPages", 1);
 <template>
   <table class="min-w-full rounded-lg">
     <thead class="bg-accent capitalize my-5">
-      <tr class="text-base-clr bg-[#F5F5FF]">
+      <tr class="text-base-clr border-b">
         <th v-if="firstCol" class="th p-4 text-left uppercase tracking-wider">
           <slot name="headerFirst"></slot>
         </th>

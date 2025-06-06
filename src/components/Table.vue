@@ -86,6 +86,9 @@ watch(
 
 const nextPage = inject("next", null);
 const previousPage = inject("previous", null);
+const send = inject("send", () => {});
+const selectedValue = ref(25);
+const active = ref(1);
 </script>
 <template>
   <DataTable
@@ -155,28 +158,40 @@ const previousPage = inject("previous", null);
     </template>
   </DataTable>
   <div
-    class="mb-2 flex justify-end gap-4 p-2 items-center"
     v-if="!pending && showPagination"
+    class="flex justify-between p-4 items-center"
   >
-    <button
-      @click="previousPage"
-      class="flex gap-2 items-center border border-primary px-4 py-1 rounded text-text-clr"
-    >
-      <!-- <i v-html="icons.previous" /> -->
-      <span>Previous</span>
-    </button>
-    <!-- <select @change="send(parseInt($event.target.value))" class="w-16 h-8 pl-2">
-      <option selected value="25">25</option>
-      <option value="50">50</option>
-      <option value="75">75</option>
-      <option value="100">100</option>
-    </select> -->
-    <button
-      class="flex gap-2 items-center border border-primary px-4 py-1 rounded text-text-clr"
-      @click="nextPage"
-    >
-      <span>Next</span>
-      <!-- <i v-html="icons.next" /> -->
-    </button>
+    <div class="flex gap-5 items-center">
+      <span class="text-base-clr">Showing</span>
+      <select
+        @change="send(parseInt($event.target.value))"
+        class="px-3 py-2 rounded-md bg-base-clr3"
+        v-model="selectedValue"
+      >
+        <option selected value="25">25</option>
+        <option value="50">50</option>
+        <option value="75">75</option>
+        <option value="100">100</option>
+      </select>
+    </div>
+    <div class="text-base-clr">
+      Showing {{ selectedValue - 24 }} to {{ selectedValue }} out of records
+    </div>
+    <div class="flex gap-[10px] items-center justify-between">
+      <i @click="" class="px-3" v-html="icons.chevron_left"></i>
+      <div
+        @click="active > key ? nextPage : previousPage"
+        v-for="key in 4"
+        class="font-semibold rounded py-1 px-3 cursor-pointer"
+        :class="[active === key ? 'border border-base-clr' : ' ']"
+      >
+        {{ key }}
+      </div>
+      <i
+        @click="nextPage"
+        class="px-3 cursor-pointer"
+        v-html="icons.chevron_right"
+      ></i>
+    </div>
   </div>
 </template>

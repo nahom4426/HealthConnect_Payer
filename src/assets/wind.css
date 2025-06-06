@@ -1,4 +1,4 @@
-@import url("./fonts/geist/geist.css");
+@import url("https://fonts.googleapis.com/css2?family=Days+One&family=Inter+Tight:ital,wght@0,100..900;1,100..900&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,14 +7,14 @@
   --primary: 2 103 107;
   --secondary: 107 42 0;
   --toast: 76 187 23;
-  --dark: 64 72 79;
+  --dark: 51 51 51;
   --text-clr: var(--dark);
-  --base-clr: 103 103 105;
+  --base-clr: 117 119 139;
   --base-clr2: 245 245 255;
-  --base-clr3: 30 30 30;
+  --base-clr3: 246 247 250;
 
-  --drawer-width: 17rem;
-  --navbar-height: 3rem;
+  --drawer-width: 16rem;
+  --navbar-height: 5rem;
 }
 
 .orange {
@@ -39,10 +39,7 @@
   --primary: 75 0 130;
 }
 body {
-  font-family: "Geist", ui-sans-serif, poppins, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-    "Noto Color Emoji";
+  font-family: "Inter Tight", "Days One", sans-serif;
   font-optical-sizing: auto;
   font-weight: 400;
   text-rendering: optimizeLegibility;
@@ -72,6 +69,13 @@ body,
   border-radius: 5px;
   background-color: theme("colors.text-clr");
   visibility: hidden;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .show-scrollbar:hover::-webkit-scrollbar-thumb {
