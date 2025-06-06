@@ -228,7 +228,7 @@ async function handleDeactivateWithClose(payerUuid) {
               @click.stop="handleEditWithClose(row)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              <div class="flex items-center justify-center gap-4">
+              <div class="flex items-center justify-start pl-4 gap-4">
                 <i v-html="icons.edits" />
                 Edit
               </div>
@@ -238,7 +238,7 @@ async function handleDeactivateWithClose(payerUuid) {
               @click.stop="handleViewWithClose(row.payerUuid || row.id)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              <div class="flex items-center justify-center gap-4">
+              <div class="flex items-center justify-start pl-4 gap-4">
                 <i v-html="icons.details" />
                 Detail
               </div>
@@ -250,7 +250,7 @@ async function handleDeactivateWithClose(payerUuid) {
                 @click.stop="handleActivateWithClose(row.payerUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
-                <div class="flex items-center justify-center gap-4">
+                <div class="flex items-center justify-start pl-4 gap-4">
                   <i v-html="icons.activate" />
                   Activate
                 </div>
@@ -261,7 +261,7 @@ async function handleDeactivateWithClose(payerUuid) {
                 @click.stop="handleDeactivateWithClose(row.payerUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
               >
-                <div class="flex items-center justify-center gap-4">
+                <div class="flex items-center justify-start pl-4 gap-4">
                   <i v-html="icons.deactivate" />
                   Deactivate
                 </div>
@@ -280,7 +280,7 @@ async function handleDeactivateWithClose(payerUuid) {
 }
 
 .dropdown-menu {
-  min-width: 100%;
+  min-width: 150%;
   transition: all 0.2s ease-out;
   transform-origin: top right;
 }

@@ -39,6 +39,12 @@ export default [
     //privilage: [],
     //role: ''
   },
+   {
+        path: "/active_insured_persons",
+        name: "Insured Persons",
+        icon: icons.active_insured_persons,
+        // privilege: ['Read-Privileges'],
+      },
   {
     name: "Claims",
     icon: icons.claimManagement,

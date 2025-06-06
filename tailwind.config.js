@@ -3,6 +3,9 @@ export default {
   content: ["./index.html", "./src/**/*.{js,vue,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Inter Tight"', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+      },
       colors: {
         primary: "rgba(var(--primary) / <alpha-value>)",
         secondary: "rgba(var(--secondary) / <alpha-value>)",
@@ -33,3 +36,4 @@ export default {
   },
   plugins: [],
 };
+

@@ -14,7 +14,7 @@ export function getInsuredByContractId(id: string, query = {}) {
 }
 
 export function searchInsuredByInstitution(id: string, query = {}, config = {}) {
-	return api.addAuthenticationHeader().get<InsuredPerson[]>(`${path}/institution/with-dependants/${id}`, {
+	return api.addAuthenticationHeader().get<InsuredPerson[]>(`${path}/payer/with-dependants/${id}`, {
 		params: query,
 		...config
 	})
