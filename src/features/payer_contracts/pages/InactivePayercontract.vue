@@ -7,9 +7,9 @@ import InactiveProvidersDataProvider from "../components/InactiveProvidersDataPr
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
 import { useProviders } from "../store/payerContractStore";
-import { changeProviderStatus, deleteProvider } from "../api/payerContractApi";
+import { changePayerContractStatus } from "../api/payerContractApi";
 import { addToast } from "@/toast";
-import EditProviderModal from "../components/EditProviderModal.vue";
+import EditPayerContractModal from "../components/EditPayerContractModal.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import StatusRow from "@/components/StatusRow.vue";
 
@@ -68,7 +68,7 @@ function handleProviderUpdated(updatedProvider: any) {
 
 function handleStatusChange(id: string, newStatus: Status) {
   statusReq.send(
-    () => changeProviderStatus(id, newStatus),
+    () => changePayerContractStatus(id, newStatus),
     (res) => {
       if (res.success) {
         addToast({
@@ -96,29 +96,6 @@ function handleDeactivate(id: string) {
   handleStatusChange(id, 'INACTIVE');
 }
 
-function handleDelete(id: string) {
-  if (confirm('Are you sure you want to delete this provider? This action cannot be undone.')) {
-    deleteReq.send(
-      () => deleteProvider(id),
-      (res) => {
-        if (res.success) {
-          addToast({
-            type: 'success',
-            title: 'Provider Deleted',
-            message: 'Provider has been successfully deleted'
-          });
-          refreshData();
-        } else {
-          addToast({
-            type: 'error',
-            title: 'Delete Failed',
-            message: res.error || 'Failed to delete provider'
-          });
-        }
-      }
-    );
-  }
-}
 </script>
 
 <template>

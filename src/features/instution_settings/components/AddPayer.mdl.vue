@@ -9,13 +9,17 @@ import { useRouter } from 'vue-router';
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref } from "vue";
+import { useInstitutions } from "../store/InstitutionsStore";
 
+const payersStore = useInstitutions();
+const pending = ref(false);
 const router = useRouter();
 const formDataProvider = ref();
 
 async function handleSubmit(formValues: any) {
   try {
-    // Verify required fields exist
+    pending.value = true;
+
     const requiredFields = [
       'payerName',
       'email',
@@ -26,20 +30,15 @@ async function handleSubmit(formValues: any) {
     ];
     
     const missingFields = requiredFields.filter(field => !formValues[field]);
-    
     if (missingFields.length > 0) {
       throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
 
-    // Create FormData for multipart request
     const formData = new FormData();
-    
-    // Append the logo file if exists
     if (formValues.payerLogo) {
       formData.append('logo', formValues.payerLogo);
     }
 
-    // Append payer data as JSON string
     const payerData = {
       payerName: formValues.payerName,
       description: formValues.memo || "",
@@ -56,14 +55,32 @@ async function handleSubmit(formValues: any) {
       tinNumber: formValues.tinNumber,
       status: formValues.status || "ACTIVE"
     };
-    
+
     formData.append('payerRequest', JSON.stringify(payerData));
 
     console.log('Submitting payer data:', payerData);
-    
+
     const result = await formDataProvider.value.register(formData);
-    
+
     if (result.success) {
+      const newPayer = {
+        ...result.data,
+        logoUrl: result.data.logoUrl || (result.data.logoPath
+          ? `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/payer/logo/${result.data.logoPath}`
+          : null)
+      };
+
+      // Add to store
+      payersStore.add(newPayer);
+
+      // Optional callback
+      if (
+        formDataProvider.value.props?.data?.onAdded &&
+        typeof formDataProvider.value.props.data.onAdded === 'function'
+      ) {
+        formDataProvider.value.props.data.onAdded(newPayer);
+      }
+
       closeModal();
       router.push('/payer_list');
     } else {
@@ -71,9 +88,11 @@ async function handleSubmit(formValues: any) {
     }
   } catch (error) {
     console.error('Submission error:', error);
-    toasted(false, 'Failed to submit form', error.message);
+  } finally {
+    pending.value = false;
   }
 }
+
 </script>
 
 <template>
@@ -86,7 +105,7 @@ async function handleSubmit(formValues: any) {
     >
       <div class="bg-white rounded-lg">
         <InstitutionFormDataProvider ref="formDataProvider">
-          <template #default="{ pending }">
+          <template #default="{ pending : payerPending }">
             <InstitutionForm
               :pending="pending"
               :onSubmit="handleSubmit"

@@ -1,9 +1,11 @@
-<script setup lang="ts">
-import { defineProps, ref } from 'vue';
-import { Status } from '@/types/interface';
-import Button from '@/components/Button.vue';
-import Dropdown from '@/components/Dropdown.vue';
-import icons from '@/utils/icons';
+<script setup>
+import { defineProps, onMounted, onUnmounted } from 'vue';
+import Button from "@/components/Button.vue";
+import { openModal } from '@customizer/modal-x';
+import { insuredMembers } from "../store/insuredPersonsStore";
+import { changeInsuredStatus } from "../api/insuredPersonsApi";
+import { useToast } from '@/toast/store/toast';
+import icons from "@/utils/icons";
 
 const props = defineProps({
   rowData: {
@@ -39,30 +41,119 @@ const props = defineProps({
     default: () => {}
   }
 });
+console.log('InsuredPersonStatusRow props:', props.rowData);
 
-const showDropdown = ref(false);
-
-function formatName(row) {
-  if (!row) return '';
-  return `${row.title || ''} ${row.firstName || ''} ${row.fatherName || ''} ${row.grandFatherName || ''}`.trim();
-}
-
-function formatAddress(row) {
-  if (!row) return '';
-  return `${row.address3 || ''}, ${row.address2 || ''}, ${row.address1 || ''}, ${row.state || ''}`.replace(/^,\s*|,\s*$|(?:,\s*)+/g, ', ').trim();
-}
+const { addToast } = useToast();
+const insuredStore = insuredMembers();
 
 function getStatusStyle(status) {
-  switch (status) {
-    case Status.ACTIVE:
-      return 'bg-green-100 text-green-800';
-    case Status.INACTIVE:
-    case Status.SUSPENDED:
-      return 'bg-red-100 text-red-800';
-    case Status.PENDING:
-      return 'bg-yellow-100 text-yellow-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
+  if (status === 'ACTIVE' || status === 'Active') {
+    return 'bg-[#DFF1F1] text-[#02676B]';
+  } else if (status === 'INACTIVE' || status === 'Inactive') {
+    return 'bg-red-100 text-red-800';
+  } else {
+    return 'bg-gray-100 text-gray-800';
+  }
+}
+
+function getBaseUrl() {
+  return import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+}
+
+function handleImageError(event) {
+  event.target.src = '/assets/placeholder-profile.png';
+}
+
+function handleEdit(row) {
+  if (row.insuredUuid) {
+    openModal('EditInsured', { 
+      insuredUuid: row.insuredUuid, 
+      insured: row,
+      onUpdated: (updatedInsured) => {
+        insuredStore.update(updatedInsured.insuredUuid, updatedInsured);
+      }
+    });
+  } else if (typeof props.onEdit === 'function') {
+    props.onEdit(row);
+  }
+}
+
+function toggleDropdown(event, rowId) {
+  event.stopPropagation();
+  closeAllDropdowns();
+  const dropdown = document.getElementById(`dropdown-${rowId}`);
+  if (dropdown) {
+    dropdown.classList.toggle('hidden');
+  }
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown-menu').forEach(el => {
+    el.classList.add('hidden');
+  });
+}
+
+onMounted(() => {
+  window.addEventListener('click', closeAllDropdowns);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', closeAllDropdowns);
+});
+
+function handleEditWithClose(row) {
+  closeAllDropdowns();
+  handleEdit(row);
+}
+
+function handleViewWithClose(rowId) {
+  closeAllDropdowns();
+  props.onView(rowId);
+}
+
+async function handleActivateWithClose(insuredId) {
+  closeAllDropdowns();
+  try {
+    const response = await changeInsuredStatus(insuredId, 'ACTIVE');
+    if (response.success) {
+      addToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: 'Insured member has been activated'
+      });
+      insuredStore.update(insuredId, { status: 'ACTIVE' });
+    } else {
+      throw new Error(response.error || 'Failed to activate');
+    }
+  } catch (error) {
+    addToast({
+      type: 'error',
+      title: 'Activation Failed',
+      message: error.message || 'Failed to activate insured member'
+    });
+  }
+}
+
+async function handleDeactivateWithClose(insuredId) {
+  closeAllDropdowns();
+  try {
+    const response = await changeInsuredStatus(insuredId, 'INACTIVE');
+    if (response.success) {
+      addToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: 'Insured member has been deactivated'
+      });
+      insuredMembers.update(insuredId, { status: 'INACTIVE' });
+    } else {
+      throw new Error(response.error || 'Failed to deactivate');
+    }
+  } catch (error) {
+    addToast({
+      type: 'error',
+      title: 'Deactivation Failed',
+      message: error.message || 'Failed to deactivate insured member'
+    });
   }
 }
 </script>
@@ -71,97 +162,138 @@ function getStatusStyle(status) {
   <tr 
     v-for="(row, idx) in rowData" 
     :key="idx"
-    @click="onRowClick(row)" 
-    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out cursor-pointer" 
+    @click.self="props.onRowClick(row)" 
+    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out"
   >  
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
+    <!-- Insured Photo Column -->
+    <td  class="p-3 py-4 w-16">
+      <div class="flex justify-center items-center">
+        <img 
+          v-if="row.photoBase64" 
+          :src="row.photoBase64" 
+          alt="Profile" 
+          class="h-10 w-10 object-cover rounded-full border border-gray-200"
+        />
+        <img 
+          v-else-if="row.photoUrl" 
+          :src="row.photoUrl" 
+          alt="Profile" 
+          class="h-10 w-10 object-cover rounded-full border border-gray-200"
+        />
+        <img 
+          v-else-if="row.photoPath" 
+          :src="`${getBaseUrl()}/insured/photo/${row.photoPath}`" 
+          alt="Profile" 
+          class="h-10 w-10 object-cover rounded-full border border-gray-200"
+          @error="handleImageError"
+        />
+        <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
+          <span class="text-gray-500 text-xs">No Photo</span>
+        </div>
+      </div>
+    </td>
+
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
-      <!-- Status field -->
       <div v-if="key === 'status'" class="truncate">  
         <span 
           class="px-2.5 py-1 rounded-full text-xs font-medium"
           :class="getStatusStyle(row.status)"
         >
-          {{ row.status || 'Active' }}
+          {{ row.status }}
         </span>
       </div>
-      <!-- Name field -->
-      <span v-else-if="key === 'fullName'" class="text-gray-700">
-        {{ formatName(row) }}
-      </span>
-      <!-- Address field -->
-      <span v-else-if="key === 'address'" class="text-gray-700">
-        {{ formatAddress(row) }}
-      </span>
-      <!-- Default field rendering -->
+      <div v-else-if="key === 'fullName'" class="text-gray-700">
+        {{ row.firstName }} {{ row.fatherName }}
+      </div>
       <span v-else class="text-gray-700">
         {{ row[key] }}
       </span>
     </td>  
 
-    <td class="p-3" v-if="headKeys.includes('Actions') || headKeys.includes('actions')">  
-      <div class="flex gap-2">
-        <Button 
-          type="secondary" 
-          size="xs" 
-          @click.stop="onView(row)"
-          class="flex items-center gap-1"
+    <!-- Actions Dropdown Column -->
+    <td class="p-3">
+      <div class="dropdown-container relative">
+        <button 
+          @click.stop="toggleDropdown($event, row.insuredUuid || row.id)"
+          class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
+          type="button"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
           </svg>
-          View
-        </Button>
-        
-        <Button 
-          type="secondary" 
-          size="xs" 
-          @click.stop="onEdit(row)"
-          class="flex items-center gap-1"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-          Edit
-        </Button>
+        </button>
 
-        <Button 
-          v-if="row.status !== Status.INACTIVE && row.status !== Status.SUSPENDED"
-          type="danger" 
-          size="xs" 
-          @click.stop="onDeactivate(row.insuredUuid)"
-          class="flex items-center gap-1"
+        <div 
+          :id="`dropdown-${row.insuredUuid || row.id}`"
+          class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Deactivate
-        </Button>
-        
-        <Button 
-          v-else
-          type="success" 
-          size="xs" 
-          @click.stop="onActivate(row.insuredUuid)"
-          class="flex items-center gap-1"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-          Activate
-        </Button>
+          <div class="py-1">
+            <button 
+              @click.stop="handleEditWithClose(row)"
+              class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <i v-html="icons.edits" class="mr-2" />
+              Edit
+            </button>
+            
+            <button 
+                 @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
+              class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <i v-html="icons.details" class="mr-2" />
+              
+            </button>
+            
+            <template v-if="row.status">
+              <button 
+                v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
+                @click.stop="handleActivateWithClose(row.insuredUuid || row.id)"
+                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <i v-html="icons.activate" class="mr-2" />
+                Activate
+              </button>
+             
+              <button 
+                v-if="row.status === 'ACTIVE' || row.status === 'Active'"
+                @click.stop="handleDeactivateWithClose(row.insuredUuid || row.id)"
+                class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+              >
+                <i v-html="icons.deactivate" class="mr-2" />
+                Deactivate
+              </button>
+            </template>
+          </div>
+        </div>
       </div>
-    </td>   
-  </tr>   
+    </td>
+  </tr>
 </template>
 
 <style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.dropdown-container {
+  position: relative;
+}
+
+.dropdown-menu {
+  transition: all 0.2s ease-out;
+  transform-origin: top right;
+}
+
+.dropdown-menu.hidden {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.dropdown-menu:not(.hidden) {
+  opacity: 1;
+  transform: scale(1);
+}
+
+tr:hover {
+  background-color: #f9fafb;
 }
 </style>

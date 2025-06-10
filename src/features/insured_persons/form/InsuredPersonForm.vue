@@ -12,10 +12,15 @@ const props = defineProps({
     type: Object as () => InsuredPerson,
     default: () => ({})
   },
+  institutionId: {
+    type: String,
+    required: true
+  },
   innerValidate: {
     type: Boolean,
     default: true
   },
+
   pending: {
     type: Boolean,
     default: false
@@ -49,6 +54,7 @@ function handleSubmit() {
   // Validate required fields before submission
   const requiredFields = [
     { name: 'Title', value: title.value },
+    { name: 'Institution', value: props.institutionId },
     { name: 'First Name', value: firstName.value },
     { name: 'Father Name', value: fatherName.value },
     { name: 'Grand Father Name', value: grandFatherName.value },
@@ -78,6 +84,7 @@ function handleSubmit() {
   // Create payload
   const payload = {
     email: email.value,
+    payerUuid: props.institutionId,
     premium: Number(premium.value) || 0,
     title: title.value,
     firstName: firstName.value,
@@ -98,8 +105,8 @@ function handleSubmit() {
   };
 
   // If editing, include the UUID
-  if (props.insuredPerson?.uuid) {
-    payload.uuid = props.insuredPerson.uuid;
+  if (props.insuredPerson?.insuredPersonUuid) {
+    payload.insuredPersonUuid = props.insuredPerson.insuredPersonUuid;
   }
 
   console.log('Submitting insured person data:', payload);

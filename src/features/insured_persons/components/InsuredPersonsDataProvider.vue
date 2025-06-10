@@ -1,83 +1,116 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
-import { useApiRequest } from '@/composables/useApiRequest';
-import { searchInsuredByInstitution } from '../api/insuredPersonsApi';
+import { useApiRequest } from "@/composables/useApiRequest";
+import { searchInsuredByInstitution } from "../api/insuredPersonsApi";
+import { usePagination } from "@/composables/usePagination";
+import type { PropType } from "vue";
+import { Status } from "@/types/interface";
+import { insuredMembers } from "../store/insuredPersonsStore";
+import { ref, watch } from "vue";
 
+// Props
 const props = defineProps({
-  search: {
-    type: String,
-    default: ''
+  auto: {
+    type: Boolean,
+    default: true
   },
   institutionId: {
     type: String,
     required: true
   },
-  limit: {
-    type: Number,
-    default: 10
+  status: {
+    type: String as PropType<Status>,
+    default: Status.ACTIVE
   },
-  page: {
-    type: Number,
-    default: 1
+  search: {
+    type: String,
+    default: ""
   }
 });
 
-const insuredPersons = ref([]);
-const currentPage = ref(props.page);
-const itemsPerPage = ref(props.limit);
-const totalPages = ref(0);
+console.log('institutionId:', props.institutionId);
 
-const request = useApiRequest();
+// Store & Request
+const insuredStore = insuredMembers();
+const insuredReq = useApiRequest();
+const currentPage = ref(1);
+const itemsPerPage = ref(25);
+const totalPages = ref(1);
+const totalItems = ref(0);
 
-// Fetch insured persons data
-function fetchData() {
-  const query = {
-    page: currentPage.value,
-    limit: itemsPerPage.value,
-    search: props.search
-  };
-
-  request.send(
-    () => searchInsuredByInstitution(props.institutionId, query),
-    (response) => {
-      if (response.data) {
-        insuredPersons.value = response.data;
-        totalPages.value = response.totalPages || Math.ceil(response.total / itemsPerPage.value) || 1;
+// Pagination setup
+const pagination = usePagination({
+  auto: false,
+  cb: async (data: any) => {
+    try {
+      const response = await searchInsuredByInstitution(
+        props.institutionId,
+        {
+          ...data,
+          status: props.status
+        }
+      );
+      
+      console.log("API Response:", response);
+      
+      // Check if the response has the expected structure (paginated response)
+      if (response && response.data && response.data.content) {
+        // Update the store with the content array
+        insuredStore.set(response.data.content);
+        
+        // Update pagination information
+        currentPage.value = response.data.page || 1;
+        itemsPerPage.value = response.data.size || 25;
+        totalPages.value = response.data.totalPages || 1;
+        totalItems.value = response.data.totalElements || response.data.content.length;
+        
+        return response.data;
+      } else if (response && response.content) {
+        // Alternative structure
+        insuredStore.set(response.content);
+        
+        // Update pagination information
+        currentPage.value = response.page || 1;
+        itemsPerPage.value = response.size || 25;
+        totalPages.value = response.totalPages || 1;
+        totalItems.value = response.totalElements || response.content.length;
+        
+        return response;
+      } else {
+        // Fallback for old API structure
+        insuredStore.set(response);
+        return response;
       }
+    } catch (error) {
+      console.error("Error fetching insured persons:", error);
+      return { error };
     }
-  );
+  }
+});
+
+// Watch for search changes
+watch(() => props.search, (newValue) => {
+  if (newValue !== undefined) {
+    pagination.search(newValue);
+  }
+});
+
+// Auto-fetch if needed
+if (props.auto) {
+  pagination.send();
 }
-
-// Watch for changes in search, page, or limit
-watch(() => props.search, fetchData);
-watch(() => props.page, (newPage) => {
-  currentPage.value = newPage;
-  fetchData();
-});
-watch(() => props.limit, (newLimit) => {
-  itemsPerPage.value = newLimit;
-  fetchData();
-});
-
-// Initial data fetch
-onMounted(fetchData);
-
-// Expose method to refresh data
-function refresh() {
-  fetchData();
-}
-
-defineExpose({
-  refresh
-});
 </script>
 
 <template>
-  <slot 
-    :insuredPersons="insuredPersons" 
-    :pending="request.pending.value" 
-    :currentPage="currentPage" 
-    :itemsPerPage="itemsPerPage" 
+  <slot
+    :insuredMembers="insuredStore.insuredMembers"
+    :pending="insuredReq.pending.value"
+    :error="insuredReq.error.value"
+    :search="pagination.search"
+    :currentPage="currentPage"
+    :itemsPerPage="itemsPerPage"
     :totalPages="totalPages"
+    :totalItems="totalItems"
   />
 </template>
+
+

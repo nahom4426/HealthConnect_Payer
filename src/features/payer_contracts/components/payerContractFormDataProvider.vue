@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useApiRequest } from "@/composables/useApiRequest";
-import { createProvider, importProviders, downloadProviderTemplate } from "../api/payerContractApi";
+import { createPayerContract, importPayerContracts, downloadPayerContractTemplate } from "../api/payerContractApi";
 import { ref } from "vue";
 import { toasted } from "@/utils/utils";
 
@@ -20,32 +20,32 @@ function register(formData: FormData) {
   console.log('Registration form data received:', formData);
   
   // Check if required fields are present
-  const providerJson = formData.get('provider');
-  if (!providerJson) {
-    const errorMsg = 'Missing provider data';
+  const contractJson = formData.get('payerContract');
+  if (!contractJson) {
+    const errorMsg = 'Missing payer contract data';
     toasted(false, errorMsg);
     return Promise.reject(new Error(errorMsg));
   }
 
   try {
-    const providerData = JSON.parse(providerJson as string);
+    const contractData = JSON.parse(contractJson as string);
     
-    const requiredProviderFields = [
-      'providerName', 
-      'email', 
-      'telephone',
-      'address1', 
-      'tinNumber', 
-      'category'
+    const requiredContractFields = [
+      'contractName', 
+      'payerId',
+      'startDate',
+      'endDate',
+      'contractType',
+      'paymentTerms'
     ];
 
-    const missingFields = requiredProviderFields.filter(field => {
-      const value = providerData[field];
+    const missingFields = requiredContractFields.filter(field => {
+      const value = contractData[field];
       return value === undefined || value === null || value === '';
     });
 
     if (missingFields.length > 0) {
-      const errorMsg = `Missing required Provider fields: ${missingFields.join(', ')}`;
+      const errorMsg = `Missing required Contract fields: ${missingFields.join(', ')}`;
       console.error('Validation failed:', errorMsg);
       toasted(false, errorMsg);
       return Promise.reject(new Error(errorMsg));
@@ -53,8 +53,8 @@ function register(formData: FormData) {
 
     return sendRegistrationRequest(formData);
   } catch (error) {
-    console.error('Error parsing provider data:', error);
-    toasted(false, 'Invalid provider  data format');
+    console.error('Error parsing contract data:', error);
+    toasted(false, 'Invalid contract data format');
     return Promise.reject(error);
   }
 }
@@ -64,15 +64,15 @@ function sendRegistrationRequest(formData: FormData) {
   
   return new Promise((resolve, reject) => {
     registerReq.send(
-      () => createProvider(formData), // Make sure your API function accepts FormData
+      () => createPayerContract(formData),
       (response) => {
         if (response.success) {
           console.log('Registration successful:', response.data);
-          toasted(true, 'Provider registered successfully');
+          toasted(true, 'Payer contract registered successfully');
           resolve(response);
         } else {
           console.error('Registration failed:', response.error);
-          const errorMsg = response.error || 'Failed to register provider';
+          const errorMsg = response.error || 'Failed to register payer contract';
           toasted(false, errorMsg);
           reject(new Error(errorMsg));
         }
@@ -80,17 +80,18 @@ function sendRegistrationRequest(formData: FormData) {
     );
   });
 }
+
 function importFile(file: File) {
   return new Promise((resolve, reject) => {
     importReq.send(
-      () => importProviders(file),
+      () => importPayerContracts(file),
       (res) => {
         if (res.success) {
-          toasted(true, 'Institutions imported successfully');
+          toasted(true, 'Payer contracts imported successfully');
           resolve(res);
         } else {
-          toasted(false, res.error || 'Failed to import institutions');
-          reject(new Error(res.error || 'Failed to import institutions'));
+          toasted(false, res.error || 'Failed to import payer contracts');
+          reject(new Error(res.error || 'Failed to import payer contracts'));
         }
       }
     );
@@ -99,13 +100,13 @@ function importFile(file: File) {
 
 function downloadTemplate() {
   downloadReq.send(
-    () => downloadProviderTemplate(),
+    () => downloadPayerContractTemplate(),
     (res) => {
       try {
         const url = window.URL.createObjectURL(new Blob([res]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'institution_template.xlsx');
+        link.setAttribute('download', 'payer_contract_template.xlsx');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

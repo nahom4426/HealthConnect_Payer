@@ -1,14 +1,14 @@
 import ApiService from "@/service/ApiService";
-import type { InsuredPerson, AsyncResponse, Insured } from "@/types/interface";
+import type { dependant, AsyncResponse, Insured } from "@/types/interface";
 import { getQueryFormObject } from "@/utils/utils";
 
 const api = new ApiService()
-const path = '/insuredperson'
+const path = '/dependant'
 const baseUrl = import.meta.env.v_API_URI
-const basePath = '/insuredperson';
+const basePath = '/dependant';
 
 export function getInsuredByContractId(id: string, query = {}) {
-	return api.addAuthenticationHeader().get<InsuredPerson[]>(`${path}/list/${id}`, {
+	return api.addAuthenticationHeader().get<dependant[]>(`${path}/list/${id}`, {
 		params: query
 	})
 }
@@ -26,34 +26,36 @@ export function searchInsuredByInstitution(id: string, query = {}, config = {}) 
 		throw error;
 	});
 }
-export function getInsuredById(id: string, query = {}, config = {}) {
-	return api.addAuthenticationHeader().get(`${path}/${id}`, {
-		params: query,
-		...config
-	}).then(response => {
-		console.log("API raw response:", response);
-		// Return the response data directly, the component will handle pagination
-		return response.data;
-	}).catch(error => {
-		console.error("API error:", error);
-		throw error;
-	});
+
+export function createdependant(formData: FormData): Promise<AsyncResponse<any>> {
+  return api.post(`${basePath}/createDependant`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
 }
-export function createInsuredPerson(data: any) {
-	return api.addAuthenticationHeader().post(`${baseUrl}/insuredperson`, data)
+export function updatedependant(dependantUuid: string, formData: FormData): Promise<AsyncResponse<any>> {
+  return api.put(`${basePath}/${dependantUuid}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
 }
 
-export function updateInsuredPerson(uuid: string, data: any) {
-	return api.addAuthenticationHeader().put(`${baseUrl}/insuredperson/${uuid}`, data)
+
+
+
+export function updatedependantstatus(dependantUuid: string, status: string): Promise<AsyncResponse<any>> {
+  return api.patch(`${basePath}/dependant/${dependantUuid}/status`, { status });
 }
 
-export function getInsuredPersonById(uuid: string) {
-	return api.addAuthenticationHeader().get(`${baseUrl}/insuredperson/${uuid}`)
+export function getdependantById(uuid: string) {
+	return api.addAuthenticationHeader().get(`${baseUrl}/dependant/${uuid}`)
 }
 
 import { useAuthStore } from "@/stores/auth"; // Make sure to import the auth store
 
-export function importInsuredPersons(file: File, institutionUuid: string): Promise<AsyncResponse<any>> {
+export function importdependants(file: File, institutionUuid: string): Promise<AsyncResponse<any>> {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -80,12 +82,12 @@ export function getInsuredMembers(query = {}) {
   });
 }
 
-// export function getInsuredById(id: string): Promise<AsyncResponse<Insured>> {
-//   return api.addAuthenticationHeader().get(`${basePath}/${id}`);
-// }
+export function getInsuredById(id: string): Promise<AsyncResponse<Insured>> {
+  return api.addAuthenticationHeader().get(`${basePath}/${id}`);
+}
 
 export function createInsured(formData: FormData): Promise<AsyncResponse<Insured>> {
-  return api.addAuthenticationHeader().post(`${basePath}/createInsuredPerson`, formData, {
+  return api.addAuthenticationHeader().post(`${path}/createdependant`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },

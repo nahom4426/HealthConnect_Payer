@@ -6,18 +6,18 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import payerContractDataProvider from "../components/payerContractDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
-import { changeProviderStatus, deleteProvider } from "../api/payerContractApi";
+import { changePayerContractStatus } from "../api/payerContractApi";
 import { addToast } from "@/toast";
 import { useApiRequest } from "@/composables/useApiRequest";
 import StatusRow from "../components/StatusRow.vue";
 import { openModal } from "@customizer/modal-x";
-import { useProviders } from "../store/payerContractStore";
+import { usePayerContracts } from "../store/payerContractStore";
 // Define emits to handle the navigate event
 const emit = defineEmits(['navigate']);
 
 const router = useRouter();
 const dataProvider = ref();
-const providersStore = useProviders();
+const payerContractStore = usePayerContracts();
 const statusReq = useApiRequest();
 const deleteReq = useApiRequest();
 
@@ -65,7 +65,7 @@ function handleProviderUpdated(updatedProvider: any) {
   console.log('Provider updated:', updatedProvider);
   // Update the provider in the store
   if (updatedProvider && updatedProvider.providerUuid) {
-    providersStore.update(updatedProvider.providerUuid, updatedProvider);
+    payerContractStore.update(updatedProvider.providerUuid, updatedProvider);
     // Refresh the data
     refreshData();
     // Show success toast
@@ -79,11 +79,11 @@ function handleProviderUpdated(updatedProvider: any) {
 
 function handleStatusChange(id: string, newStatus: Status) {
   statusReq.send(
-    () => changeProviderStatus(id, newStatus),
+    () => changePayerContractStatus(id, newStatus),
     (res) => {
       if (res.success) {
         // Update the provider in the store
-        providersStore.update(id, { status: newStatus });
+        payerContractStore.update(id, { status: newStatus });
         
         addToast({
           type: 'success',
@@ -102,32 +102,7 @@ function handleStatusChange(id: string, newStatus: Status) {
   );
 }
 
-function handleDelete(id: string) {
-  if (confirm('Are you sure you want to delete this provider? This action cannot be undone.')) {
-    deleteReq.send(
-      () => deleteProvider(id),
-      (res) => {
-        if (res.success) {
-          // Remove the provider from the store
-          providersStore.remove(id);
-          
-          addToast({
-            type: 'success',
-            title: 'Provider Deleted',
-            message: 'Provider has been successfully deleted'
-          });
-          refreshData();
-        } else {
-          addToast({
-            type: 'error',
-            title: 'Delete Failed',
-            message: res.error || 'Failed to delete provider'
-          });
-        }
-      }
-    );
-  }
-}
+
 
 function handleActivate(id: string) {
   handleStatusChange(id, Status.ACTIVE);
@@ -142,7 +117,7 @@ function handleAddProvider() {
   openModal('AddProvider', {
     onAdded: (newProvider: any) => {
       // Add the new provider to the store
-      providersStore.add(newProvider);
+      payerContractStore.add(newProvider);
       // Refresh the data
       refreshData();
       // Show success toast

@@ -11,10 +11,10 @@ const props = defineProps({
 		type: Boolean,
 		default: true
 	},
-	// status: {
-	// 	type: String as PropType<Status>,
-	// 	default: Status.ACTIVE
-	// }
+	status: {
+		type: String as PropType<Status>,
+		default: Status.ACTIVE
+	}
 })
 const providersStore = useProviders();
 

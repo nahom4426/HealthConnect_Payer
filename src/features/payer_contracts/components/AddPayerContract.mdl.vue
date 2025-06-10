@@ -8,13 +8,13 @@ import { useRouter } from 'vue-router';
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref } from "vue";
-import { useProviders } from "../store/payerContractStore";
+import { usePayerContracts } from "../store/payerContractStore";
 const pending = ref(false);
 
 const router = useRouter();
 const formDataProvider = ref();
 // Initialize the providers store
-const providersStore = useProviders();
+const payerContractStore = usePayerContracts();
 
 async function handleSubmit(formValues: any) {
   try {
@@ -73,7 +73,7 @@ async function handleSubmit(formValues: any) {
       };
       
       // Add the new provider to the store
-      providersStore.add(newProvider);
+      payerContractStore.add(newProvider);
       
       // Show success message
       

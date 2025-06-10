@@ -210,10 +210,6 @@ function handleImageError(event) {
               :rowData="institutions" 
               :rowKeys="['payerName', 'email', 'tinNumber', 'telephone', 'category', 'status']" 
               :headKeys="['', 'Institution Name', 'Email', 'TIN Number', 'Contact Phone', 'Category', 'Status', 'Actions']"
-              :onView="viewDetails"
-              :onEdit="openEditModal"
-              :onActivate="handleActivate"
-              :onDeactivate="handleDeactivate"
               :onRowClick="(row) => {}"
             />
           </template>

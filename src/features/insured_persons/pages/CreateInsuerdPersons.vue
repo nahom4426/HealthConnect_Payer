@@ -22,7 +22,7 @@ function handleSubmit(register, data) {
   register(data)
     .then((res) => {
       console.log('Registration successful:', res);
-      router.push('/active_insured_persons');
+      router.push('/insured_list');
     })
     .catch(error => {
       console.error('Registration error:', error);

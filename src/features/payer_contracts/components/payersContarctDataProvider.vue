@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useApiRequest } from "@/composables/useApiRequest";
-import { useProviders } from "../store/payerContractStore";
-import { getProviders } from "../api/payerContractApi";
+import { usePayerContracts } from "../store/payerContractStore";
+import { getPayerContracts } from "../api/payerContractApi";
 import { usePagination } from "@/composables/usePagination";
 import type { PropType } from "vue";
 import { Status } from "@/types/interface";
@@ -16,19 +16,19 @@ const props = defineProps({
 		default: Status.ACTIVE
 	}
 })
-const providersStore = useProviders();
+const payerContractStore = usePayerContracts();
 
 const providerReq = useApiRequest()
 
 const pagination = usePagination({
 	auto: false,
-	cb: (data: any) => getProviders({
+	cb: (data: any) => getPayerContracts({
 		...data,
 		status: props.status
 	})
 })
 
-if(!providersStore.providers.length) {
+if(!payerContractStore.payerContract.length) {
 	if(props.auto) {
 		pagination.send()
 	}
@@ -36,7 +36,7 @@ if(!providersStore.providers.length) {
 </script>
 <template>
   <slot
-    :providers="providersStore.providers"
+    :payerContract="payerContractStore.payerContract"
     :pending="providerReq.pending.value"
     :error="providerReq.error.value"
 		:search="pagination.search"

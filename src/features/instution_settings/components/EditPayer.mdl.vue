@@ -126,11 +126,11 @@ async function handleSubmit(formValues: any) {
 
       closeModal();
     } else {
-      throw new Error(result?.error || "Update failed");
+      // throw new Error(result?.error || "Update failed");
     }
   } catch (err) {
     console.error("Update error:", err);
-    error.value = err.message || "Update failed";
+    // error.value = err.message || "Update failed";
     toasted(false, "Failed to update payer", error.value);
   } finally {
     pending.value = false;

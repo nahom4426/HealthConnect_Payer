@@ -40,7 +40,7 @@ export default [
     //role: ''
   },
    {
-        path: "/active_insured_persons",
+        path: "/insured_list",
         name: "Insured Persons",
         icon: icons.active_insured_persons,
         // privilege: ['Read-Privileges'],

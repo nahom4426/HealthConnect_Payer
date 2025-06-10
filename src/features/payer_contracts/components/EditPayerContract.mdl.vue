@@ -6,8 +6,8 @@ import Button from "@/components/Button.vue";
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref, onMounted, watch } from "vue";
-import { updateProvider } from "../api/payerContractApi";
-import { useProviders } from "../store/payerContractStore";
+import { updatePayerContract } from "../api/payerContractApi";
+import { usePayerContracts } from "../store/payerContractStore";
 
 // In modal-x, props are passed via the 'data' prop
 const props = defineProps({
@@ -19,7 +19,7 @@ const props = defineProps({
 });
 
 // Initialize the providers store
-const providersStore = useProviders();
+const payerContractStore = usePayerContracts();
 
 const error = ref('');
 const pending = ref(false);
@@ -95,7 +95,7 @@ async function handleSubmit(formValues: any) {
 
     formData.append('provider', JSON.stringify(providerPayload));
 
-    const result = await updateProvider(providerUuid.value, formData);
+    const result = await updatePayerContract(providerUuid.value, formData);
 
     // ✅ Normalize success check
     const isSuccess = result && (result.success || result.status === 200 || result.status === 'success');
@@ -120,7 +120,7 @@ async function handleSubmit(formValues: any) {
         }
       }
 
-      providersStore.update(providerUuid.value, updatedProvider);
+      payerContractStore.update(providerUuid.value, updatedProvider);
       toasted(true, 'Provider updated successfully');
 
       if (props.data.onUpdated && typeof props.data.onUpdated === 'function') {
@@ -129,7 +129,7 @@ async function handleSubmit(formValues: any) {
 
       closeModal();
     } else {
-      throw new Error(result?.error || 'Update failed');
+      // throw new Error(result?.error || 'Update failed');
     }
   } catch (err) {
     console.error('Update error:', err);

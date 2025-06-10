@@ -1,34 +1,124 @@
 <script setup lang="ts">
-import icons from '@/utils/icons';
-import InsuredMemberForm from '../form/InsuredMemberForm.vue';
-import { closeModal } from '@customizer/modal-x'
-import Button from '@/components/Button.vue';
-import { useForm } from '@/components/new_form_builder/useForm';
+import ModalParent from "@/components/ModalParent.vue";
+import NewFormParent from "@/components/NewFormParent.vue";
+import InsuredForm from "../form/InsuredMemberForm.vue";
+import Button from "@/components/Button.vue";
+import { useRouter } from 'vue-router';
+import { closeModal } from "@customizer/modal-x";
+import { toasted } from "@/utils/utils";
+import { ref } from "vue";
+import InsuredPersonFormDataProvider from "../form/InsuredPersonFormDataProvider.vue";
+import { insuredMembers } from "../store/insuredPersonsStore";
 
-const props = defineProps({
-	data: {
-		type: Object
-	}
-})
+const pending = ref(false);
+const router = useRouter();
+const formDataProvider = ref();
+const insuredStore = insuredMembers();
 
-const { submit } = useForm('members-form')
+async function handleSubmit(formValues: any) {
+  try {
+    pending.value = true;
+
+    const requiredFields = [
+      'payerUuid',
+      'firstName',
+      'fatherName',
+      'grandFatherName',
+      'gender',
+      'position',
+      'birthDate',
+      'idNumber',
+      'phone'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !formValues[field]);
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    }
+
+    const formData = new FormData();
+    if (formValues.employeePhoto) {
+      formData.append('photo', formValues.employeePhoto);
+    }
+
+    const insuredData = {
+      email: formValues.email || "",
+      firstName: formValues.firstName,
+      payerUuid: formValues.payerUuid,
+      fatherName: formValues.fatherName,
+      grandFatherName: formValues.grandFatherName,
+      birthDate: formValues.birthDate,
+      phone: formValues.phone,
+      address: formValues.address || "",
+      state: formValues.state || "Addis Ababa",
+      country: formValues.country || "Ethiopia",
+      idNumber: formValues.idNumber,
+      position: formValues.position,
+      gender: formValues.gender,
+      status: formValues.status || "ACTIVE"
+    };
+    
+    formData.append('insured', JSON.stringify(insuredData));
+
+    console.log('Submitting insured data:', insuredData);
+    
+    const result = await formDataProvider.value.register(formData);
+    
+    if (result.success) {
+      // Process the insured data to include photo information
+      const newInsured = {
+        ...result.data,
+        photoUrl: result.data.photoUrl || (result.data.photoPath ? 
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/insured/photo/${result.data.photoPath}` : 
+          null)
+      };
+      
+      // Add the new insured to the store
+      insuredStore.add(newInsured);
+      
+      // Show success message
+      toasted(true, 'Success', 'Employee added successfully');
+      
+      // Call the onAdded callback if it exists
+      if (formDataProvider.value.props && formDataProvider.value.props.data && 
+          formDataProvider.value.props.data.onAdded && 
+          typeof formDataProvider.value.props.data.onAdded === 'function') {
+        formDataProvider.value.props.data.onAdded(newInsured);
+      }
+      
+      closeModal();
+      router.push('/insured_list');
+    } else {
+      throw new Error(result.error || 'Registration failed');
+    }
+  } catch (error) {
+    console.error('Submission error:', error);
+    toasted(false, 'Failed to submit form', error.message);
+  } finally {
+    pending.value = false;
+  }
+}
 </script>
 
 <template>
-	<div class="grid place-items-center p-4 bg-dark/90 w-full min-h-full">
-		<div class="w-[45rem] flex flex-col rounded-md h-[35rem] bg-white shadow-lg">
-			<div class="flex px-4 p-3 pr-4 justify-between border-b items-center">
-				<p class="font-semibold text-lg">Add Member</p>
-				<button @click="closeModal()"><i v-html="icons.close" /></button>
-			</div>
-			<div class="flex-1 p-6 overflow-auto">
-				<InsuredMemberForm :inner-validate="false" />
-			</div>
-			<div class="p-3 grid grid-cols-1 border-t">
-				<Button @click.prevent="submit?.(console.log)" size="lg" type="primary">
-					Add Member
-				</Button>
-			</div>
-		</div>
-	</div>
+  <ModalParent>
+    <NewFormParent 
+      class="" 
+      size="lg" 
+      title="Add Employee" 
+      subtitle="To add a new employee, please fill out the information in the fields below."
+    >
+      <div class="bg-white rounded-lg">
+        <InsuredPersonFormDataProvider ref="formDataProvider">
+          <template #default="{ pending: insuredPending }">
+            <InsuredForm
+              :pending="pending"
+              :onSubmit="handleSubmit"
+              :onCancel="() => closeModal()"
+            />
+          </template>
+        </InsuredPersonFormDataProvider>
+      </div>
+    </NewFormParent>
+  </ModalParent>
 </template>

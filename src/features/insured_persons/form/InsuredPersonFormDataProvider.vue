@@ -1,74 +1,145 @@
 <script setup lang="ts">
-import { ref, provide } from 'vue';
-import { useApiRequest } from '@/composables/useApiRequest';
-import { toasted } from '@/utils/utils';
-import { createInsuredPerson, updateInsuredPerson } from '../api/insuredPersonsApi';
+import { useApiRequest } from "@/composables/useApiRequest";
+import { createInsured, importInsuredMembers, downloadInsuredTemplate } from "../api/insuredPersonsApi";
+import { ref } from "vue";
+import { toasted } from "@/utils/utils";
 
 const props = defineProps({
-  institutionUuid: {
-    type: String,
-    required: true
+  auto: {
+    type: Boolean,
+    default: true
   }
 });
 
-const createPersonReq = useApiRequest();
-const updatePersonReq = useApiRequest();
+const registerReq = useApiRequest();
+const importReq = useApiRequest();
+const downloadReq = useApiRequest();
+const fileInputRef = ref<HTMLInputElement | null>(null);
 
-// Register a new insured person
-function register(data: any) {
-  console.log('Registering insured person with data:', data);
+function register(formData: FormData) {
+  console.log('Registration form data received:', formData);
   
-  // Add institution UUID to the payload
-  data.institutionUuid = props.institutionUuid;
+  // Check if required fields are present
+  const insuredJson = formData.get('insured');
+  if (!insuredJson) {
+    const errorMsg = 'Missing insured data';
+    toasted(false, errorMsg);
+    return Promise.reject(new Error(errorMsg));
+  }
+
+  try {
+    const insuredData = JSON.parse(insuredJson as string);
+    
+    const requiredInsuredFields = [
+      'payerUuid',
+      'firstName',
+      'fatherName',
+      'grandFatherName',
+      'gender',
+      'position',
+      'birthDate',
+      'idNumber',
+      'phone'
+    ];
+
+    const missingFields = requiredInsuredFields.filter(field => {
+      const value = insuredData[field];
+      return value === undefined || value === null || value === '';
+    });
+
+    if (missingFields.length > 0) {
+      const errorMsg = `Missing required Insured fields: ${missingFields.join(', ')}`;
+      console.error('Validation failed:', errorMsg);
+      toasted(false, errorMsg);
+      return Promise.reject(new Error(errorMsg));
+    }
+
+    return sendRegistrationRequest(formData);
+  } catch (error) {
+    console.error('Error parsing insured data:', error);
+    toasted(false, 'Invalid insured data format');
+    return Promise.reject(error);
+  }
+}
+
+function sendRegistrationRequest(formData: FormData) {
+  console.log('Sending registration request with form data');
   
   return new Promise((resolve, reject) => {
-    createPersonReq.send(
-      () => createInsuredPerson(data),
-      (res) => {
-        console.log('API response:', res);
-        if (res.success) {
-          toasted(true, 'Insured person registered successfully');
-          resolve(res);
+    registerReq.send(
+      () => createInsured(formData),
+      (response) => {
+        if (response.success) {
+          console.log('Registration successful:', response.data);
+          toasted(true, 'Insured member registered successfully');
+          resolve(response);
         } else {
-          toasted(false, res.error || 'Failed to register insured person');
-          reject(new Error(res.error || 'Failed to register insured person'));
+          console.error('Registration failed:', response.error);
+          const errorMsg = response.error || 'Failed to register insured member';
+          toasted(false, errorMsg);
+          reject(new Error(errorMsg));
         }
       }
     );
   });
 }
 
-// Update an existing insured person
-function update(uuid: string, data: any) {
-  console.log('Updating insured person with data:', data);
-  
+function importFile(file: File) {
   return new Promise((resolve, reject) => {
-    updatePersonReq.send(
-      () => updateInsuredPerson(uuid, data),
+    importReq.send(
+      () => importInsuredMembers(file),
       (res) => {
-        console.log('API response:', res);
         if (res.success) {
-          toasted(true, 'Insured person updated successfully');
+          toasted(true, 'Insured members imported successfully');
           resolve(res);
         } else {
-          toasted(false, res.error || 'Failed to update insured person');
-          reject(new Error(res.error || 'Failed to update insured person'));
+          toasted(false, res.error || 'Failed to import insured members');
+          reject(new Error(res.error || 'Failed to import insured members'));
         }
       }
     );
   });
 }
 
-// Provide the pending state to child components
-provide('createPersonPending', createPersonReq.pending);
-provide('updatePersonPending', updatePersonReq.pending);
+function downloadTemplate() {
+  downloadReq.send(
+    () => downloadInsuredTemplate(),
+    (res) => {
+      try {
+        const url = window.URL.createObjectURL(new Blob([res]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'insured_members_template.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error('Error downloading template:', error);
+        toasted(false, 'Failed to download template');
+      }
+    }
+  );
+}
+
+defineExpose({
+  register,
+  importFile,
+  downloadTemplate,
+  fileInputRef,
+  pending: registerReq.pending
+});
 </script>
 
 <template>
-  <slot 
-    :register="register" 
-    :update="update" 
-    :createPending="createPersonReq.pending.value" 
-    :updatePending="updatePersonReq.pending.value"
+  <slot
+    :register="register"
+    :registerPending="registerReq.pending.value"
+    :registerError="registerReq.error.value"
+    :importFile="importFile"
+    :importPending="importReq.pending.value"
+    :importError="importReq.error.value"
+    :downloadTemplate="downloadTemplate"
+    :downloadPending="downloadReq.pending.value"
+    :fileInputRef="fileInputRef"
   />
 </template>

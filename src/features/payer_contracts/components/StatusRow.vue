@@ -4,7 +4,7 @@ import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
 import { useInstitutions } from "@/features/instution_settings/store/InstitutionsStore";
 import icons from "@/utils/icons";
-import { changeProviderStatus } from '../api/payerContractApi.ts';
+import { changePayerContractStatus } from '../api/payerContractApi.ts';
 
 
 const props = defineProps({
@@ -112,7 +112,7 @@ function handleViewWithClose(rowId) {
 async function handleActivateWithClose(payerUuid) {
   closeAllDropdowns();
   try {
-    const response = await changeProviderStatus(payerUuid, 'ACTIVE');
+    const response = await changePayerContractStatus(payerUuid, 'ACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
@@ -135,7 +135,7 @@ async function handleActivateWithClose(payerUuid) {
 async function handleDeactivateWithClose(payerUuid) {
   closeAllDropdowns();
   try {
-    const response = await changeProviderStatus(payerUuid, 'INACTIVE');
+    const response = await changePayerContractStatus(payerUuid, 'INACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
@@ -166,7 +166,7 @@ async function handleDeactivateWithClose(payerUuid) {
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
     <!-- Payer Logo Column (added to match provider) -->
-    <td v-if="row.logoBase64 || row.logoUrl || row.logoPath" class="p-3 py-4 w-16">
+    <td  class="p-3 py-4 w-16">
       <div class="flex justify-center items-center">
         <img 
           v-if="row.logoBase64" 
@@ -187,7 +187,7 @@ async function handleDeactivateWithClose(payerUuid) {
           class="h-10 w-10 object-contain rounded-full border border-gray-200"
           @error="handleImageError"
         />
-        <div v-else class="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+        <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
           <span class="text-gray-500 text-xs">No Logo</span>
         </div>
       </div>

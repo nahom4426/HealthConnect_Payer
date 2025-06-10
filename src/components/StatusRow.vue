@@ -90,6 +90,7 @@ function handleEdit(row) {
     }
   }
 }
+
 function toggleDropdown(event, rowId) {
   event.stopPropagation();
   closeAllDropdowns(); // Close any open dropdowns first
@@ -187,7 +188,7 @@ async function handleDeactivateWithClose(providerId) {
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
     <!-- Provider Logo Column (new) -->
-    <td v-if="row.logoBase64 || row.logoUrl || row.logoPath" class="p-3 py-4 w-16">
+    <td class="p-3 py-4 w-16">
       <div class="flex justify-center items-center">
         <img 
           v-if="row.logoBase64" 
@@ -208,7 +209,7 @@ async function handleDeactivateWithClose(providerId) {
           class="h-10 w-10 object-contain rounded-full border border-gray-200"
           @error="handleImageError"
         />
-        <div v-else class="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+        <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
           <span class="text-gray-500 text-xs">No Logo</span>
         </div>
       </div>

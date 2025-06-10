@@ -68,7 +68,7 @@ export function usePagination(options = {}) {
         console.log(res);
 
         if (paginationOptions.value.store && res.success) {
-          paginationOptions.value.store.set(res.data || []);
+          paginationOptions.value.store.set(res.data?.content || []);
         }
 
         pagination.totalPages.value = res.data?.[0]?.totalPages || 1;
