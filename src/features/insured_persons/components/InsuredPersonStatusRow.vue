@@ -144,7 +144,7 @@ async function handleDeactivateWithClose(insuredId) {
         title: 'Status Updated',
         message: 'Insured member has been deactivated'
       });
-      insuredMembers.update(insuredId, { status: 'INACTIVE' });
+      insuredStore.update(insuredId, { status: 'INACTIVE' });
     } else {
       throw new Error(response.error || 'Failed to deactivate');
     }
@@ -168,7 +168,20 @@ async function handleDeactivateWithClose(insuredId) {
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
     <!-- Insured Photo Column -->
-    <td  class="p-3 py-4 w-16">
+   
+
+    <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
+      <div v-if="key === 'status'" class="truncate">  
+        <span 
+          class="px-2.5 py-1 rounded-full text-xs font-medium"
+          :class="getStatusStyle(row.status)"
+        >
+          {{ row.status }}
+        </span>
+      </div>
+     
+       <div v-else-if="key === 'fullName'" class="text-gray-700 flex items-center gap-2.5 ">
+       
       <div class="flex justify-center items-center">
         <img 
           v-if="row.photoBase64" 
@@ -193,20 +206,11 @@ async function handleDeactivateWithClose(insuredId) {
           <span class="text-gray-500 text-xs">No Photo</span>
         </div>
       </div>
-    </td>
+       <div>
+         {{ row.firstName }} {{ row.fatherName }} {{ row.grandfatherName }}
+      </div>
+      </div>
 
-    <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
-      <div v-if="key === 'status'" class="truncate">  
-        <span 
-          class="px-2.5 py-1 rounded-full text-xs font-medium"
-          :class="getStatusStyle(row.status)"
-        >
-          {{ row.status }}
-        </span>
-      </div>
-      <div v-else-if="key === 'fullName'" class="text-gray-700">
-        {{ row.firstName }} {{ row.fatherName }}
-      </div>
       <span v-else class="text-gray-700">
         {{ row[key] }}
       </span>
@@ -230,41 +234,49 @@ async function handleDeactivateWithClose(insuredId) {
           class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         >
           <div class="py-1">
-            <button 
+            
+              <button 
               @click.stop="handleEditWithClose(row)"
-              class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              <i v-html="icons.edits" class="mr-2" />
+            <div class="flex items-start justify-start pl-4 gap-4">
+               <i v-html="icons.edits"/>
               Edit
+            </div>
             </button>
-            
-            <button 
-                 @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
-              class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+             <button 
+             @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
+              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              <i v-html="icons.details" class="mr-2" />
-              
+             <div class="flex items-center justify-start pl-4 gap-4">
+              <i v-html="icons.details" />
+              Details
+            </div>
             </button>
-            
+       
             <template v-if="row.status">
-              <button 
-                v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
-                @click.stop="handleActivateWithClose(row.insuredUuid || row.id)"
-                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <i v-html="icons.activate" class="mr-2" />
-                Activate
-              </button>
-             
-              <button 
-                v-if="row.status === 'ACTIVE' || row.status === 'Active'"
-                @click.stop="handleDeactivateWithClose(row.insuredUuid || row.id)"
-                class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-              >
-                <i v-html="icons.deactivate" class="mr-2" />
-                Deactivate
-              </button>
-            </template>
+      <button 
+        v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
+        @click.stop="handleActivateWithClose(row.insuredUuid || row.id)"
+        class="block w-full text-center py-2 text-sm text-[#28A745]  hover:bg-gray-100"
+      >
+        <div class="flex items-center justify-start pl-4 gap-4">
+          <i v-html="icons.activate" />
+          Activate
+        </div>
+      </button>
+     
+      <button 
+        v-if="row.status === 'ACTIVE' || row.status === 'Active'"
+        @click.stop="handleDeactivateWithClose(row.insuredUuid || row.id)"
+        class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
+      >
+        <div class="flex items-center justify-start pl-4 gap-4">
+          <i v-html="icons.deactivate" />
+          Deactivate
+        </div>
+      </button>
+    </template>
           </div>
         </div>
       </div>

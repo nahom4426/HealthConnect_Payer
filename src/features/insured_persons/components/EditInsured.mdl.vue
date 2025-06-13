@@ -63,7 +63,7 @@ async function handleSubmit(formValues: any) {
       firstName: formValues.firstName,
       payerUuid: formValues.payerUuid,
       fatherName: formValues.fatherName,
-      grandFatherName: formValues.grandFatherName,
+      grandFatherName: formValues.grandFatherName || formValues.grandfatherName,
       birthDate: formValues.birthDate ? `${formValues.birthDate}T00:00:00.000Z` : '',
       phone: `${formValues.phone}`,
       address: formValues.address || "",

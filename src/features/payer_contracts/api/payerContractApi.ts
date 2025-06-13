@@ -19,7 +19,7 @@ export function getPayerContracts(query = {}) {
       payerUuid,
       page: 0,
       size: 10,
-      sort: 'startDate,desc',
+      sort: 'startDate',
       ...query
     }
   });

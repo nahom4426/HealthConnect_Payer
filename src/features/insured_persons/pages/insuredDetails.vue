@@ -77,7 +77,7 @@
         </div>
 
         <!-- Dependants Table - ORIGINAL FORMAT PRESERVED -->
-        <div class="overflow-x-auto">
+        <div class="">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
@@ -154,11 +154,38 @@
                         <div class="py-1">
                           <button 
                             @click.stop="startEdit(dependent)"
-                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            <i class="fas fa-edit mr-2"></i>
+                          <div class="flex items-start justify-start pl-4 gap-4">
+                          <i v-html="icons.edits" />
                             Edit
+                            </div>
                           </button>
+
+                        
+      <button 
+        v-if="dependent.status === 'INACTIVE' || dependent.status === 'Inactive'"
+        @click.stop="handleActivateWithClose(dependent.dependantUuid  || row.id)"
+        class="block w-full text-center py-2 text-sm text-[#28A745]  hover:bg-gray-100"
+      >
+        <div class="flex items-center justify-start pl-4 gap-4">
+          <i v-html="icons.activate" />
+          Activate
+        </div>
+      </button>
+     
+      <button 
+        v-if="dependent.status === 'ACTIVE' || dependent.status === 'Active'"
+        @click.stop="handleDeactivateWithClose(dependent.dependantUuid  || row.id)"
+        class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
+      >
+        <div class="flex items-center justify-start pl-4 gap-4">
+          <i v-html="icons.deactivate" />
+          Deactivate
+        </div>
+      </button>
+  
+                        
                           <!-- Other dropdown options -->
                         </div>
                       </div>
@@ -454,8 +481,9 @@ import Select from "@/components/new_form_elements/Select.vue";
 import { addToast } from "@/toast";
 import { insuredMembers } from "../store/insuredPersonsStore";
 import DependantsTable from '../components/DependantsTable.vue';
+import { useDependentStore } from "../store/dependantPersonsStore";
 
-const insuredMember = insuredMembers();
+const dependentStore = useDependentStore();
 const route = useRoute();
 const router = useRouter();
 const insuredPersonUuid = route.params.insuredPersonUuid as string;
@@ -730,58 +758,77 @@ function handleViewWithClose(insuredUuid) {
   router.push(`/insured-persons/${insuredUuid}`);
 }
 
-async function handleActivateWithClose(insuredUuid) {
-  if (!insuredUuid) {
-    console.error('No insured UUID provided');
+
+async function handleActivateWithClose(dependantUuid: string) {
+  if (!dependantUuid) {
+    console.error('No dependent UUID provided');
     return;
   }
+
   closeAllDropdowns();
+
   try {
-    const response = await changeInsuredStatus(insuredUuid, 'ACTIVE');
+    const response = await changeInsuredStatus(dependantUuid, 'ACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
-        message: 'Provider has been activated successfully'
+        message: 'Dependent has been activated successfully'
       });
-      // Update the local state or trigger a refresh
-      insuredMember.update(insuredUuid, { status: 'ACTIVE' });
+
+      // ✅ Find and update the dependent locally
+      const index = dependentsList.value.findIndex(d => d.dependantUuid === dependantUuid);
+      if (index !== -1) {
+        dependentsList.value.splice(index, 1, {
+          ...dependentsList.value[index],
+          status: 'ACTIVE'
+        });
+      }
     } else {
-      throw new Error(response.error || 'Failed to activate provider');
+      throw new Error(response.error || 'Failed to activate dependent');
     }
   } catch (error) {
     addToast({
       type: 'error',
       title: 'Activation Failed',
-      message: error.message || 'An error occurred while activating the provider'
+      message: error.message || 'An error occurred while activating the dependent'
     });
   }
 }
 
-async function handleDeactivateWithClose(insuredUuid) {
-  if (!insuredUuid) {
-    console.error('No insured UUID provided');
+async function handleDeactivateWithClose(dependantUuid: string) {
+  if (!dependantUuid) {
+    console.error('No dependent UUID provided');
     return;
   }
+
   closeAllDropdowns();
+
   try {
-    const response = await changeInsuredStatus(insuredUuid, 'INACTIVE');
+    const response = await changeInsuredStatus(dependantUuid, 'INACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
-        message: 'Provider has been deactivated successfully'
+        message: 'Dependent has been deactivated successfully'
       });
-      // Update the local state or trigger a refresh
-      insuredMember.update(insuredUuid, { status: 'INACTIVE' });
+
+      // ✅ Find and update the dependent locally
+      const index = dependentsList.value.findIndex(d => d.dependantUuid === dependantUuid);
+      if (index !== -1) {
+        dependentsList.value.splice(index, 1, {
+          ...dependentsList.value[index],
+          status: 'INACTIVE'
+        });
+      }
     } else {
-      throw new Error(response.error || 'Failed to deactivate provider');
+      throw new Error(response.error || 'Failed to deactivate dependent');
     }
   } catch (error) {
     addToast({
       type: 'error',
       title: 'Deactivation Failed',
-      message: error.message || 'An error occurred while deactivating the provider'
+      message: error.message || 'An error occurred while deactivating the dependent'
     });
   }
 }

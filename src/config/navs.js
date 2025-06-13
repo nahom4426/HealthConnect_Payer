@@ -32,16 +32,47 @@ export default [
     name: "Services",
     icon: icons.Services,
   },
-  {
-    path: "/credit-services",
-    name: "Credit Services",
-    icon: icons.creditservices,
-    //privilage: [],
-    //role: ''
+
+    {
+    name: "Credits",
+    icon: icons.Credits,
+    //  privilege: ['Read-Privileges'],
+    //  category: "Payers",
+    navs: [
+      {
+        path: "/credit_services",
+        name: "Credit Services",
+        icon: icons.creditservices,
+        // category: "main",
+        // privilege: ['Read-Privileges'],
+      },
+      {
+        path: "/submit_claims",
+        name: "Submit Claims",
+        icon: icons.approveClaims,
+        category: "Pages",
+        // privilege: ['Read-Privileges'],
+      },
+      {
+        path: "/authorization",
+        name: "Authorization",
+        icon: icons.Authorization,
+        category: "Pages",
+        // privilege: ['Read-Privileges'],
+      },
+      {
+        path: "/track_claims",
+        name: "Track Claims",
+        icon: icons.completedClaims,
+        category: "service",
+        // privilege: ['Read-Privileges'],
+      },
+    
+    ],
   },
    {
         path: "/insured_list",
-        name: "Insured Persons",
+        name: "Employees list",
         icon: icons.active_insured_persons,
         // privilege: ['Read-Privileges'],
       },
@@ -100,6 +131,7 @@ export default [
       },
     ],
   },
+ 
   {
     path: "/users",
     name: "Users",

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useApiRequest } from "@/composables/useApiRequest";
 import { searchInsuredByInstitution } from "../api/insuredPersonsApi";
 import { usePagination } from "@/composables/usePagination";
 import type { PropType } from "vue";
 import { Status } from "@/types/interface";
 import { insuredMembers } from "../store/insuredPersonsStore";
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, computed } from "vue";
+import { debounce } from "@/utils/debounce";
 
 // Props
 const props = defineProps({
@@ -27,84 +27,76 @@ const props = defineProps({
   }
 });
 
-console.log('institutionId:', props.institutionId);
-
-// Store & Request
 const insuredStore = insuredMembers();
-const insuredReq = useApiRequest();
 const currentPage = ref(1);
 const itemsPerPage = ref(25);
 const totalPages = ref(1);
 const totalItems = ref(0);
 
-// Pagination setup
+// ✅ Pagination setup without useApiRequest
 const pagination = usePagination({
   auto: false,
   cb: async (data: any) => {
-    try {
-      const response = await searchInsuredByInstitution(
-        props.institutionId,
-        {
-          ...data,
-          status: props.status
-        }
-      );
-      
-      console.log("API Response:", response);
-      
-      // Check if the response has the expected structure (paginated response)
-      if (response && response.data && response.data.content) {
-        // Update the store with the content array
-        insuredStore.set(response.data.content);
-        
-        // Update pagination information
-        currentPage.value = response.data.page || 1;
-        itemsPerPage.value = response.data.size || 25;
-        totalPages.value = response.data.totalPages || 1;
-        totalItems.value = response.data.totalElements || response.data.content.length;
-        
-        return response.data;
-      } else if (response && response.content) {
-        // Alternative structure
-        insuredStore.set(response.content);
-        
-        // Update pagination information
-        currentPage.value = response.page || 1;
-        itemsPerPage.value = response.size || 25;
-        totalPages.value = response.totalPages || 1;
-        totalItems.value = response.totalElements || response.content.length;
-        
-        return response;
-      } else {
-        // Fallback for old API structure
-        insuredStore.set(response);
-        return response;
-      }
-    } catch (error) {
-      console.error("Error fetching insured persons:", error);
-      return { error };
+    const response = await searchInsuredByInstitution(props.institutionId, {
+      ...data,
+      status: props.status
+    });
+
+    const paginated = response?.data || response;
+
+    if (paginated?.content) {
+      insuredStore.set(paginated.content);
+      currentPage.value = paginated.page ?? 1;
+      itemsPerPage.value = paginated.size ?? 25;
+      totalPages.value = paginated.totalPages ?? 1;
+      totalItems.value = paginated.totalElements ?? paginated.content.length;
+    } else {
+      insuredStore.set(paginated);
     }
+
+    return paginated;
   }
 });
 
-// Watch for search changes
-watch(() => props.search, (newValue) => {
-  if (newValue !== undefined) {
-    pagination.search(newValue);
-  }
-});
-
-// Auto-fetch if needed
-if (props.auto) {
+// ✅ Debounced search watcher
+const debouncedSearch = debounce((newSearch: string) => {
+  pagination.search.value = newSearch;
   pagination.send();
-}
+}, 300);
+
+watch(
+  () => props.search,
+  (newSearch) => {
+    debouncedSearch(newSearch);
+  }
+);
+
+// ✅ Auto-fetch on mount
+onMounted(() => {
+  if (props.search) {
+    pagination.search.value = props.search;
+  }
+
+  if (props.auto) {
+    pagination.send();
+  }
+});
+
+// ✅ Expose to parent
+defineExpose({
+  refresh: pagination.send,
+  currentPage: computed(() => currentPage.value),
+  itemsPerPage: computed(() => itemsPerPage.value),
+  setPage: pagination.setPage,
+  setLimit: pagination.setLimit
+});
 </script>
 
 <template>
   <slot
     :insuredMembers="insuredStore.insuredMembers"
-    :pending="insuredReq.pending.value"
-    :error="insuredReq.error.value"
+    :pending="pagination.pending.value"
+    :error="null"
     :search="pagination.search"
     :currentPage="currentPage"
     :itemsPerPage="itemsPerPage"
@@ -112,5 +104,3 @@ if (props.auto) {
     :totalItems="totalItems"
   />
 </template>
-
-

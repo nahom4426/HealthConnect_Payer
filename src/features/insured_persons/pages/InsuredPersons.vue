@@ -37,7 +37,7 @@ function handleAddInsured() {
       addToast({
         type: "success",
         title: "Insured Added",
-        message: `Insured "${newInsured.firstName} ${newInsured.fatherName}" has been added successfully`,
+        message: `Insured "${newInsured.firstName} ${newInsured.fatherName} " has been added successfully`,
       });
     },
   });
@@ -93,7 +93,6 @@ function refreshData() {
           :pending="pending"
           :headers="{
             head: [
-              '',
               'Full Name',
               'ID Number',
               'Phone',

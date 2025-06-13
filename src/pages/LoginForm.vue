@@ -92,7 +92,7 @@ function reRoute() {
     location.href = route.query.redirect;
   else if (route.query.redirect)
     router.replace(route.query.redirect);
-  else router.replace("/credit-services");
+  else router.replace("/");
 }
 
 if (detiail) {

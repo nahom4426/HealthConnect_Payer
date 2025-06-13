@@ -166,7 +166,18 @@ async function handleDeactivateWithClose(payerUuid) {
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
     <!-- Payer Logo Column (added to match provider) -->
-    <td  class="p-3 py-4 w-16">
+
+    <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
+      <div v-if="key === 'status'" class="truncate">  
+        <span 
+          class="px-2.5 py-1 rounded-full text-xs font-medium"
+          :class="getStatusStyle(row.status)"
+        >
+          {{ row.status }}
+        </span>
+      </div>
+      <div v-else-if="key === 'payerName'" class="text-gray-700 flex items-center gap-2.5 ">
+       
       <div class="flex justify-center items-center">
         <img 
           v-if="row.logoBase64" 
@@ -191,16 +202,9 @@ async function handleDeactivateWithClose(payerUuid) {
           <span class="text-gray-500 text-xs">No Logo</span>
         </div>
       </div>
-    </td>
-
-    <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
-      <div v-if="key === 'status'" class="truncate">  
-        <span 
-          class="px-2.5 py-1 rounded-full text-xs font-medium"
-          :class="getStatusStyle(row.status)"
-        >
-          {{ row.status }}
-        </span>
+       <div>
+        {{ row.payerName }}
+      </div>
       </div>
       <span v-else class="text-gray-700">
         {{ row[key] }}
@@ -248,7 +252,7 @@ async function handleDeactivateWithClose(payerUuid) {
               <button 
                 v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
                 @click.stop="handleActivateWithClose(row.payerUuid || row.id)"
-                class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+                class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
                   <i v-html="icons.activate" />

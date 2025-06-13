@@ -5,7 +5,6 @@ import CreditServices from "@/features/customer Services/pages/CreditServices.vu
 import CreditInvoice from "@/features/credit Invoice/pages/CreditInvoice.vue";
 import Login from "@/pages/Login.vue";
 import { useAuthStore } from "@/stores/auth";
-import creditServicesRoutes from "./creditServices.routes";
 import creditInvoicesRoutes from "./creditInvoices.routes";
 import priceRoutes from "./price.routes";
 import Dashboard from "@/features/Dashboard/pages/Dashboard.vue";
@@ -20,6 +19,9 @@ import Provider_contractsRoutes from "./provider_contracts.routes";
 import providerRoutes from "./providers.routes"
 import finance from "./finance.routes.ts"
 import payerContractRoutes from "./payerContract.routes";
+import creditServicesRoutes from "./credit_services.routes";
+import submitClaimsRoutes from "./submit_claims.routes";
+import authorizationRoutes from "./authorization.routes";
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -40,7 +42,6 @@ const router = createRouter({
           component: Dashboard,
         },
         
-        ...creditServicesRoutes,
         ...creditInvoicesRoutes,
         ...priceRoutes,
         ...eligibility_checkRoutes,
@@ -54,6 +55,9 @@ const router = createRouter({
         ...providerRoutes,
         ...finance,
         ...payerContractRoutes,
+        ...creditServicesRoutes,
+        ...submitClaimsRoutes,
+        ...authorizationRoutes,
        
       ],
     },
@@ -110,7 +114,7 @@ router.beforeEach(async (to, from) => {
   }
 
   if (to.path === '/') {
-    return { path: '/credit-services' };
+    return { path: '/dashboard' };
   }
 
   const isProtectedRoute = to.path !== '/login' && 

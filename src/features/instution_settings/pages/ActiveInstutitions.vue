@@ -189,8 +189,8 @@ function handleImageError(event) {
         <Table
           :pending="pending"
           :headers="{
-            head: ['', 'Institution Name', 'Email', 'TIN Number', 'Contact Phone', 'Category', 'Status', 'Actions'],
-            row: ['payerName', 'email', 'tinNumber', 'telephone', 'category', 'status']
+            head: [ 'Institution Name', 'Contracts', 'Payer Admin User', 'Contact', 'Category', 'Status', 'Actions'],
+            row: ['payerName', 'totalContracts', 'email', 'telephone', 'category', 'status']
           }"
           :rows="institutions"
           :rowCom="StatusRow"

@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { ref, defineEmits } from "vue";
-import { useRouter } from "vue-router";
-import Table from "@/components/Table.vue";
-import DefaultPage from "@/components/DefaultPage.vue";
-import ActiveProvidersDataProvider from "../components/ActiveProvidersDataProvider.vue";
-import Button from "@/components/Button.vue";
-import { Status } from "@/types/interface";
+  import { ref, defineEmits } from "vue";
+  import { useRouter } from "vue-router";
+  import Table from "@/components/Table.vue";
+  import DefaultPage from "@/components/DefaultPage.vue";
+  import ActiveProvidersDataProvider from "../components/ActiveProvidersDataProvider.vue";
+  import Button from "@/components/Button.vue";
+  import { Status } from "@/types/interface";
 
-import { changeProviderStatus, deleteProvider } from "../api/providerApi";
-import { addToast } from "@/toast";
+  import { changeProviderStatus, deleteProvider } from "../api/providerApi";
+  import { addToast } from "@/toast";
 
-import { useApiRequest } from "@/composables/useApiRequest";
-import StatusRow from "@/components/StatusRow.vue";
-import { openModal } from "@customizer/modal-x";
-import { useProviders } from "../store/providersStore";
-import icons from "@/utils/icons";
-// Define emits to handle the navigate event
-const emit = defineEmits(["navigate"]);
+  import { useApiRequest } from "@/composables/useApiRequest";
+  import StatusRow from "@/components/StatusRow.vue";
+  import { openModal } from "@customizer/modal-x";
+  import { useProviders } from "../store/providersStore";
+  import icons from "@/utils/icons";
+  // Define emits to handle the navigate event
+  const emit = defineEmits(["navigate"]);
 
 const router = useRouter();
 const dataProvider = ref();
@@ -193,10 +193,9 @@ function handleAddProvider() {
           :pending="pending"
           :headers="{
             head: [
-              '',
               'Provider Name',
-              'Email',
-              'Telephone',
+              'Contact Person',
+              'Contact',
               'Category',
               'Level',
               'Status',

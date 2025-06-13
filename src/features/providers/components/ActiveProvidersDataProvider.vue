@@ -3,8 +3,9 @@ import { usePagination } from "@/composables/usePagination";
 import { useProviders } from "../store/providersStore";
 import { getProviders } from "../api/providerApi";
 import type { PropType } from "vue";
-import { watch, computed } from "vue";
+import { watch, computed, onMounted } from "vue";
 import { Status } from "@/types/interface";
+import { debounce } from "@/utils/debounce";
 
 const props = defineProps({
   auto: {
@@ -30,20 +31,31 @@ const pagination = usePagination({
   cb: (data) => getProviders({
     ...data,
     status: props.status,
-    search: props.search || undefined
+    search: props.search.trim() || undefined // Send search term to API
   })
 });
 
-// Watch for search input changes
+// Initialize with current search term
+onMounted(() => {
+  if (props.search) {
+    pagination.search.value = props.search;
+    pagination.send();
+  }
+});
+
+// Debounced search watcher
+const debouncedSearch = debounce((newSearch: string) => {
+  pagination.search.value = newSearch;
+  pagination.searchFetch(); // Use searchFetch which likely resets to page 1
+}, 300);
+
 watch(
   () => props.search,
   (newSearch) => {
-    pagination.search.value = newSearch;
-    pagination.searchFetch();
+    debouncedSearch(newSearch);
   }
 );
 
-// Expose methods and reactive state
 defineExpose({
   refresh: pagination.send,
   currentPage: computed(() => store.currentPage),
@@ -60,6 +72,5 @@ defineExpose({
     :currentPage="store.currentPage"
     :itemsPerPage="store.itemsPerPage"
     :totalPages="store.totalPages"
-    :search="pagination.search"
   />
 </template>

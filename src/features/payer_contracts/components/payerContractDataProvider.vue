@@ -13,7 +13,7 @@ const props = defineProps({
   },
   status: {
     type: String as PropType<Status>,
-    default: Status.ACTIVE
+    // default: Status.ACTIVE
   },
   search: {
     type: String,
@@ -30,7 +30,7 @@ const pagination = usePagination({
   cb: (data) =>
     getPayerContracts({
       ...data,
-      status: props.status,
+      // status: props.status,
       search: props.search || undefined
     })
 });

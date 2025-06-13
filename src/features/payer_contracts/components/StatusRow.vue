@@ -248,7 +248,7 @@ async function handleDeactivateWithClose(payerUuid) {
               <button 
                 v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
                 @click.stop="handleActivateWithClose(row.payerUuid || row.id)"
-                class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+                class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
                   <i v-html="icons.activate" />

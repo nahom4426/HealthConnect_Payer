@@ -188,32 +188,7 @@ async function handleDeactivateWithClose(providerId) {
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
     <!-- Provider Logo Column (new) -->
-    <td class="p-3 py-4 w-16">
-      <div class="flex justify-center items-center">
-        <img 
-          v-if="row.logoBase64" 
-          :src="row.logoBase64" 
-          alt="Provider Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-        />
-        <img 
-          v-else-if="row.logoUrl" 
-          :src="row.logoUrl" 
-          alt="Provider Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-        />
-        <img 
-          v-else-if="row.logoPath" 
-          :src="`${getBaseUrl()}/provider/logo/${row.logoPath}`" 
-          alt="Provider Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-          @error="handleImageError"
-        />
-        <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
-          <span class="text-gray-500 text-xs">No Logo</span>
-        </div>
-      </div>
-    </td>
+    
 
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <!-- Status field -->
@@ -225,6 +200,37 @@ async function handleDeactivateWithClose(providerId) {
           {{ row.status }}
         </span>
       </div>
+       <div v-else-if="key === 'providerName'" class="text-gray-700 flex items-center gap-2.5 ">
+       
+      <div class="flex justify-center items-center">
+        <img 
+          v-if="row.logoBase64" 
+          :src="row.logoBase64" 
+          alt="Payer Logo" 
+          class="h-10 w-10 object-contain rounded-full border border-gray-200"
+        />
+        <img 
+          v-else-if="row.logoUrl" 
+          :src="row.logoUrl" 
+          alt="Payer Logo" 
+          class="h-10 w-10 object-contain rounded-full border border-gray-200"
+        />
+        <img 
+          v-else-if="row.logoPath" 
+          :src="`${getBaseUrl()}/payer/logo/${row.logoPath}`" 
+          alt="Payer Logo" 
+          class="h-10 w-10 object-contain rounded-full border border-gray-200"
+          @error="handleImageError"
+        />
+        <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
+          <span class="text-gray-500 text-xs">No Logo</span>
+        </div>
+      </div>
+       <div>
+        {{ row.providerName }}
+      </div>
+      </div>
+
       <!-- Default field rendering -->
       <span v-else class="text-gray-700">
         {{ row[key] }}
@@ -276,7 +282,7 @@ async function handleDeactivateWithClose(providerId) {
       <button 
         v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
         @click.stop="handleActivateWithClose(row.providerUuid || row.id)"
-        class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+        class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
       >
         <div class="flex items-center justify-start pl-4 gap-4">
           <i v-html="icons.activate" />

@@ -2,7 +2,8 @@
 import { usePagination } from "@/composables/usePagination";
 import { getActiveInstitutions } from "../api/institutionsApi";
 import { useInstitutions } from "../store/InstitutionsStore";
-import { watch, computed } from "vue";
+import { watch, computed, onMounted } from "vue";
+import { debounce } from "@/utils/debounce";
 
 const props = defineProps({
   search: {
@@ -17,18 +18,31 @@ const pagination = usePagination({
   store: store,
   auto: true,
   reset: true,
-  cb: (data) => getActiveInstitutions({
-    ...data,
-    search: props.search || undefined
-  })
+  cb: (data) =>
+    getActiveInstitutions({
+      ...data,
+      search: props.search.trim() || undefined
+    })
 });
 
-// Watch for search changes
+// Initialize with current search term
+onMounted(() => {
+  if (props.search) {
+    pagination.search.value = props.search;
+    pagination.send();
+  }
+});
+
+// Debounced search watcher
+const debouncedSearch = debounce((newSearch: string) => {
+  pagination.search.value = newSearch;
+  pagination.send();
+}, 300);
+
 watch(
   () => props.search,
-  (val) => {
-    pagination.search.value = val;
-    pagination.searchFetch();
+  (newSearch) => {
+    debouncedSearch(newSearch);
   }
 );
 
