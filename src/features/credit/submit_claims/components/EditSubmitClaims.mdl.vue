@@ -7,7 +7,7 @@ import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref, onMounted, watch } from "vue";
 import { updateInsured } from "../api/submitClaimsApi";
-import { insuredMembers } from "../store/submitClaimsStore";
+import { claimServices } from "../store/submitClaimsStore";
 
 const props = defineProps({
   data: {
@@ -17,7 +17,7 @@ const props = defineProps({
   }
 });
 
-const insuredStore = insuredMembers();
+const claimServicesStore = claimServices();
 const error = ref('');
 const pending = ref(false);
 const insuredData = ref({});

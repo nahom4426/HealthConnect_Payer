@@ -41,7 +41,7 @@ export default [
     navs: [
       {
         path: "/credit_services",
-        name: "Credit Services",
+        name: "Create Claims",
         icon: icons.creditservices,
         // category: "main",
         // privilege: ['Read-Privileges'],

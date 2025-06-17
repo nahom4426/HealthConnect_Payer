@@ -1,8 +1,6 @@
 import MainLayout from "@/layouts/MainLayout.vue";
 import { useBreadcrumb, type BreadcrumbRoutes } from "@/stores/breadCrumbsStore";
 import { createRouter, createWebHistory } from "vue-router";
-import CreditServices from "@/features/customer Services/pages/CreditServices.vue";
-import CreditInvoice from "@/features/credit Invoice/pages/CreditInvoice.vue";
 import Login from "@/pages/Login.vue";
 import { useAuthStore } from "@/stores/auth";
 import creditInvoicesRoutes from "./creditInvoices.routes";

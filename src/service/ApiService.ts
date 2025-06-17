@@ -22,7 +22,7 @@ export default class ApiService {
   }
 
   constructor(baseURL: string) {
-    console.log(baseURL, backendApiUrl);
+    
   
     if (baseURL) this._initApi(baseURL);
     else this._initApi(backendApiUrl);

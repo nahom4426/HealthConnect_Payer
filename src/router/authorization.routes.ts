@@ -15,6 +15,7 @@ export default [
         children: [
           {
             path: '',
+            name: 'Authorization List',
             component: Authorization,
           },
           {

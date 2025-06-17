@@ -4,6 +4,25 @@ import { createInsured, importInsuredMembers, downloadInsuredTemplate } from "..
 import { ref } from "vue";
 import { toasted } from "@/utils/utils";
 
+interface InsuredData {
+  payerUuid: string;
+  firstName: string;
+  fatherName: string;
+  grandFatherName: string;
+  gender: string;
+  position: string;
+  birthDate: string;
+  idNumber: string;
+  phone: string;
+  [key: string]: any; // For additional properties
+}
+
+interface RegistrationResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
 const props = defineProps({
   auto: {
     type: Boolean,
@@ -16,92 +35,103 @@ const importReq = useApiRequest();
 const downloadReq = useApiRequest();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
-function register(formData: FormData) {
+// Validate insured data structure
+function validateInsuredData(data: any): data is InsuredData {
+  const requiredFields = [
+    'payerUuid',
+    'firstName',
+    'fatherName',
+    'grandFatherName',
+    'gender',
+    'position',
+    'birthDate',
+    'idNumber',
+    'phone'
+  ];
+
+  return requiredFields.every(field => data[field] !== undefined && data[field] !== null && data[field] !== '');
+}
+
+async function register(formData: FormData): Promise<RegistrationResponse> {
   console.log('Registration form data received:', formData);
   
-  // Check if required fields are present
-  const insuredJson = formData.get('insured');
-  if (!insuredJson) {
-    const errorMsg = 'Missing insured data';
-    toasted(false, errorMsg);
-    return Promise.reject(new Error(errorMsg));
-  }
-
   try {
-    const insuredData = JSON.parse(insuredJson as string);
-    
-    const requiredInsuredFields = [
-      'payerUuid',
-      'firstName',
-      'fatherName',
-      'grandFatherName',
-      'gender',
-      'position',
-      'birthDate',
-      'idNumber',
-      'phone'
-    ];
-
-    const missingFields = requiredInsuredFields.filter(field => {
-      const value = insuredData[field];
-      return value === undefined || value === null || value === '';
-    });
-
-    if (missingFields.length > 0) {
-      const errorMsg = `Missing required Insured fields: ${missingFields.join(', ')}`;
-      console.error('Validation failed:', errorMsg);
-      toasted(false, errorMsg);
-      return Promise.reject(new Error(errorMsg));
+    const insuredJson = formData.get('insured');
+    if (!insuredJson) {
+      throw new Error('Missing insured data');
     }
 
-    return sendRegistrationRequest(formData);
+    const insuredData = JSON.parse(insuredJson as string);
+    
+    if (!validateInsuredData(insuredData)) {
+      const missingFields = [
+        'payerUuid',
+        'firstName',
+        'fatherName',
+        'grandFatherName',
+        'gender',
+        'position',
+        'birthDate',
+        'idNumber',
+        'phone'
+      ].filter(field => !insuredData[field]);
+
+      throw new Error(`Missing required insured fields: ${missingFields.join(', ')}`);
+    }
+
+    return await sendRegistrationRequest(formData);
   } catch (error) {
-    console.error('Error parsing insured data:', error);
-    toasted(false, 'Invalid insured data format');
-    return Promise.reject(error);
+    console.error('Registration error:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Registration failed';
+    toasted(false, errorMsg);
+    throw error;
   }
 }
 
-function sendRegistrationRequest(formData: FormData) {
-  console.log('Sending registration request with form data');
-  
+async function sendRegistrationRequest(formData: FormData): Promise<RegistrationResponse> {
   return new Promise((resolve, reject) => {
     registerReq.send(
       () => createInsured(formData),
       (response) => {
         if (response.success) {
-          console.log('Registration successful:', response.data);
           toasted(true, 'Insured member registered successfully');
           resolve(response);
         } else {
-          console.error('Registration failed:', response.error);
           const errorMsg = response.error || 'Failed to register insured member';
-          toasted(false, errorMsg);
-          reject(new Error(errorMsg));
+          throw new Error(errorMsg);
         }
+      },
+      (error) => {
+        reject(error);
       }
     );
   });
 }
 
-function importFile(file: File) {
+async function importFile(file: File): Promise<any> {
+  if (!file) {
+    throw new Error('No file selected');
+  }
+
   return new Promise((resolve, reject) => {
     importReq.send(
       () => importInsuredMembers(file),
       (res) => {
         if (res.success) {
-          toasted(true, 'Insured members imported successfully');
+          toasted(true, `Successfully imported ${res.data?.count || 0} members`);
           resolve(res);
         } else {
-          toasted(false, res.error || 'Failed to import insured members');
-          reject(new Error(res.error || 'Failed to import insured members'));
+          throw new Error(res.error || 'Import failed');
         }
+      },
+      (error) => {
+        reject(error);
       }
     );
   });
 }
 
-function downloadTemplate() {
+function downloadTemplate(): void {
   downloadReq.send(
     () => downloadInsuredTemplate(),
     (res) => {
@@ -112,11 +142,19 @@ function downloadTemplate() {
         link.setAttribute('download', 'insured_members_template.xlsx');
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+        toasted(true, 'Template downloaded successfully');
       } catch (error) {
-        console.error('Error downloading template:', error);
-        toasted(false, 'Failed to download template');
+        console.error('Download error:', error);
+        throw new Error('Failed to download template');
       }
+    },
+    (error) => {
+      console.error('Download request error:', error);
+      toasted(false, 'Failed to download template');
     }
   );
 }
@@ -126,7 +164,9 @@ defineExpose({
   importFile,
   downloadTemplate,
   fileInputRef,
-  pending: registerReq.pending
+  pending: registerReq.pending,
+  importPending: importReq.pending,
+  downloadPending: downloadReq.pending
 });
 </script>
 
@@ -140,6 +180,7 @@ defineExpose({
     :importError="importReq.error.value"
     :downloadTemplate="downloadTemplate"
     :downloadPending="downloadReq.pending.value"
+    :downloadError="downloadReq.error.value"
     :fileInputRef="fileInputRef"
   />
 </template>

@@ -12,13 +12,13 @@ const props = defineProps({
 <template>
   <InputParent v-slot="{ setRef, error, value, changeValue }">
     <InputLayout :error="error" :label="$attrs?.label">
-      <div class="flex w-full">
+      <div class="flex w-full ">
         <slot class="" name="left" />
         <input
           v-focus='focus'
           :ref="setRef"
         />
-        <slot name="right" />
+        <slot name="left" />
       </div>
     </InputLayout>
   </InputParent>

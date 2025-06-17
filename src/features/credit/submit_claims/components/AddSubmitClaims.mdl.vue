@@ -8,12 +8,12 @@ import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref } from "vue";
 import submitClaimsFormDataProvider from "../form/submitClaimsFormDataProvider.vue";
-import { insuredMembers } from "../store/submitClaimsStore";
+import { claimServices } from "../store/submitClaimsStore";
 
 const pending = ref(false);
 const router = useRouter();
 const formDataProvider = ref();
-const insuredStore = insuredMembers();
+const claimServicesStore = claimServices();
 
 async function handleSubmit(formValues: any) {
   try {
@@ -74,7 +74,7 @@ async function handleSubmit(formValues: any) {
       };
       
       // Add the new insured to the store
-      insuredStore.add(newInsured);
+      claimServicesStore.add(newInsured);
       
       // Show success message
       toasted(true, 'Success', 'Employee added successfully');

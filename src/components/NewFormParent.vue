@@ -31,12 +31,12 @@ const props = defineProps({
 <template>
   <div
     :class="[$style[size]]"
-    class="overflow-hidden flex flex-col justify-between bg-white m-6 p-6 rounded-md"
+    class="overflow-hidden flex flex-col justify-between bg-white m-6 rounded-lg px-3 py-6 rounded-md"
   >
     <div
       class="flex justify-between  border-text-secondary-clr/30 items-center"
     >
-      <div class="flex justify-between mx-4 pb-4  bg-[#F6F7FA] w-full px-4 items-center gap-4">
+      <div class="flex justify-between mx-3 pb-4  bg-[#F6F7FA] rounded-lg w-full  items-center gap-4">
         <div>
           <button
             @click="onGoBack"
@@ -78,11 +78,11 @@ const props = defineProps({
   width: 60rem;
   height: 100%;
 }
-
 .xl {
-  width: 100%;
+  width: 66rem;
   height: 100%;
 }
+
 
 .xs {
   width: auto;

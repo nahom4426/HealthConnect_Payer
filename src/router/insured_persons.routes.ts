@@ -23,6 +23,7 @@ export default [
         children: [
           {
             path: '',
+            name: 'Insured Persons List',
             component: InsuredPersons,
           },
           {
