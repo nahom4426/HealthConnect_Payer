@@ -1,140 +1,104 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
-// Status type (adjust if needed)
-export type Status = "ACTIVE" | "INACTIVE" | "PENDING"; // or import from "@/types/interface"
-
-// Insured interface
-export interface Insured {
-  insuredUuid: string;
-  email: string;
-  firstName: string;
-  fatherName: string;
-  grandFatherName: string;
-  birthDate: string;
-  phone: string;
-  address: string;
-  state: string;
-  country: string;
-  idNumber: string;
-  position: string;
-  gender: string;
-  status: Status;
-  photoUrl?: string;
-  photoPath?: string;
+// Medication Item interface
+export interface MedicationItem {
+  medicationName: string;
+  quantity: number;
+  unitOfMeasure: string;
+  unitPrice: number;
+  totalPrice: number;
 }
 
-export const insuredMembers = defineStore("insuredStore", () => {
-  const insuredMembers = ref<Insured[]>([]);
+// Claim Service interface
+export interface ClaimService {
+  invoiceNumber: string;
+  dispensingUuid: string;
+  payerUuid: string;
+  patientName: string;
+  insuranceId: string | null;
+  dispensingDate: string;
+  prescriptionNumber: string;
+  pharmacyTransactionId: string;
+  totalAmount: number;
+  patientResponsibility: number;
+  insuranceCoverage: number;
+  branchName: string | null;
+  createdAt: string;
+  medicationItems: MedicationItem[];
+}
 
-  function getAll(): Insured[] {
-    return insuredMembers.value;
+export const claimServices = defineStore("claimServicesStore", () => {
+  const claimServices = ref<ClaimService[]>([]);
+
+  function getAll(): ClaimService[] {
+    return claimServices.value;
   }
 
-  function set(data: Insured[]): void {
-    console.log("Setting insured members in store:", data);
+  function set(data: ClaimService[]): void {
+    console.log("Setting claim services in store:", data);
     
-    // Check if data is valid array
     if (!Array.isArray(data)) {
-      console.error("Invalid data format for insured members:", data);
-      insuredMembers.value = [];
+      console.error("Invalid data format for claim services:", data);
+      claimServices.value = [];
       return;
     }
     
-    // Map API response to match our Insured interface
-    const mappedData = data.map(item => {
-      return {
-        insuredUuid: item.insuredPersonUuid || item.insuredUuid,
-        email: item.email || "",
-        firstName: item.firstName || "",
-        fatherName: item.fatherName || "",
-        grandFatherName: item.grandFatherName || item.grandfatherName || "",
-        birthDate: item.birthDate || "",
-        phone: item.phone || "",
-        address: item.address1 || item.address || "",
-        state: item.state || "",
-        country: item.country || "Ethiopia",
-        idNumber: item.insuranceId || item.idNumber || "",
-        position: item.position || "",
-        gender: item.gender || "",
-        status: item.status || "ACTIVE",
-        photoUrl: item.profilePictureBase64 || item.photoUrl || null,
-        photoPath: item.photoPath || null
-      };
-    });
-    
-    insuredMembers.value = mappedData;
+    claimServices.value = data;
   }
 
   // Alias for set
-  function setInsuredMembers(data: Insured[]): void {
-    console.log("Setting insured members with setInsuredMembers:", data);
+  function setClaimServices(data: ClaimService[]): void {
     set(data);
   }
 
   // Alias for set
-  function setAll(data: Insured[]): void {
-    console.log("Setting insured members with setAll:", data);
+  function setAll(data: ClaimService[]): void {
     set(data);
   }
 
-  function add(data: Insured): void {
-    console.log("Adding insured member to store:", data);
-    insuredMembers.value.unshift(data);
+  function add(data: ClaimService): void {
+    console.log("Adding claim service to store:", data);
+    claimServices.value.unshift(data);
   }
 
-  function update(id: string, data: Partial<Insured>): void {
-    console.log(`Updating insured member with UUID: ${id}`, data);
+  function update(id: string, data: Partial<ClaimService>): void {
+    console.log(`Updating claim service with UUID: ${id}`, data);
     
-    // Debug: log all insured UUIDs to check for matches
-    console.log("Available insured UUIDs:", insuredMembers.value.map(i => i.insuredUuid));
-    
-    const idx = insuredMembers.value.findIndex((el) => el.insuredUuid === id);
+    const idx = claimServices.value.findIndex((el) => el.dispensingUuid === id);
     if (idx === -1) {
-      console.warn(`[Insured Store] No insured member found with UUID: ${id}`);
-      // If not found by UUID, try to add it instead
-      if (data.insuredUuid) {
-        console.log("Insured member not found for update, adding instead:", data);
-        add(data as Insured);
+      console.warn(`[Claim Services Store] No claim service found with UUID: ${id}`);
+      if (data.dispensingUuid) {
+        console.log("Claim service not found for update, adding instead:", data);
+        add(data as ClaimService);
       }
       return;
     }
 
-    // Use splice for reactive updates
-    insuredMembers.value.splice(idx, 1, {
-      ...insuredMembers.value[idx],
+    claimServices.value.splice(idx, 1, {
+      ...claimServices.value[idx],
       ...data,
     });
-    console.log("Insured member updated successfully");
   }
 
   function remove(id: string): void {
-    const idx = insuredMembers.value.findIndex((el) => el.insuredUuid === id);
+    const idx = claimServices.value.findIndex((el) => el.dispensingUuid === id);
     if (idx === -1) {
-      console.warn(`[Insured Store] No insured member found with UUID: ${id}`);
+      console.warn(`[Claim Services Store] No claim service found with UUID: ${id}`);
       return;
     }
 
-    insuredMembers.value.splice(idx, 1);
-  }
-
-  // Update insured status
-  function updateStatus(id: string, status: Status): void {
-    console.log(`Updating status for insured member with UUID: ${id} to ${status}`);
-    update(id, { status });
+    claimServices.value.splice(idx, 1);
   }
 
   return {
-    insuredMembers,
+    claimServices,
     getAll,
     set,
-    setInsuredMembers,
+    setClaimServices,
     setAll,
     add,
     update,
-    updateStatus,
     remove,
   };
 });
-
-

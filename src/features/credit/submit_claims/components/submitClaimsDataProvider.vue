@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { searchInsuredByInstitution } from "../api/submitClaimsApi";
+import { getCreditClaimsbyProviderUuid } from "../api/submitClaimsApi";
 import { usePagination } from "@/composables/usePagination";
 import type { PropType } from "vue";
 import { Status } from "@/types/interface";
-import { insuredMembers } from "../store/submitClaimsStore";
+import { claimServices } from "../store/submitClaimsStore";
 import { ref, watch, onMounted, computed } from "vue";
 import { debounce } from "@/utils/debounce";
 
@@ -13,7 +13,7 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  institutionId: {
+  providerUuid: {
     type: String,
     required: true
   },
@@ -27,7 +27,7 @@ const props = defineProps({
   }
 });
 
-const insuredStore = insuredMembers();
+const claimServicesStore = claimServices();
 const currentPage = ref(1);
 const itemsPerPage = ref(25);
 const totalPages = ref(1);
@@ -37,21 +37,21 @@ const totalItems = ref(0);
 const pagination = usePagination({
   auto: false,
   cb: async (data: any) => {
-    const response = await searchInsuredByInstitution(props.institutionId, {
+    const response = await getCreditClaimsbyProviderUuid(props.providerUuid, {
       ...data,
-      status: props.status
+      // status: props.status
     });
 
     const paginated = response?.data || response;
 
     if (paginated?.content) {
-      insuredStore.set(paginated.content);
+      claimServicesStore.set(paginated.content);
       currentPage.value = paginated.page ?? 1;
       itemsPerPage.value = paginated.size ?? 25;
       totalPages.value = paginated.totalPages ?? 1;
       totalItems.value = paginated.totalElements ?? paginated.content.length;
     } else {
-      insuredStore.set(paginated);
+      claimServicesStore.set(paginated);
     }
 
     return paginated;
@@ -94,7 +94,7 @@ defineExpose({
 
 <template>
   <slot
-    :insuredMembers="insuredStore.insuredMembers"
+    :claimServices="claimServicesStore.claimServices"
     :pending="pagination.pending.value"
     :error="null"
     :search="pagination.search"

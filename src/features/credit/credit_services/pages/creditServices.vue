@@ -35,7 +35,23 @@ const providerUuid = ref(
 
 <template>
   <DefaultPage placeholder="Search Insured Members">
-    <!-- ... your existing template parts ... -->
+    <template #filter>
+      <button
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
+      >
+        <i v-html="icons.filter"></i>
+        <p class="text-base">Filters</p>
+      </button>
+    </template>
+      <template #add-action>
+         <button
+        @click.prevent="openModal('AddCreditServices')"
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
+      >
+        <i v-html="icons.plus_circle"></i>
+        <p class="text-base">Add Credit</p>
+      </button>
+    </template>
    <template #default="{ search }">
   <creditServicesDataProvider
     ref="dataProvider"

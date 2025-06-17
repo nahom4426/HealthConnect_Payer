@@ -1,427 +1,709 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useForm } from '@/components/new_form_builder/useForm';
 import Form from '@/components/new_form_builder/Form.vue';
-import Input from '@/components/new_form_elements/Input.vue';
-import Select from '@/components/new_form_elements/Select.vue';
 import Button from '@/components/Button.vue';
-import InputEmail from '@/components/new_form_elements/InputEmail.vue';
 import ModalFormSubmitButton from '@/components/new_form_builder/ModalFormSubmitButton.vue';
-import { useAuthStore } from "@/stores/auth";
+import { getActiveInstitutions } from '@/features/instution_settings/api/institutionSettingsApi';
+import { searchInsuredByInstitution } from '@/features/insured_persons/api/insuredPersonsApi';
+import { searchServices } from '@/features/services/Api/serviceApi';
+import { useAuthStore } from '@/stores/auth';
+import { openModal } from "@customizer/modal-x";
+import { toasted } from "@/utils/utils";
+import Spinner from '@/components/Spinner.vue';
+import Select from '@/components/new_form_elements/Select.vue';
+import Input from '@/components/new_form_elements/Input.vue';
 
+interface Payer {
+  payerUuid: string;
+  payerName: string;
+  email: string;
+  telephone?: string;
+}
+
+interface Employee {
+  insuredUuid: string;
+  fullName: string;
+  phone: string;
+  position: string;
+  idNumber: string;
+  birthDate: string;
+  eligible: boolean;
+  profilePictureBase64?: string;
+}
+
+interface Service {
+  id: string;
+  serviceUuid: string;
+  serviceCode: string;
+  serviceName: string;
+  paymentAmount: string;
+  diagnosis?: string;
+  quantity: number;
+  status: string;
+}
+
+interface CreditServiceFormData {
+  payerUuid: string;
+  phone: string;
+  dispensingDate: string;
+  prescriptionNumber: string;
+  pharmacyTransactionId: string;
+  medicationItems: {
+    serviceUuid: string;
+    quantity: number;
+  }[];
+}
+
+interface FormProps {
+  initialData?: Partial<CreditServiceFormData>;
+  isEdit?: boolean;
+  pending?: boolean;
+  onSubmit: (formData: CreditServiceFormData) => void;
+  onCancel: () => void;
+}
+
+const props = defineProps<FormProps>();
+
+// Reactive state
+const payers = ref<Payer[]>([]);
+const employees = ref<Employee[]>([]);
+const selectedPayer = ref<string | null>(null);
+const selectedEmployee = ref<Employee | null>(null);
+const searchEmployeeQuery = ref('');
+const searchServiceQuery = ref('');
+const pending = ref(false);
+const error = ref<string | null>(null);
+const currentStep = ref<'selectEmployee' | 'selectServices'>('selectEmployee');
+const services = ref<Service[]>([]);
+const addedServices = ref<Service[]>([]);
 const auth = useAuthStore();
-const props = defineProps({
-  initialData: {
-    type: Object as PropType<any>,
-    default: () => ({})
-  },
-  isEdit: {
-    type: Boolean,
-    default: false
-  },
-  institutionId: {
-    type: String,
-    required: true
-  },
-  pending: {
-    type: Boolean,
-    default: false
-  },
-  onSubmit: {
-    type: Function as PropType<(values: any) => void>,
-    required: true
-  },
-  onCancel: {
-    type: Function as PropType<() => void>,
-    required: true
-  }
+const providerUuid = ref(auth.auth?.user?.providerUuid || '');
+
+// Form fields
+const prescriptionNumber = ref('');
+const pharmacyTransactionId = ref('');
+const dispensingDate = ref(new Date().toISOString().split('T')[0]);
+
+// Computed properties
+const employeeDetails = computed(() => {
+  if (!selectedEmployee.value) return null;
+
+  return {
+   fullName: selectedEmployee.value.fullName,
+    employeeId: selectedEmployee.value.idNumber,
+    role: selectedEmployee.value.position,
+    phone: selectedEmployee.value.phone,
+    email: selectedEmployee.value.email,
+    gender: selectedEmployee.value.gender,
+    address: selectedEmployee.value.address,
+    birthDate: selectedEmployee.value.birthDate,
+    status: selectedEmployee.value.status,
+    profilePicture: selectedEmployee.value.profilePictureBase64,
+  };
 });
 
-// Form data
-const employeePhoto = ref<File | null>(null);
-const firstName = ref('');
-const fatherName = ref('');
-const institutionId = ref(auth.auth?.user?.payerUuid || "");
-const grandFatherName = ref('');
-const gender = ref('');
-const role = ref('');
-const dateOfBirth = ref('');
-const employeeId = ref('');
-const phoneNumber = ref('');
-const countryCode = ref('+251');
-const address = ref('');
-const email = ref('');
-const status = ref('ACTIVE');
-const previewImage = ref('');
-const payerId = ref('');
 
-// Initialize form data from props
-onMounted(() => {
-  if (props.initialData && Object.keys(props.initialData).length > 0) {
-    payerId.value = props.initialData.payerUuid || '';
-    firstName.value = props.initialData.firstName || '';
-    fatherName.value = props.initialData.fatherName || '';
-    grandFatherName.value = props.initialData.grandFatherName || props.initialData.grandfatherName || '';
-    gender.value = props.initialData.gender || '';
-    role.value = props.initialData.position || '';
-    dateOfBirth.value = props.initialData.birthDate?.split('T')[0] || '';
-    employeeId.value = props.initialData.idNumber || '';
-    address.value = props.initialData.address || '';
-    email.value = props.initialData.email || '';
-    status.value = props.initialData.status || 'ACTIVE';
+// Lifecycle hooks
+onMounted(async () => {
+  await fetchPayers();
+});
 
-    const fullPhone = props.initialData.phone || '';
-    const possibleCodes = ['+251', '+1', '+44', '+91'];
-    const matchedCode = possibleCodes.find(code => fullPhone.startsWith(code));
+// Watchers
+watch(selectedPayer, async (newPayerId) => {
+  if (!newPayerId) return;
+  await fetchEmployees();
+});
+
+let searchTimeout: number;
+watch(searchEmployeeQuery, async (newQuery) => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(async () => {
+    if (selectedPayer.value) {
+      await fetchEmployees();
+    }
+  }, 300);
+});
+
+let serviceSearchTimeout: number;
+watch(searchServiceQuery, async (newQuery) => {
+  clearTimeout(serviceSearchTimeout);
+  serviceSearchTimeout = setTimeout(async () => {
+    await fetchServices();
+  }, 300);
+});
+
+// Methods
+async function fetchPayers() {
+  try {
+    pending.value = true;
+    error.value = null;
     
-    if (matchedCode) {
-      countryCode.value = matchedCode;
-      phoneNumber.value = fullPhone.slice(matchedCode.length);
-    } else {
-      countryCode.value = '+251';
-      phoneNumber.value = fullPhone;
+    const response = await getActiveInstitutions({ page: 1, limit: 100 });
+    
+    if (!response?.data?.content || !Array.isArray(response.data.content)) {
+      throw new Error('Invalid data format: missing content array');
     }
 
-    if (props.initialData.photoUrl) {
-      previewImage.value = props.initialData.photoUrl;
-    } else if (props.initialData.photoBase64) {
-      previewImage.value = props.initialData.photoBase64;
-    }
-  }
-});
+    payers.value = response.data.content.map(item => ({
+      payerUuid: item.payerUuid,
+      payerName: item.payerName || `Unnamed Payer (${item.email})`,
+      email: item.email,
+      telephone: item.telephone
+    }));
 
-// File upload handling
-function handleFileUpload(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (file) {
-    employeePhoto.value = file;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImage.value = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+    if (payers.value.length === 0) {
+      error.value = 'No payers available';
+    }
+  } catch (err) {
+    console.error('Error fetching payers:', err);
+    error.value = 'Failed to load payers. Please try again.';
+  } finally {
+    pending.value = false;
   }
 }
 
-function browseFiles() {
-  const fileInput = document.getElementById('employee-photo-upload') as HTMLInputElement;
-  fileInput.click();
+async function fetchEmployees() {
+  if (!selectedPayer.value) return;
+  
+  try {
+    pending.value = true;
+    error.value = null;
+    
+    const response = await searchInsuredByInstitution(selectedPayer.value, {
+      search: searchEmployeeQuery.value
+    });
+
+    const employeesData = Array.isArray(response) ? response : 
+                       response?.content ? response.content : 
+                       response?.data?.content ? response.data.content : [];
+
+    if (!Array.isArray(employeesData)) {
+      throw new Error('Invalid employee data format');
+    }
+
+    employees.value = employeesData.map(emp => ({
+      insuredUuid: emp.insuredUuid,
+      fullName: `${emp.firstName || ''} ${emp.fatherName || ''} ${emp.grandFatherName || ''}`.trim(),
+      phone: emp.phone,
+      email: emp.email || 'N/A',
+      gender: emp.gender || 'Unknown',
+      address: emp.address || 'Unknown',
+      eligible: emp.status === 'ACTIVE',
+      position: emp.position || 'Unknown position',
+      idNumber: emp.idNumber || 'N/A',
+      birthDate: emp.birthDate || 'Unknown',
+     
+      profilePictureBase64: emp.profilePictureBase64 || null,
+      status: emp.status || 'UNKNOWN'}));
+
+    if (employees.value.length === 0) {
+      error.value = 'No employees found for this payer';
+    }
+  } catch (err) {
+    console.error('Error fetching employees:', err);
+    error.value = 'Failed to load employees. Please try again.';
+  } finally {
+    pending.value = false;
+  }
+}
+
+async function fetchServices() {
+  if (!providerUuid.value) return;
+  
+  try {
+    pending.value = true;
+    const response = await searchServices(providerUuid.value, { 
+      search: searchServiceQuery.value,
+      page: 1,
+      limit: 25
+    });
+
+    services.value = response.data.map((service: any) => ({
+      id: service.serviceUuid,
+      serviceUuid: service.serviceUuid,
+      serviceCode: service.serviceCode,
+      serviceName: service.serviceName,
+      paymentAmount: `ETB ${service.price?.toFixed(2) || '0.00'}`,
+      status: service.status || 'UNKNOWN',
+      quantity: 1
+    }));
+
+  } catch (err) {
+    console.error('Error fetching services:', err);
+    error.value = 'Failed to load services. Please try again.';
+  } finally {
+    pending.value = false;
+  }
+}
+
+function selectEmployee(employee: Employee) {
+  if (!employee.eligible) return;
+  selectedEmployee.value = employee;
+}
+
+async function continueToServices() {
+  if (selectedEmployee.value) {
+    currentStep.value = 'selectServices';
+    await fetchServices();
+  }
+}
+
+function backToEmployeeSelection() {
+  currentStep.value = 'selectEmployee';
+}
+
+function addService(service: Service) {
+  if (service.status !== 'ACTIVE') return;
+  
+  addedServices.value.push({ ...service });
+}
+
+function removeService(index: number) {
+  addedServices.value.splice(index, 1);
+}
+
+function updateQuantity(index: number, value: number) {
+  if (value < 1) return;
+  addedServices.value[index].quantity = value;
+}
+
+function validateForm(): boolean {
+  error.value = null;
+  
+  if (currentStep.value === 'selectEmployee') {
+    if (!selectedPayer.value) {
+      error.value = 'Please select a payer';
+      return false;
+    }
+    if (!selectedEmployee.value) {
+      error.value = 'Please select an employee';
+      return false;
+    }
+    return true;
+  }
+  
+  if (!prescriptionNumber.value) {
+    error.value = 'Prescription number is required';
+    return false;
+  }
+  if (!pharmacyTransactionId.value) {
+    error.value = 'Pharmacy transaction ID is required';
+    return false;
+  }
+  if (!dispensingDate.value) {
+    error.value = 'Dispensing date is required';
+    return false;
+  }
+  if (addedServices.value.length === 0) {
+    error.value = 'Please add at least one service';
+    return false;
+  }
+  
+  if (addedServices.value.some(item => item.quantity <= 0)) {
+    error.value = 'Quantity must be greater than 0';
+    return false;
+  }
+  
+  return true;
 }
 
 function handleSubmit() {
-  const formData = {
-    firstName: firstName.value,
-    payerUuid:institutionId.value || payerId.value,
-    fatherName: fatherName.value,
-    grandFatherName: grandFatherName.value,
-    gender: gender.value,
-    position: role.value,
-    birthDate: dateOfBirth.value ? `${dateOfBirth.value}T00:00:00.000Z` : '',
-    idNumber: employeeId.value,
-    phone: `${countryCode.value}${phoneNumber.value}`,
-    address: address.value,
-    email: email.value,
-    status: status.value,
-    country: 'Ethiopia',
-    state: 'Addis Ababa' // Default as per your swagger example
+  if (!validateForm()) return;
+
+  const formData: CreditServiceFormData = {
+    payerUuid: selectedPayer.value!,
+    phone: selectedEmployee.value!.phone,
+    dispensingDate: dispensingDate.value,
+    prescriptionNumber: prescriptionNumber.value,
+    pharmacyTransactionId: pharmacyTransactionId.value,
+    medicationItems: addedServices.value.map(item => ({
+      serviceUuid: item.serviceUuid,
+      quantity: Number(item.quantity)
+    }))
   };
-
-  if (employeePhoto.value) {
-    formData.employeePhoto = employeePhoto.value;
-  }
-
-  if (previewImage.value && !employeePhoto.value && props.isEdit) {
-    if (props.initialData.photoBase64) {
-      formData.photoBase64 = props.initialData.photoBase64;
-    }
-  }
 
   props.onSubmit(formData);
 }
-
-const genderOptions = ['Male', 'Female', 'Other'];
-const statusOptions = ['ACTIVE', 'INACTIVE'];
+const payerOptions = computed(() => {
+  if (!payers.value || !Array.isArray(payers.value)) return [];
+  return payers.value.map(payer => ({
+    label: `${payer.payerName} (${payer.telephone || payer.email || 'N/A'})`,
+    value: payer.payerUuid,
+  }));
+});
+const updateFormData = (key: string, value: any) => {
+  formData[key] = value;
+};
 </script>
 
 <template>
   <Form
-    id="employee-form"
+    id="credit-service-form"
     class="bg-white rounded-lg shadow-sm"
     @submit.prevent="handleSubmit"
   >
-    <!-- Header -->
-  
+    <!-- Step 1: Select Employee -->
+    <div v-if="currentStep === 'selectEmployee'" class="py-3 space-y-6">  
+      <!-- <h1 class="text-2xl font-bold text-gray-800">Add Credit Services</h1>
+      <p class="text-gray-600">Add a new credit service</p> -->
 
-    <div class="p-6 space-y-6">
-      <!-- Top section: Photo and Personal Info -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Photo Upload Section -->
-        <div class="col-span-1">
-          <div class="bg-white p-5 border border-[#75778B33] rounded-lg flex flex-col items-center justify-center h-full">
-            <div class="w-56 h-52 bg-[#F6F7FA] rounded-lg flex items-center justify-center mb-4 overflow-hidden">
-              <img v-if="previewImage" :src="previewImage" alt="Employee photo" class="w-full h-full object-cover" />
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-              </svg>
+      <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        {{ error }}
+      </div>
+
+      <!-- <template v-if="pending">
+        <div class="flex justify-center py-8">
+          <Spinner class="h-8 w-8 text-teal-600" />
+        </div>
+      </template> -->
+      <!-- <template v-else> -->
+        <div class="flex gap-4 mt-4">
+          <div class="w-72">
+            <!-- <label class="block text-sm font-medium text-gray-700 mb-1">Select Payer *</label> -->
+                        <Select     
+                  :obj="true"
+                  name="payer"
+                  label="Select Payer"
+                  validation="required"
+                  :options="payerOptions"
+                  :disabled="pending"
+                  :attributes="{
+                    placeholder: 'Select a Payer'
+                  }"
+                  v-model="selectedPayer"
+
+                />
+
+          </div>
+          
+                              <div class="w-full">
+                              <Input 
+                      name="searchEmployeeQuery" 
+                      label="Search Employees" 
+                      :attributes="{
+                        placeholder: 'Search employees',
+                        // disabled: !selectedPayer,
+                      }"
+                      v-model="searchEmployeeQuery"
+                    />
+
+          </div>
+        </div>
+
+        <!-- Employees Table -->
+        <div  class="mt-6">
+          
+         <template v-if="pending">
+          <div class="flex justify-center py-8">
+            <Spinner class="h-8 w-8 text-teal-600" />
+          </div>
+        </template>
+          <template v-else>
+            <div class=" border rounded-lg">
+             <table class="min-w-full divide-y divide-gray-200">
+  <thead class="border-b">
+    <tr>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eligibility</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    <tr 
+      v-for="(employee, index) in employees" 
+      :key="employee.insuredUuid"
+      :class="{
+        'bg-[#DFF1F1]': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid
+      }"
+    >
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+        {{ employee.idNumber }}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {{ employee.fullName }}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {{ employee.phone }}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {{ employee.position }}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
+        <span :class="employee.eligible ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-red-600'">
+          {{ employee.eligible ? 'Eligible' : 'Not Eligible' }}
+        </span>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+        <button
+          type="button"
+          @click="selectEmployee(employee)"
+          :class="{
+            'text-white bg-[#02676B] px-4 py-2 hover:text-teal-900': !(selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid),
+            'text-white bg-[#02676B] px-4 py-2 rounded': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid
+          }"
+          :disabled="!employee.eligible"
+        >
+          {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Selected' : 'Select' }}
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
             </div>
-            <button 
-              type="button" 
-              @click="browseFiles"
-              class="w-full py-3 px-5 bg-primary hover:bg-teal-800 text-white rounded flex items-center justify-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-              </svg>
-              Upload Photo
-            </button>
-            <input 
-              id="employee-photo-upload" 
-              type="file" 
-              accept="image/*" 
-              class="hidden" 
-              @change="handleFileUpload"
-            />
-          </div>
+          </template>
         </div>
 
-        <!-- Personal Information -->
-        <div class="col-span-2  border border-[#75778B33] p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- First Name -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              First Name <span class="text-red-500">*</span>
-            </label>
-            <Input
-              v-model="firstName"
-              name="firstName"
-              validation="required"
-              :attributes="{
-                placeholder: 'Enter first name',
-              
-              }"
-            />
-          </div>
-
-          <!-- Father's Name -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Father's Name <span class="text-red-500">*</span>
-            </label>
-            <Input
-              v-model="fatherName"
-              name="fatherName"
-              validation="required"
-              :attributes="{
-                placeholder: 'Enter father\'s name',
-              
-              }"
-            />
-          </div>
-
-          <!-- Grandfather's Name -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Grandfather's Name <span class="text-red-500">*</span>
-            </label>
-            <Input
-              v-model="grandFatherName"
-              name="grandFatherName"
-              validation="required"
-              :attributes="{
-                placeholder: 'Enter Grand father\'s name',
-              
-              }"
-            />
-          </div>
-
-          <!-- Role -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Role <span class="text-red-500">*</span>
-            </label>
-            <Input
-              v-model="role"
-              name="role"
-              validation="required"
-              :attributes="{
-                placeholder: 'Enter Role',
-              
-              }"
-            />
-          </div>
-
-          <!-- Gender -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Gender <span class="text-red-500">*</span>
-            </label>
-            <Select
-              v-model="gender"
-              name="gender"
-              validation="required"
-              :options="genderOptions"
-              :attributes="{
-                placeholder: 'Select Gender',
-              
-              }"
-            />
-          </div>
-
-          <!-- Date of Birth -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Date of Birth <span class="text-red-500">*</span>
-            </label>
-            <Input
-              v-model="dateOfBirth"
-              name="dateOfBirth"
-              type="date"
-              validation="required"
-              :attributes="{
-                placeholder: 'Select Date',
-                 type: 'date',
-              }"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Middle section: Employee ID and Address -->
-      <div class="grid grid-cols-1 border border-[#75778B33] md:grid-cols-2 gap-6 p-5">
-        <!-- Employee ID -->
-        <div class="pb-1">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Employee ID <span class="text-red-500">*</span>
-          </label>
-          <Input
-            v-model="employeeId"
-            name="employeeId"
-            validation="required"
-            :attributes="{
-              placeholder: 'Enter employee ID',
-            
-            }"
-          />
-        </div>
-
-        <!-- Address -->
-        <div class="py">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Address
-          </label>
-          <Input
-            v-model="address"
-            name="address"
-            :attributes="{
-              placeholder: 'Enter address',
-            
-            }"
-          />
-        </div>
-
-        <!-- Phone Number -->
-        <div class="py-1">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Phone Number <span class="text-red-500">*</span>
-          </label>
-          <div class="flex w-full gap-2">
-            <Select
-              v-model="countryCode"
-              name="countryCode"
-              :options="['+251', '+1', '+44', '+91']"
-              :attributes="{ 
-                
-                required: true 
-              }"
-            />
-            <Input
-              v-model="phoneNumber"
-              name="phoneNumber"
-              validation="required"
-              :attributes="{
-                placeholder: 'Enter phone number',
-                
-                required: true
-              }"
-            />
-          </div>
-        </div>
-
-        <!-- Email -->
-        <div class="py-1">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Email
-          </label>
-          <InputEmail
-            v-model="email"
-            name="email"
-            validation="email"
-            :attributes="{
-              placeholder: 'Enter email',
-            
-            }"
-          />
-        </div>
-      </div>
-
-      <!-- Bottom section: Insurance Status -->
-      <div class="border border-[#75778B33] col-span-3 w-[33%] p-5">
-        <label class="[#75778B33] block text-sm font-medium text-gray-700 mb-3">
-          Start insurance status as
-        </label>
-        <div class="flex space-x-4">
-          <label class="inline-flex items-center p-3   rounded-md" :class="{ 'text-[#02676B] bg-[#DFF1F1] ': status === 'ACTIVE' }">
-            <input
-              type="radio"
-              v-model="status"
-              value="ACTIVE"
-              class="form-radio h-5 w-5 text-[#02676B] focus:ring-[#DFF1F1]"
-              :checked="status === 'ACTIVE'"
-            />
-            <span class="ml-2 ">Active</span>
-          </label>
-         <label
-  class="inline-flex items-center p-3 rounded-md bg-gray-50"
-  :class="{
-    'bg-red-200 text-red-400': status === 'INACTIVE'  // Add this line to change background
-  }"
->
-  <input
-    type="radio"
-    v-model="status"
-    value="INACTIVE"
-    class="form-radio h-5 w-5  focus:ring-[#DFF1F1]"
-  />
-  <span class="ml-2 ">InActive</span>
-</label>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- Form Actions -->
-    <div class="px-6 py-4 bg-white border-t border-gray-200 flex justify-end space-x-4 rounded-b-lg">
-      <Button
+        <!-- Continue Button -->
+        <div v-if="selectedEmployee" class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
+           <Button
         type="button"
         @click="props.onCancel"
-        class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+        class="text-[#75778B] px-6 py-4 border-[1px] border-[#75778B] rounded-lg hover:bg-gray-50"
         :disabled="pending"
       >
         Cancel
       </Button>
-      <!-- <Button
-        type="submit"
-        class="px-6 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800"
-        :disabled="pending"
-      >
-        {{ isEdit ? 'Update Employee' : 'Add Employee' }}
-      </Button> -->
-         <ModalFormSubmitButton
-        :pending="pending"
-        :btn-text="isEdit ? 'Update Employee' : 'Add Employee'"
-        class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
+          <button
+            type="button"
+            class="px-6 py-2 bg-primary text-white rounded-md hover:bg-teal-700"
+            @click="continueToServices"
+          >
+            Continue to Services
+          </button>
+
+        </div>
+      <!-- </template> -->
+    </div>
+
+    <!-- Step 2: Select Services -->
+    <div v-else-if="employeeDetails" class="py-3 space-y-6">
+      <!-- <h1 class="text-2xl font-bold text-gray-800">Add Credit Services</h1>
+      <p class="text-gray-600">Add a new credit service</p> -->
+
+      <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        {{ error }}
+      </div>
+
+      <!-- Employee Details -->
+      <div v-if="employeeDetails" class="flex flex-col md:flex-row bg-gray-50 p-6 rounded-xl shadow-md">
+    <!-- Profile Photo -->
+    <div class="flex-shrink-0">
+      <img
+        :src="employeeDetails.profilePicture || defaultProfile"
+        alt="Profile"
+        class="w-40 h-40 object-cover rounded-lg"
+      />
+    </div>
+
+    <!-- Details -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 ml-6 mt-6 md:mt-0">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Full Name</label>
+        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.fullName }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Phone</label>
+        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.phone }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Email</label>
+        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.email }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Employee ID</label>
+        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.employeeId }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Role</label>
+        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.role }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Gender</label>
+        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.gender }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Address</label>
+        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.address }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Birth Date</label>
+        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.birthDate }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Status</label>
+        <p class="mt-1">
+          <span
+            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+            :class="employeeDetails.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+          >
+            {{ employeeDetails.status }}
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+      <!-- Credit Service Details -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Prescription Number *</label>
+          <input
+            v-model="prescriptionNumber"
+            type="text"
+            class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Pharmacy Transaction ID *</label>
+          <input
+            v-model="pharmacyTransactionId"
+            type="text"
+            class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Dispensing Date *</label>
+          <input
+            v-model="dispensingDate"
+            type="date"
+            class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Services Section -->
+      <div class="mt-8">
+        <h2 class="text-lg font-semibold mb-4">Search and Select Services</h2>
+        <div class="mb-4">
+          <input
+            v-model="searchServiceQuery"
+            type="text"
+            placeholder="Search Services"
+            class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+          />
+        </div>
+
+        <template v-if="pending">
+          <div class="flex justify-center py-8">
+            <Spinner class="h-8 w-8 text-teal-600" />
+          </div>
+        </template>
+        <template v-else>
+          <div class="overflow-x-auto mb-8">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Code</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Name</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="(service, index) in services" :key="service.id">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ service.serviceCode }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.serviceName }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.paymentAmount }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span :class="service.status === 'ACTIVE' ? 'text-green-600' : 'text-red-600'">
+                      {{ service.status }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      type="button"
+                      @click="addService(service)"
+                      class="text-teal-600 hover:text-teal-900"
+                      :disabled="service.status !== 'ACTIVE'"
+                    >
+                      Add
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 class="text-lg font-semibold mb-4">Added Services</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Code</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Name</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="(service, index) in addedServices" :key="index">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ service.serviceCode }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.serviceName }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.paymentAmount }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="number"
+                      min="1"
+                      v-model.number="service.quantity"
+                      @change="updateQuantity(index, $event.target.valueAsNumber)"
+                      class="w-20 p-1 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      type="button"
+                      @click="removeService(index)"
+                      class="text-red-600 hover:text-red-900"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
+      </div>
+
+      <!-- </template> -->
+ 
+         <div  class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
+        <Button
+          type="button"
+          @click="backToEmployeeSelection"
+          class="text-[#75778B] px-6 py-4 border-[1px] border-[#75778B] rounded-lg hover:bg-gray-50"
+          :disabled="pending"
+        >
+          Back
+        </Button>
+        <ModalFormSubmitButton
+          :pending="pending"
+          btn-text="Add Service to Credit"
+          class="bg-primary hover:bg-teal-700 text-white px-6 py-2"
         />
+      </div>
     </div>
   </Form>
 </template>
@@ -435,7 +717,15 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
   @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5;
 }
 
-:deep(.form-select) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5;
+table {
+  @apply min-w-full divide-y divide-gray-200;
+}
+
+th {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+td {
+  @apply px-6 py-4 whitespace-nowrap;
 }
 </style>

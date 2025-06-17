@@ -2,6 +2,18 @@
 import icons from "@/utils/icons";
 import Dropdown from "./Dropdown.vue";
 import { useAuthStore } from "@/stores/auth";
+import { ref, computed } from 'vue';
+
+const imageLoaded = ref(true);
+const imageSrc = '/src/assets/img/profile.png';
+
+const userInitial = computed(() => {
+  return authStore.user?.firstName?.charAt(0) || "U";
+});
+
+function handleImageError() {
+  imageLoaded.value = false;
+}
 function logout() {
   localStorage.removeItem("userDetail");
   window.location.href = "/login";
@@ -47,19 +59,17 @@ const props = defineProps({
           @click.prevent="toggleDropdown"
           class="flex items-center gap-2 px-5 py-3 rounded-lg bg-base-clr3 cursor-pointer"
         >
-          <div
-            class="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
-          >
-            <img
-              src="/src/assets/img/profile.png"
-              alt="User avatar"
-              class="w-full h-full object-cover"
-              onerror="this.style.display='none'"
-            />
-            <span v-if="!$event?.target?.src" class="font-bold text-black">{{
-              authStore.user?.firstName?.charAt(0) || "U"
-            }}</span>
-          </div>
+         <div class="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
+    <img
+      :src="imageSrc"
+      alt="User avatar"
+      class="w-full h-full object-cover"
+      @error="handleImageError"
+    />
+    <span v-if="!imageLoaded" class="font-bold text-black">
+      {{ authStore.user?.firstName?.charAt(0) || "U" }}
+    </span>
+  </div>
           <div class="flex flex-col">
             <span class="text-sm font-normal">{{
               authStore.user?.firstName || "Birhane Araya"

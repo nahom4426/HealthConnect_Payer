@@ -3,9 +3,9 @@ import type { InsuredPerson, AsyncResponse, Insured } from "@/types/interface";
 import { getQueryFormObject } from "@/utils/utils";
 
 const api = new ApiService()
-const path = '/insuredperson'
+const path = '/integration/pharmacy'
 const baseUrl = import.meta.env.v_API_URI
-const basePath = '/insuredperson';
+const basePath = '/integration/pharmacy';
 
 export function getInsuredByContractId(id: string, query = {}) {
 	return api.addAuthenticationHeader().get<InsuredPerson[]>(`${path}/list/${id}`, {
@@ -13,8 +13,21 @@ export function getInsuredByContractId(id: string, query = {}) {
 	})
 }
 
-export function searchInsuredByInstitution(id: string, query = {}, config = {}) {
-	return api.addAuthenticationHeader().get(`${path}/by-payer/${id}`, {
+export function getCreditClaimsbyProviderUuid(id: string, query = {}, config = {}) {
+	return api.addAuthenticationHeader().get(`${path}/dispensing/${id}`, {
+		params: query,
+		...config
+	}).then(response => {
+		console.log("API raw response:", response);
+		// Return the response data directly, the component will handle pagination
+		return response.data;
+	}).catch(error => {
+		console.error("API error:", error);
+		throw error;
+	});
+}
+export function getPayerbyPayerUuid(id: string, query = {}, config = {}) {
+	return api.addAuthenticationHeader().get(`/payer/${id}`, {
 		params: query,
 		...config
 	}).then(response => {

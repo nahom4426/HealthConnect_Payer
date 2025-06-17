@@ -14,6 +14,7 @@ export default [
         children: [
           {
             path: '',
+            name: 'Submit Claims List',
             component: SubmitClaims,
           },
           {

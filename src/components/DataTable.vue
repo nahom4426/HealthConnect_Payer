@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { inject, watch } from "vue";
 
 const props = defineProps({
@@ -6,42 +6,41 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-
   showFooter: {
     type: Boolean,
     default: true,
-  },
-  lastCol: {
-    type: Boolean,
-    default: false,
   },
   firstCol: {
     type: Boolean,
     default: false,
   },
+  lastCol: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const next = inject("next", () => {});
-const previous = inject("previous", () => {});
+const next = inject("next", () => { });
+const previous = inject("previous", () => { });
 
 const page = inject("page", 1);
 const totalPages = inject("totalPages", 1);
 </script>
 <template>
-  <table class="min-w-full rounded-lg">
-    <thead class="bg-accent capitalize my-5">
-      <tr class="text-base-clr border-b">
-        <th v-if="firstCol" class="th p-4 text-left uppercase tracking-wider">
+  <table class="min-w-full border rounded-lg">
+    <thead class="bg-[#F9FAFF] capitalize text-black">
+      <tr class="text-base-clr border border-t-0">
+        <th v-if="firstCol" class="th p-2 text-left uppercase tracking-wider">
           <slot name="headerFirst"></slot>
         </th>
 
-        <th class="th p-2 px-4 text-left uppercase tracking-wider">#</th>
+        <th class="th p-3 pl-4 text-left uppercase tracking-wider">#</th>
         <!-- Add row number column -->
-        <th v-for="header in headers" :key="header" class="p-4 text-left">
+        <th v-for="header in headers" :key="header" class="p-2 text-left">
           {{ header }}
         </th>
-        <th v-if="lastCol">
-          <slot name="lastColHeader"></slot>
+        <th v-if="lastCol" class="th p-3 text-left uppercase tracking-wider">
+          <slot name="headerLast"></slot>
         </th>
       </tr>
     </thead>

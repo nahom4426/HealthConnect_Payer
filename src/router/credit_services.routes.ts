@@ -14,6 +14,7 @@ export default [
         children: [
           {
             path: '',
+            name: 'Credit Services List',
             component: CreditServices,
           },
           {

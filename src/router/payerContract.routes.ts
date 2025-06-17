@@ -28,6 +28,7 @@ export default [
     children: [
       {
         path: '',
+        name: 'Payer Contracts List',
         component: PayerContracts,
       },
       {

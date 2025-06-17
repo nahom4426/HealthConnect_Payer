@@ -1,64 +1,64 @@
-<script setup>
-import { defineProps, onMounted, onUnmounted } from 'vue';
+<script setup lang="ts">
+import { defineProps, onMounted, onUnmounted, ref } from 'vue';
 import Button from "@/components/Button.vue";
 import { openModal } from '@customizer/modal-x';
-import { insuredMembers } from "../store/submitClaimsStore";
-import { changeInsuredStatus } from "../api/submitClaimsApi";
+import { claimServices } from "../store/submitClaimsStore";
+import { changeInsuredStatus, getPayerbyPayerUuid } from "../api/submitClaimsApi";
 import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
+import { watch } from 'vue';
+
 
 const props = defineProps({
-  rowData: {
-    type: Array,
-    required: true
-  },
-  rowKeys: {
-    type: Array,
-    required: true
-  },
-  headKeys: {
-    type: Array,
-    required: true
-  },
-  onView: {
-    type: Function,
-    default: () => {}
-  },
-  onEdit: {
-    type: Function,
-    default: () => {}
-  },
-  onActivate: {
-    type: Function,
-    default: () => {}
-  },
-  onDeactivate: {
-    type: Function,
-    default: () => {}
-  },
-  onRowClick: {
-    type: Function,
-    default: () => {}
-  }
+  rowData: { type: Array, required: true },
+  rowKeys: { type: Array, required: true },
+  headKeys: { type: Array, required: true },
+  onView: { type: Function, default: () => {} },
+  onEdit: { type: Function, default: () => {} },
+  onActivate: { type: Function, default: () => {} },
+  onDeactivate: { type: Function, default: () => {} },
+  onRowClick: { type: Function, default: () => {} }
 });
-console.log('InsuredPersonStatusRow props:', props.rowData);
 
 const { addToast } = useToast();
-const insuredStore = insuredMembers();
+const insuredStore = claimServices();
+const payerNames = ref<Record<string, string>>({});
 
-function getStatusStyle(status) {
-  if (status === 'ACTIVE' || status === 'Active') {
-    return 'bg-[#DFF1F1] text-[#02676B]';
-  } else if (status === 'INACTIVE' || status === 'Inactive') {
-    return 'bg-red-100 text-red-800';
-  } else {
-    return 'bg-gray-100 text-gray-800';
+async function fetchPayerName(payerUuid: string) {
+  if (!payerUuid) return 'Unknown Payer';
+  if (payerNames.value[payerUuid]) return payerNames.value[payerUuid];
+
+  try {
+    const response = await getPayerbyPayerUuid(payerUuid);
+    if (response?.payerName) {
+      payerNames.value[payerUuid] = response.payerName;
+      return response.payerName;
+    }
+    return 'Unknown Payer';
+  } catch (error) {
+    console.error('Error fetching payer name:', error);
+    return 'Unknown Payer';
   }
 }
+watch(
+  () => props.rowData,
+  async (newData) => {
+    if (newData && newData.length > 0) {
+      const uniquePayerUuids = [...new Set(newData.map(row => row.payerUuid))];
+      await Promise.all(uniquePayerUuids.map(uuid => fetchPayerName(uuid)));
+    }
+  },
+  { immediate: true }
+);
+onMounted(async () => {
+  window.addEventListener('click', closeAllDropdowns);
+  const uniquePayerUuids = [...new Set(props.rowData.map(row => row.payerUuid))];
+  await Promise.all(uniquePayerUuids.map(uuid => fetchPayerName(uuid)));
+});
 
-function getBaseUrl() {
-  return import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-}
+onUnmounted(() => {
+  window.removeEventListener('click', closeAllDropdowns);
+});
 
 function handleImageError(event) {
   event.target.src = '/assets/placeholder-profile.png';
@@ -69,9 +69,7 @@ function handleEdit(row) {
     openModal('EditInsured', { 
       insuredUuid: row.insuredUuid, 
       insured: row,
-      onUpdated: (updatedInsured) => {
-        insuredStore.update(updatedInsured.insuredUuid, updatedInsured);
-      }
+      onUpdated: updated => insuredStore.update(updated.insuredUuid, updated)
     });
   } else if (typeof props.onEdit === 'function') {
     props.onEdit(row);
@@ -82,33 +80,16 @@ function toggleDropdown(event, rowId) {
   event.stopPropagation();
   closeAllDropdowns();
   const dropdown = document.getElementById(`dropdown-${rowId}`);
-  if (dropdown) {
-    dropdown.classList.toggle('hidden');
-  }
+  if (dropdown) dropdown.classList.toggle('hidden');
 }
 
 function closeAllDropdowns() {
-  document.querySelectorAll('.dropdown-menu').forEach(el => {
-    el.classList.add('hidden');
-  });
+  document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
 }
-
-onMounted(() => {
-  window.addEventListener('click', closeAllDropdowns);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('click', closeAllDropdowns);
-});
 
 function handleEditWithClose(row) {
   closeAllDropdowns();
   handleEdit(row);
-}
-
-function handleViewWithClose(rowId) {
-  closeAllDropdowns();
-  props.onView(rowId);
 }
 
 async function handleActivateWithClose(insuredId) {
@@ -116,21 +97,13 @@ async function handleActivateWithClose(insuredId) {
   try {
     const response = await changeInsuredStatus(insuredId, 'ACTIVE');
     if (response.success) {
-      addToast({
-        type: 'success',
-        title: 'Status Updated',
-        message: 'Insured member has been activated'
-      });
+      addToast({ type: 'success', title: 'Status Updated', message: 'Insured member has been activated' });
       insuredStore.update(insuredId, { status: 'ACTIVE' });
     } else {
       throw new Error(response.error || 'Failed to activate');
     }
   } catch (error) {
-    addToast({
-      type: 'error',
-      title: 'Activation Failed',
-      message: error.message || 'Failed to activate insured member'
-    });
+    addToast({ type: 'error', title: 'Activation Failed', message: error.message });
   }
 }
 
@@ -139,25 +112,16 @@ async function handleDeactivateWithClose(insuredId) {
   try {
     const response = await changeInsuredStatus(insuredId, 'INACTIVE');
     if (response.success) {
-      addToast({
-        type: 'success',
-        title: 'Status Updated',
-        message: 'Insured member has been deactivated'
-      });
+      addToast({ type: 'success', title: 'Status Updated', message: 'Insured member has been deactivated' });
       insuredStore.update(insuredId, { status: 'INACTIVE' });
     } else {
       throw new Error(response.error || 'Failed to deactivate');
     }
   } catch (error) {
-    addToast({
-      type: 'error',
-      title: 'Deactivation Failed',
-      message: error.message || 'Failed to deactivate insured member'
-    });
+    addToast({ type: 'error', title: 'Deactivation Failed', message: error.message });
   }
 }
 </script>
-
 <template>
   <tr 
     v-for="(row, idx) in rowData" 
@@ -167,48 +131,15 @@ async function handleDeactivateWithClose(insuredId) {
   >  
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
-    <!-- Insured Photo Column -->
-   
-
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
-      <div v-if="key === 'status'" class="truncate">  
-        <span 
-          class="px-2.5 py-1 rounded-full text-xs font-medium"
-          :class="getStatusStyle(row.status)"
-        >
-          {{ row.status }}
+      <div v-if="key === 'totalAmount'" class="truncate">  
+        <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#DFF1F1] text-[#02676B]">
+          ETB {{ row.totalAmount.toFixed(2) }}
         </span>
       </div>
-     
-       <div v-else-if="key === 'fullName'" class="text-gray-700 flex items-center gap-2.5 ">
-       
-      <div class="flex justify-center items-center">
-        <img 
-          v-if="row.photoBase64" 
-          :src="row.photoBase64" 
-          alt="Profile" 
-          class="h-10 w-10 object-cover rounded-full border border-gray-200"
-        />
-        <img 
-          v-else-if="row.photoUrl" 
-          :src="row.photoUrl" 
-          alt="Profile" 
-          class="h-10 w-10 object-cover rounded-full border border-gray-200"
-        />
-        <img 
-          v-else-if="row.photoPath" 
-          :src="`${getBaseUrl()}/insured/photo/${row.photoPath}`" 
-          alt="Profile" 
-          class="h-10 w-10 object-cover rounded-full border border-gray-200"
-          @error="handleImageError"
-        />
-        <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
-          <span class="text-gray-500 text-xs">No Photo</span>
-        </div>
-      </div>
-       <div>
-         {{ row.firstName }} {{ row.fatherName }} {{ row.grandfatherName }}
-      </div>
+      
+      <div v-else-if="key === 'payerUuid'" class="text-gray-700">
+        {{ payerNames[row[key]] || row[key] || 'Loading...' }}
       </div>
 
       <span v-else class="text-gray-700">
@@ -216,7 +147,6 @@ async function handleDeactivateWithClose(insuredId) {
       </span>
     </td>  
 
-    <!-- Actions Dropdown Column -->
     <td class="p-3">
       <div class="dropdown-container relative">
         <button 
@@ -234,49 +164,48 @@ async function handleDeactivateWithClose(insuredId) {
           class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         >
           <div class="py-1">
-            
-              <button 
+            <button 
               @click.stop="handleEditWithClose(row)"
               class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-            <div class="flex items-start justify-start pl-4 gap-4">
-               <i v-html="icons.edits"/>
-              Edit
-            </div>
+              <div class="flex items-start justify-start pl-4 gap-4">
+                <i v-html="icons.edits"/>
+                Edit
+              </div>
             </button>
-             <button 
-             @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
+            <button 
+              @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-             <div class="flex items-center justify-start pl-4 gap-4">
-              <i v-html="icons.details" />
-              Details
-            </div>
+              <div class="flex items-center justify-start pl-4 gap-4">
+                <i v-html="icons.details" />
+                Details
+              </div>
             </button>
        
             <template v-if="row.status">
-      <button 
-        v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
-        @click.stop="handleActivateWithClose(row.insuredUuid || row.id)"
-        class="block w-full text-center py-2 text-sm text-[#28A745]  hover:bg-gray-100"
-      >
-        <div class="flex items-center justify-start pl-4 gap-4">
-          <i v-html="icons.activate" />
-          Activate
-        </div>
-      </button>
-     
-      <button 
-        v-if="row.status === 'ACTIVE' || row.status === 'Active'"
-        @click.stop="handleDeactivateWithClose(row.insuredUuid || row.id)"
-        class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
-      >
-        <div class="flex items-center justify-start pl-4 gap-4">
-          <i v-html="icons.deactivate" />
-          Deactivate
-        </div>
-      </button>
-    </template>
+              <button 
+                v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
+                @click.stop="handleActivateWithClose(row.insuredUuid || row.id)"
+                class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
+              >
+                <div class="flex items-center justify-start pl-4 gap-4">
+                  <i v-html="icons.activate" />
+                  Activate
+                </div>
+              </button>
+             
+              <button 
+                v-if="row.status === 'ACTIVE' || row.status === 'Active'"
+                @click.stop="handleDeactivateWithClose(row.insuredUuid || row.id)"
+                class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
+              >
+                <div class="flex items-center justify-start pl-4 gap-4">
+                  <i v-html="icons.deactivate" />
+                  Deactivate
+                </div>
+              </button>
+            </template>
           </div>
         </div>
       </div>

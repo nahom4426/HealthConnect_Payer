@@ -36,6 +36,7 @@ export default [
     children: [
       {
         path: "",
+        name: "CreditClaim", // Added name
         component: CreditClaim,
       },
       {
@@ -52,6 +53,7 @@ export default [
     children: [
       {
         path: "",
+        name: "ProcessClaims", // Added name
         component: ProcessClaims,
       },
       {
@@ -61,6 +63,7 @@ export default [
         children: [
           {
             path: "",
+            name: "ProcessClaimDetail", // Added name
             component: ProcessClaimDetail,
           },
           {
@@ -77,6 +80,7 @@ export default [
         children: [
           {
             path: "",
+            name: "ProcessCashClaimDetail", // Added name
             component: ProcessCashClaimDetail,
           },
           {
@@ -95,6 +99,7 @@ export default [
     children: [
       {
         path: "",
+        name: "VerifyClaim", // Added name
         component: VerifyClaim,
       },
       {
@@ -104,6 +109,7 @@ export default [
         children: [
           {
             path: "",
+            name: "VerifyClaimDetail", // Added name
             component: VerifyClaimDeail,
           },
           {
@@ -122,6 +128,7 @@ export default [
     children: [
       {
         path: "",
+        name: "ApproveClaims", // Added name
         component: ApproveClaims,
       },
       {
@@ -131,6 +138,7 @@ export default [
         children: [
           {
             path: "",
+            name: "ApproveClaimDetail", // Added name
             component: ApproveClaimDetail,
           },
           {
@@ -149,6 +157,7 @@ export default [
     children: [
       {
         path: "",
+        name: "AuthorizeClaims", // Added name
         component: AuthorizeClaims,
       },
       {
@@ -158,7 +167,8 @@ export default [
         children: [
           {
             path: "",
-            component: AuthorizeClaimsDetail
+            name: "AuthorizeClaimsDetail", // Added name
+            component: AuthorizeClaimsDetail,
           },
           {
             path: "individual/:claimUuid",
@@ -175,25 +185,27 @@ export default [
     component: RouterView,
     children: [
       {
-        path: '',
-        component: CompletedClaimss
+        path: "",
+        name: "CompletedClaims", // Added name
+        component: CompletedClaimss,
       },
       {
-        path: 'detail/:providerUuid/:batchCode',
+        path: "detail/:providerUuid/:batchCode",
         name: "Completed Claim Batch Detail",
         component: RouterView,
         children: [
           {
-            path: '',
-            component: CompletedClaimsDetail
+            path: "",
+            name: "CompletedClaimDetail", // Added name
+            component: CompletedClaimsDetail,
           },
           {
             path: "individual/:claimUuid",
             name: "Completed Individual Detail",
             component: CompletedClaimsIndividualDetail,
-          }
-        ]
-      }
-    ]
+          },
+        ],
+      },
+    ],
   },
 ];
