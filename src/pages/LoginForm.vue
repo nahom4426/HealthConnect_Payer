@@ -12,14 +12,14 @@ import { ref } from "vue";
 import InputEmail from "@/components/new_form_elements/InputEmail.vue";
 import ConfirmationCodeInput from "./confimationCode.vue";
 
-const confirmationCode = ref('');
+const confirmationCode = ref("");
 const showForgotPassword = ref(false);
 const confirmationCodeSent = ref(false);
 const showNewPasswordForm = ref(false);
 const showSuccessForm = ref(false);
-const userEmail = ref('');
-const newPassword = ref('');
-const confirmNewPassword = ref('');
+const userEmail = ref("");
+const newPassword = ref("");
+const confirmNewPassword = ref("");
 
 const forgotReq = useApiRequest();
 const resetReq = useApiRequest();
@@ -48,7 +48,6 @@ function handleForgotPassword({ values }) {
 
 // Step 2: Submit code and go to password form
 function handleConfirmCode() {
-  console.log("Confirmation code:", confirmationCode.value);
   if (!confirmationCode.value || confirmationCode.value.length < 6) {
     return toasted(false, "Please enter the confirmation code.");
   }
@@ -74,7 +73,10 @@ function handleNewPassword({ values }) {
         confirmationCodeSent.value = false;
         showSuccessForm.value = true;
       } else {
-        toasted(false, res.error || "Failed to reset password. Please try again.");
+        toasted(
+          false,
+          res.error || "Failed to reset password. Please try again."
+        );
       }
     }
   );
@@ -90,8 +92,7 @@ let detiail = localStorage.getItem("userDetail");
 function reRoute() {
   if (route.query.redirect && route.query?.from == "other")
     location.href = route.query.redirect;
-  else if (route.query.redirect)
-    router.replace(route.query.redirect);
+  else if (route.query.redirect) router.replace(route.query.redirect);
   else router.replace("/");
 }
 
@@ -127,20 +128,27 @@ function handleLogin({ values }) {
 </script>
 
 <template>
- <div class="w-full max-w-md bg-white rounded-lg shadow-lg p-6 sm:p-10 md:p-12 lg:p-16 overflow-y-auto">
-     <!-- Logo -->
-    <div class="flex items-center justify-center mb-8 border-b border-gray-300 pb-8">
-      <img src="../assets/logo.svg" alt="HealthConnect Logo" class="h-10 mr-2" />
-      <h1 class="text-2xl md:text-3xl font-bold text-[#02676B]">HealthConnect</h1>
+  <div
+    class="w-full max-w-md bg-white rounded-lg shadow-lg p-6 sm:p-10 md:p-12 lg:p-16"
+  >
+    <!-- Logo -->
+    <div
+      class="flex items-center justify-center mb-8 border-b border-gray-300 pb-8"
+    >
+      <img
+        src="../assets/logo.svg"
+        alt="HealthConnect Logo"
+        class="h-10 mr-2"
+      />
+      <h1 class="text-2xl md:text-3xl font-bold text-[#02676B]">
+        HealthConnect
+      </h1>
     </div>
-    
 
     <!-- Header text -->
     <div class="text-center text-[#373946] m-8 px-6 gap-4">
       <h2 class="text-lg md:text-xl mb-2 pb-4 font-semibold">
-        <template v-if="showSuccessForm">
-          Congratulations!
-        </template>
+        <template v-if="showSuccessForm"> Congratulations! </template>
         <template v-else-if="showNewPasswordForm">
           Reset your password
         </template>
@@ -150,25 +158,26 @@ function handleLogin({ values }) {
         <template v-else-if="showForgotPassword">
           You forgot your password?
         </template>
-        <template v-else>
-          Nice to see you again 👋
-        </template>
+        <template v-else> Nice to see you again 👋 </template>
       </h2>
-      <p class="text-sm ">
+      <p class="text-sm">
         <template v-if="showSuccessForm">
-          You have successfully reset your password. Now, log in to the system using your new password.
+          You have successfully reset your password. Now, log in to the system
+          using your new password.
         </template>
         <template v-else-if="showNewPasswordForm">
           Enter and confirm your new password.
         </template>
         <template v-else-if="showForgotPassword && confirmationCodeSent">
-          Please confirm your email using the 6-digit code we sent to {{ userEmail }}.
+          Please confirm your email using the 6-digit code we sent to
+          {{ userEmail }}.
         </template>
         <template v-else-if="showForgotPassword">
           Please enter your email address to receive a confirmation code.
         </template>
         <template v-else>
-          Upon successful authentication, access your role-specific dashboard within the platform.
+          Upon successful authentication, access your role-specific dashboard
+          within the platform.
         </template>
       </p>
     </div>
@@ -189,10 +198,16 @@ function handleLogin({ values }) {
     </NewFormLayout>
 
     <!-- New Password Form -->
-    <NewFormLayout v-else-if="showNewPasswordForm" v-slot="{ submit }" id="new-password-form">
+    <NewFormLayout
+      v-else-if="showNewPasswordForm"
+      v-slot="{ submit }"
+      id="new-password-form"
+    >
       <div class="space-y-5 px-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >New Password</label
+          >
           <InputPassword
             name="newPassword"
             validation="required|min:8"
@@ -200,7 +215,9 @@ function handleLogin({ values }) {
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Confirm New Password</label
+          >
           <InputPassword
             name="confirmNewPassword"
             validation="required|confirmed:@newPassword"
@@ -220,10 +237,16 @@ function handleLogin({ values }) {
     </NewFormLayout>
 
     <!-- Confirmation Code Form -->
-    <NewFormLayout v-else-if="showForgotPassword && confirmationCodeSent" v-slot="{ submit }" id="confirmation-code-form">
+    <NewFormLayout
+      v-else-if="showForgotPassword && confirmationCodeSent"
+      v-slot="{ submit }"
+      id="confirmation-code-form"
+    >
       <div class="space-y-5 px-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Confirmation Code</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Confirmation Code</label
+          >
           <ConfirmationCodeInput
             v-model="confirmationCode"
             name="confirmationCode"
@@ -242,10 +265,16 @@ function handleLogin({ values }) {
     </NewFormLayout>
 
     <!-- Forgot Password Form -->
-    <NewFormLayout v-else-if="showForgotPassword" v-slot="{ submit }" id="forgot-password-form">
+    <NewFormLayout
+      v-else-if="showForgotPassword"
+      v-slot="{ submit }"
+      id="forgot-password-form"
+    >
       <div class="space-y-5 px-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Email</label
+          >
           <InputEmail
             name="email"
             validation="required|email"
@@ -266,9 +295,11 @@ function handleLogin({ values }) {
 
     <!-- Login Form -->
     <NewFormLayout v-else v-slot="{ submit }" id="login-form">
-      <div class="space-y-5   my-6 gap-6">
+      <div class="space-y-5 my-6 gap-6">
         <div class="pb-3">
-          <label class="block text-sm font-medium pb-2 text-gray-700 mb-1">Email</label>
+          <label class="block text-sm font-medium pb-2 text-gray-700 mb-1"
+            >Email</label
+          >
           <InputEmail
             name="email"
             validation="required|email"
@@ -276,15 +307,21 @@ function handleLogin({ values }) {
           />
         </div>
         <div class="pb-3">
-          <label class="block text-sm pb-2 font-medium text-gray-700 mb-1">Password</label>
+          <label class="block text-sm pb-2 font-medium text-gray-700 mb-1"
+            >Password</label
+          >
           <InputPassword
             name="password"
             validation="required"
             :attributes="{ placeholder: 'Enter your password' }"
           />
         </div>
-        <div class="mt-6 text-right text-sm text-gray-600 ">
-          <a href="#" @click.prevent="toggleForgotPassword" class="text-[#64748B] hover:underline">
+        <div class="mt-6 text-right text-sm text-gray-600">
+          <a
+            href="#"
+            @click.prevent="toggleForgotPassword"
+            class="text-[#64748B] hover:underline"
+          >
             Forgot password?
           </a>
         </div>
@@ -301,8 +338,15 @@ function handleLogin({ values }) {
     </NewFormLayout>
 
     <!-- Footer Link -->
-    <div v-if="showForgotPassword || showNewPasswordForm" class="mt-6 text-center text-sm text-gray-600">
-      <a href="#" @click.prevent="toggleForgotPassword" class="text-blue-600 hover:underline">
+    <div
+      v-if="showForgotPassword || showNewPasswordForm"
+      class="mt-6 text-center text-sm text-gray-600"
+    >
+      <a
+        href="#"
+        @click.prevent="toggleForgotPassword"
+        class="text-blue-600 hover:underline"
+      >
         Remember your password? Login now
       </a>
     </div>
@@ -313,7 +357,6 @@ function handleLogin({ values }) {
     </div>
   </div>
 </template>
-
 
 <style scoped>
 /* Improve scroll behavior on small screens */

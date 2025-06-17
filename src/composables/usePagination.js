@@ -8,12 +8,14 @@ export function usePagination(options = {}) {
     store: null,
     auto: true,
     perPage: 25,
+    totalElements: 0,
     cache: false,
     ...(options || {}),
   });
 
   const search = ref("");
-  const perPage = ref(paginationOptions.value.perPage);
+  const perPage = ref(paginationOptions.value.pageSize);
+  const totalElements = ref(paginationOptions.value.totalElements || 0);
 
   const req = useApiRequest();
 
@@ -36,8 +38,6 @@ export function usePagination(options = {}) {
         })
       );
     } else {
-      console.log(pagination.page.value);
-
       return JSON.parse(
         JSON.stringify({
           searchKey: search.value || undefined,
@@ -71,11 +71,12 @@ export function usePagination(options = {}) {
           paginationOptions.value.store.set(res.data?.content || []);
         }
 
-        pagination.totalPages.value = res.data?.[0]?.totalPages || 1;
-        if (
-          res.success &&
-          res.data?.content?.length < pagination.limit.value
-        ) {
+        pagination.totalPages.value = res.data?.totalPages || 1;
+        totalElements.value = res.data?.totalElements || 0;
+        pagination.totalElements.value = res.data?.totalElements || 0;
+        console.log("jjj", totalElements.value, pagination.totalElements.value);
+
+        if (res.success && res.data?.content?.length < pagination.limit.value) {
           pagination.done.value = true;
         }
       },
@@ -178,6 +179,8 @@ export function usePagination(options = {}) {
   provide("totalPages", pagination.totalPages);
   provide("searching", searching);
   provide("send", send);
+  provide("perPage", perPage);
+  provide("totalElements", pagination.totalElements.value);
 
   const page = computed(() => {
     return searching.value
@@ -197,6 +200,7 @@ export function usePagination(options = {}) {
     page,
     search,
     perPage,
+    totalElements,
     send,
     totalPages: req.response.value?.totalPages || 0,
     data:

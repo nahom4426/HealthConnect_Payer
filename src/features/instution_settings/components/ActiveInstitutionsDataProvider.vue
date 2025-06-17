@@ -8,8 +8,8 @@ import { debounce } from "@/utils/debounce";
 const props = defineProps({
   search: {
     type: String,
-    default: ""
-  }
+    default: "",
+  },
 });
 
 const store = useInstitutions();
@@ -21,8 +21,8 @@ const pagination = usePagination({
   cb: (data) =>
     getActiveInstitutions({
       ...data,
-      search: props.search.trim() || undefined
-    })
+      search: props.search.trim() || undefined,
+    }),
 });
 
 // Initialize with current search term
@@ -52,14 +52,14 @@ defineExpose({
   currentPage: computed(() => store.currentPage),
   itemsPerPage: computed(() => store.itemsPerPage),
   setPage: store.setPage,
-  setLimit: store.setLimit
+  setLimit: store.setLimit,
 });
 </script>
 
 <template>
-  <slot 
-    :institutions="store.institutions" 
-    :pending="pagination.pending.value" 
+  <slot
+    :institutions="store.institutions"
+    :pending="pagination.pending.value"
     :currentPage="store.currentPage"
     :itemsPerPage="store.itemsPerPage"
     :totalPages="store.totalPages"

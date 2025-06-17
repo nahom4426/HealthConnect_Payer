@@ -87,6 +87,13 @@ watch(
 const nextPage = inject("next", null);
 const previousPage = inject("previous", null);
 const send = inject("send", () => {});
+const page = inject("page", 1);
+const searchTotalPages = inject("searchTotalPages");
+const totalPages = inject("totalPages", 1);
+
+const perPage = inject("perPage", 25);
+const totalElements = inject("totalElements");
+
 const selectedValue = ref(25);
 const active = ref(1);
 </script>
@@ -99,6 +106,9 @@ const active = ref(1);
   >
     <template v-if="lastCol" #lastColHeader="{ row }">
       <slot name="lastColHeader" :row="row" />
+    </template>
+    <template v-if="firstCol" #headerFirst="{ row }">
+      <slot name="headerFirst" :row="row" />
     </template>
     <template v-if="rowCom">
       <component
@@ -122,6 +132,7 @@ const active = ref(1);
         :cells="cells"
       >
         <template v-if="firstCol" #select="{ row }">
+          {{ console.log("kkk") }}
           <slot name="select" :row="row" />
         </template>
         <template v-if="lastCol" #lastCol="{ row }">
@@ -175,7 +186,7 @@ const active = ref(1);
       </select>
     </div>
     <div class="text-base-clr">
-      Showing {{ selectedValue - 24 }} to {{ selectedValue }} out of records
+      Showing {{ selectedValue - 24 }} to {{ perPage }} out of records
     </div>
     <div class="flex gap-[10px] items-center justify-between">
       <i @click="" class="px-3" v-html="icons.chevron_left"></i>
