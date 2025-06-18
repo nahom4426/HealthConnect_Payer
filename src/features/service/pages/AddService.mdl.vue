@@ -5,7 +5,7 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import icons from "@/utils/icons";
 import ServiceForm from "../components/form/ServiceForm.vue";
-import { createService } from "../api/serviceApi";
+import { createService } from "../api/serviceApi.ts";
 import { useService } from "../store/serviceStore";
 import { useAuthStore } from "@/stores/auth";
 import { toasted } from "@/utils/utils";

@@ -6,7 +6,7 @@ import Button from '@/components/Button.vue';
 import ModalFormSubmitButton from '@/components/new_form_builder/ModalFormSubmitButton.vue';
 import { getActiveInstitutions } from '@/features/instution_settings/api/institutionSettingsApi';
 import { searchInsuredByInstitution } from '@/features/insured_persons/api/insuredPersonsApi';
-import { searchServices } from '@/features/services/Api/serviceApi';
+import { searchServices } from '@/features/service/api/serviceApi';
 import { useAuthStore } from '@/stores/auth';
 import { openModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
@@ -30,6 +30,10 @@ interface Employee {
   birthDate: string;
   eligible: boolean;
   profilePictureBase64?: string;
+  status?: string;
+  gender?: string;
+  address?: string;
+  email?: string;
 }
 
 interface Service {
@@ -52,6 +56,7 @@ interface CreditServiceFormData {
   medicationItems: {
     serviceUuid: string;
     quantity: number;
+    paymentAmount: number;
   }[];
 }
 
@@ -77,6 +82,7 @@ const error = ref<string | null>(null);
 const currentStep = ref<'selectEmployee' | 'selectServices'>('selectEmployee');
 const services = ref<Service[]>([]);
 const addedServices = ref<Service[]>([]);
+const filteredServices = ref<Service[]>([]);
 const auth = useAuthStore();
 const providerUuid = ref(auth.auth?.user?.providerUuid || '');
 
@@ -90,19 +96,31 @@ const employeeDetails = computed(() => {
   if (!selectedEmployee.value) return null;
 
   return {
-   fullName: selectedEmployee.value.fullName,
+    fullName: selectedEmployee.value.fullName,
     employeeId: selectedEmployee.value.idNumber,
     role: selectedEmployee.value.position,
     phone: selectedEmployee.value.phone,
-    email: selectedEmployee.value.email,
-    gender: selectedEmployee.value.gender,
-    address: selectedEmployee.value.address,
-    birthDate: selectedEmployee.value.birthDate,
-    status: selectedEmployee.value.status,
+    email: selectedEmployee.value.email || 'N/A',
+    gender: selectedEmployee.value.gender || 'Unknown',
+    address: selectedEmployee.value.address || 'Unknown',
+    idNumber: selectedEmployee.value.idNumber,
+    birthDate: selectedEmployee.value.birthDate || 'Unknown',
+    status: selectedEmployee.value.status || 'UNKNOWN',
     profilePicture: selectedEmployee.value.profilePictureBase64,
   };
 });
 
+const isServiceAdded = (serviceId: string) => {
+  return addedServices.value.some(service => service.id === serviceId);
+};
+
+const payerOptions = computed(() => {
+  if (!payers.value || !Array.isArray(payers.value)) return [];
+  return payers.value.map(payer => ({
+    label: `${payer.payerName} (${payer.telephone || payer.email || 'N/A'})`,
+    value: payer.payerUuid,
+  }));
+});
 
 // Lifecycle hooks
 onMounted(async () => {
@@ -129,8 +147,12 @@ let serviceSearchTimeout: number;
 watch(searchServiceQuery, async (newQuery) => {
   clearTimeout(serviceSearchTimeout);
   serviceSearchTimeout = setTimeout(async () => {
-    await fetchServices();
-  }, 300);
+    if (newQuery.trim().length > 0) {
+      await fetchServices();
+    } else {
+      filteredServices.value = [];
+    }
+  }, 500);
 });
 
 // Methods
@@ -193,9 +215,9 @@ async function fetchEmployees() {
       position: emp.position || 'Unknown position',
       idNumber: emp.idNumber || 'N/A',
       birthDate: emp.birthDate || 'Unknown',
-     
       profilePictureBase64: emp.profilePictureBase64 || null,
-      status: emp.status || 'UNKNOWN'}));
+      status: emp.status || 'UNKNOWN'
+    }));
 
     if (employees.value.length === 0) {
       error.value = 'No employees found for this payer';
@@ -208,18 +230,31 @@ async function fetchEmployees() {
   }
 }
 
+
 async function fetchServices() {
-  if (!providerUuid.value) return;
-  
+  if (!providerUuid.value) {
+    error.value = 'Provider UUID is missing';
+    return;
+  }
+
   try {
     pending.value = true;
+    error.value = null;
+    
     const response = await searchServices(providerUuid.value, { 
       search: searchServiceQuery.value,
       page: 1,
       limit: 25
     });
 
-    services.value = response.data.map((service: any) => ({
+    // Handle the response structure that matches your API
+    const servicesData = response.data; // Adjust this based on your actual API response structure
+
+    if (!Array.isArray(servicesData)) {
+      throw new Error('Invalid service data format');
+    }
+
+    services.value = servicesData.map((service: any) => ({
       id: service.serviceUuid,
       serviceUuid: service.serviceUuid,
       serviceCode: service.serviceCode,
@@ -229,9 +264,15 @@ async function fetchServices() {
       quantity: 1
     }));
 
+    // Filter out already added services and inactive ones
+    filteredServices.value = services.value.filter(
+      service => service.status === 'ACTIVE' && !isServiceAdded(service.id)
+    );
+
   } catch (err) {
     console.error('Error fetching services:', err);
     error.value = 'Failed to load services. Please try again.';
+    filteredServices.value = [];
   } finally {
     pending.value = false;
   }
@@ -245,7 +286,9 @@ function selectEmployee(employee: Employee) {
 async function continueToServices() {
   if (selectedEmployee.value) {
     currentStep.value = 'selectServices';
-    await fetchServices();
+    // Don't fetch services yet - wait for user to search
+    services.value = [];
+    filteredServices.value = [];
   }
 }
 
@@ -254,9 +297,16 @@ function backToEmployeeSelection() {
 }
 
 function addService(service: Service) {
-  if (service.status !== 'ACTIVE') return;
+  if (service.status !== 'ACTIVE' || isServiceAdded(service.id)) return;
   
-  addedServices.value.push({ ...service });
+  addedServices.value.push({ 
+    ...service,
+    quantity: 1
+  });
+  
+  // Clear search results after adding
+  searchServiceQuery.value = '';
+  filteredServices.value = [];
 }
 
 function removeService(index: number) {
@@ -264,7 +314,10 @@ function removeService(index: number) {
 }
 
 function updateQuantity(index: number, value: number) {
-  if (value < 1) return;
+  if (value < 1) {
+    addedServices.value[index].quantity = 1;
+    return;
+  }
   addedServices.value[index].quantity = value;
 }
 
@@ -314,27 +367,22 @@ function handleSubmit() {
   const formData: CreditServiceFormData = {
     payerUuid: selectedPayer.value!,
     phone: selectedEmployee.value!.phone,
+    patientName: selectedEmployee.value!.fullName,
     dispensingDate: dispensingDate.value,
     prescriptionNumber: prescriptionNumber.value,
     pharmacyTransactionId: pharmacyTransactionId.value,
     medicationItems: addedServices.value.map(item => ({
       serviceUuid: item.serviceUuid,
-      quantity: Number(item.quantity)
+      quantity: Number(item.quantity),
+      paymentAmount: parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
     }))
   };
 
+  // Log the formData to the console
+  console.log(formData);
+
   props.onSubmit(formData);
 }
-const payerOptions = computed(() => {
-  if (!payers.value || !Array.isArray(payers.value)) return [];
-  return payers.value.map(payer => ({
-    label: `${payer.payerName} (${payer.telephone || payer.email || 'N/A'})`,
-    value: payer.payerUuid,
-  }));
-});
-const updateFormData = (key: string, value: any) => {
-  formData[key] = value;
-};
 </script>
 
 <template>
@@ -345,339 +393,96 @@ const updateFormData = (key: string, value: any) => {
   >
     <!-- Step 1: Select Employee -->
     <div v-if="currentStep === 'selectEmployee'" class="py-3 space-y-6">  
-      <!-- <h1 class="text-2xl font-bold text-gray-800">Add Credit Services</h1>
-      <p class="text-gray-600">Add a new credit service</p> -->
-
       <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
         {{ error }}
       </div>
 
-      <!-- <template v-if="pending">
-        <div class="flex justify-center py-8">
-          <Spinner class="h-8 w-8 text-teal-600" />
-        </div>
-      </template> -->
-      <!-- <template v-else> -->
-        <div class="flex gap-4 mt-4">
-          <div class="w-72">
-            <!-- <label class="block text-sm font-medium text-gray-700 mb-1">Select Payer *</label> -->
-                        <Select     
-                  :obj="true"
-                  name="payer"
-                  label="Select Payer"
-                  validation="required"
-                  :options="payerOptions"
-                  :disabled="pending"
-                  :attributes="{
-                    placeholder: 'Select a Payer'
-                  }"
-                  v-model="selectedPayer"
-
-                />
-
-          </div>
-          
-                              <div class="w-full">
-                              <Input 
-                      name="searchEmployeeQuery" 
-                      label="Search Employees" 
-                      :attributes="{
-                        placeholder: 'Search employees',
-                        // disabled: !selectedPayer,
-                      }"
-                      v-model="searchEmployeeQuery"
-                    />
-
-          </div>
-        </div>
-
-        <!-- Employees Table -->
-        <div  class="mt-6">
-          
-         <template v-if="pending">
-          <div class="flex justify-center py-8">
-            <Spinner class="h-8 w-8 text-teal-600" />
-          </div>
-        </template>
-          <template v-else>
-            <div class=" border rounded-lg">
-             <table class="min-w-full divide-y divide-gray-200">
-  <thead class="border-b">
-    <tr>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eligibility</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-    </tr>
-  </thead>
-  <tbody class="bg-white divide-y divide-gray-200">
-    <tr 
-      v-for="(employee, index) in employees" 
-      :key="employee.insuredUuid"
-      :class="{
-        'bg-[#DFF1F1]': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid
-      }"
-    >
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        {{ employee.idNumber }}
-      </td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {{ employee.fullName }}
-      </td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {{ employee.phone }}
-      </td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {{ employee.position }}
-      </td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
-        <span :class="employee.eligible ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-red-600'">
-          {{ employee.eligible ? 'Eligible' : 'Not Eligible' }}
-        </span>
-      </td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-        <button
-          type="button"
-          @click="selectEmployee(employee)"
-          :class="{
-            'text-white bg-[#02676B] px-4 py-2 hover:text-teal-900': !(selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid),
-            'text-white bg-[#02676B] px-4 py-2 rounded': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid
-          }"
-          :disabled="!employee.eligible"
-        >
-          {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Selected' : 'Select' }}
-        </button>
-      </td>
-    </tr>
-  </tbody>
-</table>
-            </div>
-          </template>
-        </div>
-
-        <!-- Continue Button -->
-        <div v-if="selectedEmployee" class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
-           <Button
-        type="button"
-        @click="props.onCancel"
-        class="text-[#75778B] px-6 py-4 border-[1px] border-[#75778B] rounded-lg hover:bg-gray-50"
-        :disabled="pending"
-      >
-        Cancel
-      </Button>
-          <button
-            type="button"
-            class="px-6 py-2 bg-primary text-white rounded-md hover:bg-teal-700"
-            @click="continueToServices"
-          >
-            Continue to Services
-          </button>
-
-        </div>
-      <!-- </template> -->
-    </div>
-
-    <!-- Step 2: Select Services -->
-    <div v-else-if="employeeDetails" class="py-3 space-y-6">
-      <!-- <h1 class="text-2xl font-bold text-gray-800">Add Credit Services</h1>
-      <p class="text-gray-600">Add a new credit service</p> -->
-
-      <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-        {{ error }}
-      </div>
-
-      <!-- Employee Details -->
-      <div v-if="employeeDetails" class="flex flex-col md:flex-row bg-gray-50 p-6 rounded-xl shadow-md">
-    <!-- Profile Photo -->
-    <div class="flex-shrink-0">
-      <img
-        :src="employeeDetails.profilePicture || defaultProfile"
-        alt="Profile"
-        class="w-40 h-40 object-cover rounded-lg"
-      />
-    </div>
-
-    <!-- Details -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 ml-6 mt-6 md:mt-0">
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Full Name</label>
-        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.fullName }}</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Phone</label>
-        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.phone }}</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Email</label>
-        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.email }}</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Employee ID</label>
-        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.employeeId }}</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Role</label>
-        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.role }}</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Gender</label>
-        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.gender }}</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Address</label>
-        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.address }}</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Birth Date</label>
-        <p class="mt-1 text-sm text-gray-900">{{ employeeDetails.birthDate }}</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Status</label>
-        <p class="mt-1">
-          <span
-            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-            :class="employeeDetails.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-          >
-            {{ employeeDetails.status }}
-          </span>
-        </p>
-      </div>
-    </div>
-  </div>
-      <!-- Credit Service Details -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Prescription Number *</label>
-          <input
-            v-model="prescriptionNumber"
-            type="text"
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-            required
+      <div class="flex gap-4 mt-4">
+        <div class="w-72">
+          <Select     
+            :obj="true"
+            name="payer"
+            label="Select Payer"
+            validation="required"
+            :options="payerOptions"
+            :disabled="pending"
+            :attributes="{
+              placeholder: 'Select a Payer'
+            }"
+            v-model="selectedPayer"
           />
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Pharmacy Transaction ID *</label>
-          <input
-            v-model="pharmacyTransactionId"
-            type="text"
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-            required
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Dispensing Date *</label>
-          <input
-            v-model="dispensingDate"
-            type="date"
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-            required
+        
+        <div class="w-full">
+          <Input 
+            name="searchEmployeeQuery" 
+            label="Search Employees" 
+            :attributes="{
+              placeholder: 'Search employees',
+            }"
+            v-model="searchEmployeeQuery"
           />
         </div>
       </div>
 
-      <!-- Services Section -->
-      <div class="mt-8">
-        <h2 class="text-lg font-semibold mb-4">Search and Select Services</h2>
-        <div class="mb-4">
-          <input
-            v-model="searchServiceQuery"
-            type="text"
-            placeholder="Search Services"
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-          />
-        </div>
-
+      <!-- Employees Table -->
+      <div class="mt-6">
         <template v-if="pending">
           <div class="flex justify-center py-8">
             <Spinner class="h-8 w-8 text-teal-600" />
           </div>
         </template>
         <template v-else>
-          <div class="overflow-x-auto mb-8">
+          <div class="border rounded-lg">
             <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
+              <thead class="border-b">
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Code</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Name</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eligibility</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="(service, index) in services" :key="service.id">
+                <tr 
+                  v-for="(employee, index) in employees" 
+                  :key="employee.insuredUuid"
+                  :class="{
+                    'bg-[#DFF1F1]': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid
+                  }"
+                >
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ service.serviceCode }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.serviceName }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.paymentAmount }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ employee.idNumber }}
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span :class="service.status === 'ACTIVE' ? 'text-green-600' : 'text-red-600'">
-                      {{ service.status }}
+                    {{ employee.fullName }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ employee.phone }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ employee.position }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                    <span :class="employee.eligible ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-red-600'">
+                      {{ employee.eligible ? 'Eligible' : 'Not Eligible' }}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       type="button"
-                      @click="addService(service)"
-                      class="text-teal-600 hover:text-teal-900"
-                      :disabled="service.status !== 'ACTIVE'"
+                      @click="selectEmployee(employee)"
+                      :class="{
+                        'text-white bg-[#02676B] px-4 py-2 hover:text-teal-900': !(selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid),
+                        'text-white bg-[#02676B] px-4 py-2 rounded': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid
+                      }"
+                      :disabled="!employee.eligible"
                     >
-                      Add
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h2 class="text-lg font-semibold mb-4">Added Services</h2>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Code</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Name</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="(service, index) in addedServices" :key="index">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ service.serviceCode }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.serviceName }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.paymentAmount }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <input
-                      type="number"
-                      min="1"
-                      v-model.number="service.quantity"
-                      @change="updateQuantity(index, $event.target.valueAsNumber)"
-                      class="w-20 p-1 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                    />
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      type="button"
-                      @click="removeService(index)"
-                      class="text-red-600 hover:text-red-900"
-                    >
-                      Remove
+                      {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Selected' : 'Select' }}
                     </button>
                   </td>
                 </tr>
@@ -687,9 +492,237 @@ const updateFormData = (key: string, value: any) => {
         </template>
       </div>
 
-      <!-- </template> -->
- 
-         <div  class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
+      <!-- Continue Button -->
+      <div v-if="selectedEmployee" class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
+        <Button
+          type="button"
+          @click="props.onCancel"
+          class="text-[#75778B] px-6 py-4 border-[1px] border-[#75778B] rounded-lg hover:bg-gray-50"
+          :disabled="pending"
+        >
+          Cancel
+        </Button>
+        <button
+          type="button"
+          class="px-6 py-2 bg-primary text-white rounded-md hover:bg-teal-700"
+          @click="continueToServices"
+        >
+          Continue to Services
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Select Services -->
+    <div v-else-if="employeeDetails" class="py-3 space-y-6">
+      <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        {{ error }}
+      </div>
+
+      <!-- Employee Details -->
+      <div class="bg-[#F6F7FA] p-4 flex">
+        <div class="flex flex-col md:flex-row gap-4 p-4 bg-[#F6F7FA] rounded-xl shadow-sm w-full">
+          <!-- Profile Photo -->
+          <div class="w-[10rem] h-[10rem] flex items-center justify-center rounded-lg overflow-hidden">
+            <img 
+              :src="employeeDetails.profilePicture || 'https://randomuser.me/api/portraits/men/75.jpg'" 
+              alt="Profile" 
+              class="w-full h-full object-cover"
+            />
+          </div>
+
+          <!-- Left Info Section -->
+          <div class="bg-white rounded-lg p-4 w-full md:w-[20rem] space-y-2">
+            <div class="flex">
+              <span class="text-xs text-[#75778B] w-28">Full Name</span>
+              <span class="text-sm font-medium text-[#373946]">{{ employeeDetails.fullName }}</span>
+            </div>
+            <div class="flex">
+              <span class="text-xs text-[#75778B] w-28">Role</span>
+              <span class="text-sm font-medium text-[#373946]">{{ employeeDetails.role }}</span>
+            </div>
+            <div class="flex">
+              <span class="text-xs text-[#75778B] w-28">Phone</span>
+              <span class="text-sm font-medium text-[#373946]">{{ employeeDetails.phone }}</span>
+            </div>
+            <div class="flex">
+              <span class="text-xs text-[#75778B] w-28">Email</span>
+              <span class="text-sm font-medium text-[#373946]">{{ employeeDetails.email }}</span>
+            </div>
+          </div>
+
+          <!-- Right Info Section -->
+          <div class="bg-white rounded-lg p-4 w-full md:w-[20rem] space-y-2">
+            <div class="flex">
+              <span class="text-xs text-[#75778B] w-28">Employee ID</span>
+              <span class="text-sm font-medium text-[#373946]">{{ employeeDetails.employeeId }}</span>
+            </div>
+            <div class="flex">
+              <span class="text-xs text-[#75778B] w-28">Address</span>
+              <span class="text-sm font-medium text-[#373946]">{{ employeeDetails.address }}</span>
+            </div>
+            <div class="flex">
+              <span class="text-xs text-[#75778B] w-28">Gender</span>
+              <span class="text-sm font-medium text-[#373946]">{{ employeeDetails.gender }}</span>
+            </div>
+            <div class="flex">
+              <span class="text-xs text-[#75778B] w-28">Age</span>
+              <span class="text-sm font-medium text-[#373946]">{{ employeeDetails.age }}</span>
+            </div>
+          </div>
+
+          <!-- Status & Level Section -->
+          <div class="bg-white rounded-lg p-4 w-full md:w-[20rem] space-y-2">
+            <div class="flex p-2 gap-2 bg-[#DFF1F1]">
+              <span class="text-xs font-medium bg-primary py-2 rounded-lg px-3 flex items-center gap-2 text-white">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M0 6C0 2.68629 2.68629 0 6 0C9.31371 0 12 2.68629 12 6C12 9.31371 9.31371 12 6 12C2.68629 12 0 9.31371 0 6ZM5.40001 8.34854L9.27427 4.47427L8.42575 3.62574L5.40001 6.65148L3.72427 4.97574L2.87574 5.82427L5.40001 8.34854Z" fill="white"/>
+                </svg>
+                {{ employeeDetails.status }}
+              </span>
+              <div class="flex-1 flex items-center px-2 justify-between">
+                <span class="text-sm font-medium items-center text-center justify-center">{{ employeeDetails.idNumber }}</span>
+              </div>
+            </div>
+            <div class="flex">
+              <span class="bg-[#DFF1F1] text-[#02676B] px-6 py-3.5 rounded-md mt-2 text-sm font-medium">
+                C-Level
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Credit Service Details -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <div>
+          <Input
+            v-model="prescriptionNumber"
+            name="prescriptionNumber"
+            label="Prescription Number"
+            validation="required"
+            :attributes="{
+              placeholder: 'Enter prescription number',
+              required: true
+            }"
+          />
+        </div>
+        <div>
+          <Input
+            v-model="pharmacyTransactionId"
+            name="pharmacyTransactionId"
+            label="Pharmacy Transaction ID"
+            validation="required"
+            :attributes="{
+              placeholder: 'Enter pharmacy transaction ID',
+              required: true
+            }"
+          />
+        </div> 
+        <div>
+          <Input
+            v-model="dispensingDate"
+            name="dispensingDate"
+            label="Dispensing Date"
+            validation="required"
+            :attributes="{
+              type: 'date',
+              placeholder: 'Select dispensing date',
+              required: true
+            }"
+          />
+        </div>
+      </div>
+
+      <!-- Services Section -->
+      <div>
+        <h2 class="text-lg font-semibold mb-4">Add Services</h2>
+        
+        <!-- Service Search Input -->
+        <div class="flex gap-4 mb-6">
+          <div class="flex-1 relative">
+          <input
+  v-model="searchServiceQuery"
+  @keyup.enter="searchServices"
+  placeholder="Search services..."
+  class="w-full p-3 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+/>
+            <!-- Search Results Dropdown -->
+            <div 
+              v-if="filteredServices.length > 0"
+              class="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto"
+            >
+              <ul>
+                <li
+                  v-for="service in filteredServices"
+                  :key="service.id"
+                  @click="addService(service)"
+                  class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+                >
+                  <span>{{ service.serviceName }}</span>
+                  <span class="text-sm text-gray-500">{{ service.paymentAmount }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <button
+            @click="searchServices"
+            class="bg-primary text-white px-4 rounded-md hover:bg-teal-900 whitespace-nowrap"
+          >
+            Search
+          </button>
+        </div>
+
+        <!-- Added Services Table -->
+        <h2 class="text-lg font-semibold mb-4">Added Services</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-white border-b px-2">
+              <tr>
+                <th class="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Code</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="(service, index) in addedServices" :key="service.id">
+                <td class="px-1 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ service.serviceCode }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.serviceName }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.paymentAmount }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="number"
+                    min="1"
+                    v-model.number="service.quantity"
+                    @change="updateQuantity(index, $event.target.valueAsNumber)"
+                    class="w-20 p-1 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button
+                    type="button"
+                    @click="removeService(index)"
+                    class="bg-[#F14545] text-white px-3 rounded-md py-1 hover:bg-red-900"
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="addedServices.length === 0">
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                  No services added yet. Search for services above to add them.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
         <Button
           type="button"
           @click="backToEmployeeSelection"
@@ -709,10 +742,6 @@ const updateFormData = (key: string, value: any) => {
 </template>
 
 <style scoped>
-:deep(input), :deep(select) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-teal-500 focus:border-teal-500;
-}
-
 :deep(.form-control) {
   @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5;
 }
@@ -722,10 +751,10 @@ table {
 }
 
 th {
-  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+  @apply py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
 }
 
 td {
-  @apply px-6 py-4 whitespace-nowrap;
+  @apply py-4 whitespace-nowrap;
 }
 </style>

@@ -4,7 +4,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Login from "@/pages/Login.vue";
 import { useAuthStore } from "@/stores/auth";
 import creditInvoicesRoutes from "./creditInvoices.routes";
-import priceRoutes from "./price.routes";
+import priceRoutes from "./service.routes";
 import Dashboard from "@/features/Dashboard/pages/Dashboard.vue";
 import eligibility_checkRoutes from "./eligibility_check.routes";
 import claimRoutes from "./claim.routes";

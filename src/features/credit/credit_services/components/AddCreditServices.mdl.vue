@@ -9,7 +9,9 @@ import { ref } from "vue";
 import creditServicesFormDataProvider from "../form/creditServicesFormDataProvider.vue";
 import { createCredit } from "../api/creditServicesApi";
 import { useAuthStore } from "@/stores/auth";
+import { claimServices } from "../store/creditClaimsStore";
 
+const claimServicesStore = claimServices();
 const auth = useAuthStore();
 
 const pending = ref(false);
@@ -19,61 +21,37 @@ const formDataProvider = ref();
 async function handleSubmit(formValues: any) {
   try {
     pending.value = true;
-
-    // Validate required fields with better error messages
-    const requiredFields = [
-      { field: 'payerUuid', name: 'Payer' },
-      { field: 'phone', name: 'Phone Number' },
-      { field: 'dispensingDate', name: 'Dispensing Date' },
-      { field: 'prescriptionNumber', name: 'Prescription Number' },
-      { field: 'pharmacyTransactionId', name: 'Pharmacy Transaction ID' },
-      { field: 'medicationItems', name: 'Medication Items' }
-    ];
     
-    const missingFields = requiredFields.filter(fieldInfo => {
-      const value = formValues[fieldInfo.field];
-      return value === undefined || value === null || value === '' || 
-            (Array.isArray(value) && value.length === 0);
-    });
-
-    if (missingFields.length > 0) {
-      const fieldNames = missingFields.map(f => f.name).join(', ');
-      throw new Error(`Please fill in all required fields: ${fieldNames}`);
-    }
-
-    // Additional validation for medication items
-    if (formValues.medicationItems.some(item => !item.serviceUuid || !item.quantity)) {
-      throw new Error('All medication items must have both service and quantity specified');
-    }
-
-    // Prepare the form data
-    const formData = {
-      providerUuid: auth.auth?.user?.providerUuid || '', 
+    const payload = {
+      providerUuid: auth.auth?.user?.providerUuid || '',
       payerUuid: formValues.payerUuid,
       phone: formValues.phone,
+      patientName: formValues.patientName,
       dispensingDate: formValues.dispensingDate,
       prescriptionNumber: formValues.prescriptionNumber,
       pharmacyTransactionId: formValues.pharmacyTransactionId,
       medicationItems: formValues.medicationItems.map(item => ({
         serviceUuid: item.serviceUuid,
-        quantity: Number(item.quantity) // Ensure quantity is a number
+        quantity: Number(item.quantity) || 1
       }))
     };
 
-    console.log('Submitting credit service data:', formData);
-    
-    const result = await createCredit(formData);
+    const result = await createCredit(payload);
     
     if (result.success) {
-      toasted(true, 'Success', 'Credit service added successfully');
+      toasted(true, 'Success', result.data.message || 'Credit service added successfully');
+      
+      // Pass both API response and form values to the store
+      claimServicesStore.add(result.data, {
+        ...formValues
+      });
+      
       closeModal();
-      router.push('/claim_services');
-    } else {
-      throw new Error(result.error || 'Failed to add credit service');
+      router.push('/credit_services');
     }
   } catch (error) {
     console.error('Submission error:', error);
-    
+    toasted(false, 'Error', error.message || 'Failed to add credit service');
   } finally {
     pending.value = false;
   }

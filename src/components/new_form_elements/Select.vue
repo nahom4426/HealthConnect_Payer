@@ -57,8 +57,11 @@ const props = defineProps({
         </select>
         <div class="absolute pointer-events-none top-0 right-0 h-full">
           <slot name="right">
-            <div class="h-full ml-auto w-8 flex items-center justify-center">
-              <i v-html="icons.dropDown" />
+            <div class="h-full ml-auto w-8  flex items-center justify-center">
+              <svg width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M0.234314 0.834314C0.546734 0.521895 1.05327 0.521895 1.36569 0.834314L4 3.46863L6.63431 0.834314C6.94673 0.521895 7.45327 0.521895 7.76569 0.834314C8.0781 1.14673 8.0781 1.65327 7.76569 1.96568L4.56569 5.16568C4.25327 5.4781 3.74673 5.4781 3.43431 5.16568L0.234314 1.96569C-0.078105 1.65327 -0.0781051 1.14673 0.234314 0.834314Z" fill="#75778B"/>
+</svg>
+
             </div>
           </slot>
         </div>

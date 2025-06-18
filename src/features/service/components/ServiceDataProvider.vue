@@ -3,7 +3,7 @@ import { usePagination } from "@/composables/usePagination";
 import { useAuthStore } from "@/stores/auth";
 import { watch } from "vue";
 import { useService } from "../store/serviceStore";
-import { getAllServices } from "../api/serviceApi";
+import { getAllServices } from "../api/serviceApi.ts";
 
 const props = defineProps({
   search: String,

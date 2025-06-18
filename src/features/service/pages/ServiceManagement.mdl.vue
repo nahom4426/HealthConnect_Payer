@@ -7,7 +7,7 @@ import { toasted } from "@/utils/utils";
 import { useRoute } from "vue-router";
 import ServiceForm from "../components/form/ServiceForm.vue";
 import { useService } from "../store/serviceStore";
-import { getServiceByid, updateService } from "../api/serviceApi";
+import { getServiceByid, updateService } from "../api/serviceApi.ts";
 
 import { ref } from "vue";
 const props = defineProps({
