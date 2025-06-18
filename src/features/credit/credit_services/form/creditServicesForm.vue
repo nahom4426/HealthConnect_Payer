@@ -6,13 +6,13 @@ import Button from '@/components/Button.vue';
 import ModalFormSubmitButton from '@/components/new_form_builder/ModalFormSubmitButton.vue';
 import { getActiveInstitutions } from '@/features/instution_settings/api/institutionSettingsApi';
 import { searchInsuredByInstitution } from '@/features/insured_persons/api/insuredPersonsApi';
-import { getAllServices } from '@/features/service/api/serviceApi';
 import { useAuthStore } from '@/stores/auth';
 import { openModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import Spinner from '@/components/Spinner.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Input from '@/components/new_form_elements/Input.vue';
+import { getAllServices } from '@/features/service/api/serviceApi';
 
 interface Payer {
   payerUuid: string;
@@ -241,7 +241,7 @@ async function fetchServices() {
     pending.value = true;
     error.value = null;
     
-    const response = await searchServices(providerUuid.value, { 
+    const response = await getAllServices(providerUuid.value, { 
       search: searchServiceQuery.value,
       page: 1,
       limit: 25
@@ -642,7 +642,7 @@ function handleSubmit() {
           <div class="flex-1 relative">
           <input
   v-model="searchServiceQuery"
-  @keyup.enter="searchServices"
+  @keyup.enter="getAllServices"
   placeholder="Search services..."
   class="w-full p-3 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
 />
@@ -665,7 +665,7 @@ function handleSubmit() {
             </div>
           </div>
           <button
-            @click="searchServices"
+            @click="getAllServices"
             class="bg-primary text-white px-4 rounded-md hover:bg-teal-900 whitespace-nowrap"
           >
             Search
