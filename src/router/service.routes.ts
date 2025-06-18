@@ -1,7 +1,7 @@
-import AddService from "@/features/prices/pages/AddService.mdl.vue";
-import Price from "@/features/prices/pages/Price.vue";
-import ProvideServices from "@/features/prices/pages/ProvideServices.vue";
-import ServiceManagement from "@/features/prices/pages/ServiceManagement.mdl.vue";
+import AddService from "@/features/service/pages/AddService.mdl.vue";
+import service from "@/features/service/pages/sevice.vue";
+import ProvideServices from "@/features/service/pages/ProvideServices.vue";
+import ServiceManagement from "@/features/service/pages/ServiceManagement.mdl.vue";
 import Setting from "@/features/setting/pages/Setting.vue";
 
 export default[
@@ -18,7 +18,7 @@ export default[
     {
         path: "/services",
         name: "Services",
-        component:Price,
+        component:service,
       },
     {
         path:'/setting',

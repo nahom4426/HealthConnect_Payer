@@ -29,7 +29,12 @@ const providerUuid = ref(
   '' // fallback if not available
 );
 
-// ... your existing methods ...
+import { storeToRefs } from "pinia";
+
+const { claimServices: services } = storeToRefs(claimServicesStore); // Destructure with alias
+
+// Fetch initial data
+
 
 </script>
 

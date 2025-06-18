@@ -2,12 +2,13 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 
 // Medication Item interface
+// In your store file
 export interface MedicationItem {
-  medicationName: string;
-  quantity: number;
-  unitOfMeasure: string;
-  unitPrice: number;
-  totalPrice: number;
+  medicationName?: string;
+  quantity?: number;
+  unitOfMeasure?: string;
+  unitPrice?: number;
+  totalPrice?: number;
 }
 
 // Claim Service interface
@@ -57,11 +58,31 @@ export const claimServices = defineStore("claimServicesStore", () => {
     set(data);
   }
 
-  function add(data: ClaimService): void {
-    console.log("Adding claim service to store:", data);
-    claimServices.value.unshift(data);
-  }
+// In your claimServices store
+function add(apiResponse: any, formValues: any): void {
+  console.log("Raw API response:", apiResponse);
+  
+  // Transform the API response to match ClaimService interface
+  const newService: ClaimService = {
+    invoiceNumber: apiResponse.invoiceNumber || `INV-${Date.now()}`,
+    dispensingUuid: apiResponse.dispensingUuid,
+    payerUuid: formValues.payerUuid || apiResponse.payerUuid,
+    patientName: formValues.patientName || apiResponse.patientName || 'Unknown Patient',
+    insuranceId: apiResponse.insuranceId || null,
+    dispensingDate: formValues.dispensingDate || apiResponse.dispensingDate,
+    prescriptionNumber: formValues.prescriptionNumber || apiResponse.prescriptionNumber,
+    pharmacyTransactionId: formValues.pharmacyTransactionId || apiResponse.pharmacyTransactionId,
+    totalAmount: apiResponse.totalAmount ,
+    patientResponsibility: apiResponse.patientResponsibility || 0,
+    insuranceCoverage: apiResponse.insuranceCoverage || 0,
+    branchName: apiResponse.branchName || null,
+    createdAt: apiResponse.createdAt || new Date().toISOString(),
+    
+  };
 
+  console.log("Properly transformed claim service:", newService);
+  claimServices.value = [newService, ...claimServices.value]; // Add to beginning of array
+}
   function update(id: string, data: Partial<ClaimService>): void {
     console.log(`Updating claim service with UUID: ${id}`, data);
     

@@ -41,7 +41,7 @@ function remove(id) {
         :rows="pagination.data.value"
         :headers="{
           head: ['Category', 'Sub Category', 'Services', 'actions'],
-          row: ['category', 'subCategory', 'item'],
+          row: ['serviceName', 'subCategory', 'item'],
         }"
       >
         <template #actions="{ row }">

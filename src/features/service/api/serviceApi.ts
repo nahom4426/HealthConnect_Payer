@@ -6,14 +6,14 @@ const api = new ApiService();
 const basePath = '/healthConnectProvider/service'; // Updated base path
 
 // Function to search services by provider UUID
-export function searchServices(providerUuid: string, query = {}): Promise<AsyncResponse<Service[]>> {
+export function getAllServices(providerUuid: string, query = {}): Promise<AsyncResponse<Service[]>> {
   return api.addAuthenticationHeader().get<Service[]>(`${basePath}/search/${providerUuid}`, {
     params: query
   });
 }
 
 // Function to get a service by ID
-export function getServiceById(id: string): Promise<AsyncResponse<Service>> {
+export function getServiceByid(id: string): Promise<AsyncResponse<Service>> {
   return api.addAuthenticationHeader().get(`${basePath}/${id}`);
 }
 
@@ -49,7 +49,7 @@ export async function updateService(uuid: string, formData: FormData): Promise<A
 }
 
 // Function to delete a service
-export function deleteService(id: string): Promise<AsyncResponse<any>> {
+export function removeService(id: string): Promise<AsyncResponse<any>> {
   return api.addAuthenticationHeader().delete(`${basePath}/${id}`);
 }
 
