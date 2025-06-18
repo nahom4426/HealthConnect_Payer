@@ -23,7 +23,6 @@ const isMobile = ref(false);
 const expandedMenus = ref([]);
 function handleSingleItemClick() {
   // Your logic for handling the item click
-  console.log('Item clicked:', navItem);
 }
 const props = defineProps({
   isCollapsed: Boolean,
@@ -103,29 +102,30 @@ const toggleMenu = (name) => {
       <div class="flex flex-col justify-center overflow-x-hidden gap-2">
         <template v-for="item in filteredNavs" :key="item.name || item.path">
           <template v-if="item.navs && item.navs.length">
-           <button
-  @click="toggleMenu(item.name)"
-  class="flex justify-between w-full items-center h-12 rounded-lg hover:bg-primary hover:text-white transition-all duration-200"
-  :class="{
-    'bg-[#DFF1F1]': expandedMenus.includes(item.name) && !isCollapsed,
-    '': !expandedMenus.includes(item.name) || isCollapsed
-  }"
->
-  <span class="flex items-center gap-4 ml-3">
-    <i v-html="item.icon"></i>
-    <span
-      v-if="!props.isCollapsed"
-      class="text-sm md:whitespace-nowrap font-medium"
-      >{{ item.name }}</span
-    >
-  </span>
-  <i
-    v-if="!isCollapsed"
-    class="mr-3"
-    v-html="icons.chevron_down"
-    :class="{ 'rotate-180': expandedMenus.includes(item.name) }"
-  />
-</button>
+            <button
+              @click="toggleMenu(item.name)"
+              class="flex justify-between w-full items-center h-12 rounded-lg hover:bg-primary hover:text-white transition-all duration-200"
+              :class="{
+                'bg-[#DFF1F1]':
+                  expandedMenus.includes(item.name) && !isCollapsed,
+                '': !expandedMenus.includes(item.name) || isCollapsed,
+              }"
+            >
+              <span class="flex items-center gap-4 ml-3">
+                <i v-html="item.icon"></i>
+                <span
+                  v-if="!props.isCollapsed"
+                  class="text-sm md:whitespace-nowrap font-medium"
+                  >{{ item.name }}</span
+                >
+              </span>
+              <i
+                v-if="!isCollapsed"
+                class="mr-3"
+                v-html="icons.chevron_down"
+                :class="{ 'rotate-180': expandedMenus.includes(item.name) }"
+              />
+            </button>
 
             <div
               name="child-items"

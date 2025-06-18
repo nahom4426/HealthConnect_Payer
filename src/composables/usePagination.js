@@ -34,7 +34,7 @@ export function usePagination(options = {}) {
               ? ++searchPagination.page.value
               : searchPagination.page.value
             : --searchPagination.page.value,
-          size: searchPagination.limit.value || 25,
+          limit: searchPagination.limit.value || 25,
         })
       );
     } else {
@@ -47,7 +47,7 @@ export function usePagination(options = {}) {
               ? ++pagination.page.value
               : pagination.page.value
             : --pagination.page.value,
-          size: pagination.limit.value || 25,
+          limit: pagination.limit.value || 25,
         })
       );
     }
@@ -60,7 +60,6 @@ export function usePagination(options = {}) {
       pagination.page.value >= pagination.totalPages.value
     )
       console.log("jjj");
-    // if(cache && paginationOptions.value.store && paginationOptions.value.store.getAll()?.length) return
 
     req.send(
       () => paginationOptions.value.cb(getPaginationData(next, current)),
@@ -72,9 +71,10 @@ export function usePagination(options = {}) {
         }
 
         pagination.totalPages.value = res.data?.totalPages || 1;
-        totalElements.value = res.data?.totalElements || 0;
-        pagination.totalElements.value = res.data?.totalElements || 0;
-        console.log("jjj", totalElements.value, pagination.totalElements.value);
+        pagination.totalElements = res.data?.totalElements || 0;
+        totalElements.value = pagination.totalElements || 0;
+        paginationOptions.value.totalElements = totalElements.value;
+        perPage.value = res.data?.perPage;
 
         if (res.success && res.data?.content?.length < pagination.limit.value) {
           pagination.done.value = true;
@@ -179,8 +179,17 @@ export function usePagination(options = {}) {
   provide("totalPages", pagination.totalPages);
   provide("searching", searching);
   provide("send", send);
-  provide("perPage", perPage);
-  provide("totalElements", pagination.totalElements.value);
+  provide("sendPagination", sendPagination);
+
+  provide(
+    "perPage",
+    computed(() => perPage.value)
+  );
+
+  provide(
+    "totalElements",
+    computed(() => totalElements.value)
+  );
 
   const page = computed(() => {
     return searching.value
@@ -189,10 +198,24 @@ export function usePagination(options = {}) {
   });
 
   function send() {
-    console.log("ss");
-
     pagination.reset();
     searchPagination.reset();
+    fetch();
+  }
+  function sendPagination(limit, page) {
+    console.log(page);
+
+    if (page) {
+      pagination.reset();
+      searchPagination.reset();
+      pagination.limit.value = limit;
+      console.log(searchPagination);
+    } else {
+      pagination.reset();
+      searchPagination.reset();
+      pagination.limit.value = limit;
+    }
+
     fetch();
   }
 
@@ -200,8 +223,9 @@ export function usePagination(options = {}) {
     page,
     search,
     perPage,
-    totalElements,
+    totalElements: totalElements.value || paginationOptions.value.totalElements,
     send,
+    sendPagination,
     totalPages: req.response.value?.totalPages || 0,
     data:
       paginationOptions.value.store && !searching.value

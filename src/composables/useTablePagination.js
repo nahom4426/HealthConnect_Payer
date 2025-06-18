@@ -6,7 +6,6 @@ export function useTablePagination(responseLimit = 25) {
   const totalPages = ref(1);
   const limit = ref(responseLimit);
   const maxPage = ref();
-  const totalElements = ref(0);
 
   const done = ref(false);
 
@@ -46,7 +45,6 @@ export function useTablePagination(responseLimit = 25) {
     done,
     totalPages,
     maxPage,
-    totalElements,
     setPage,
     next,
     prev,

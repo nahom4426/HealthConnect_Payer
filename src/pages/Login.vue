@@ -29,9 +29,9 @@ onMounted(() => {
 
     <!-- Right: Login Form -->
     <div
-      class="w-full md:w-1/2 lg:w-1/2 bg-[#DFF1F1] m-6 rounded-md flex items-center justify-center overflow-y-auto"
+      class="w-full md:w-1/2 lg:w-1/2 bg-[#DFF1F1] rounded-md flex items-center justify-center"
     >
-      <div class="w-full max-w-md p-10 m-5 sm:p-8">
+      <div class="">
         <LoginForm />
       </div>
     </div>
