@@ -6,7 +6,7 @@ import Button from '@/components/Button.vue';
 import ModalFormSubmitButton from '@/components/new_form_builder/ModalFormSubmitButton.vue';
 import { getActiveInstitutions } from '@/features/instution_settings/api/institutionSettingsApi';
 import { searchInsuredByInstitution } from '@/features/insured_persons/api/insuredPersonsApi';
-import { searchServices } from '@/features/service/api/serviceApi';
+import { getAllServices } from '@/features/service/api/serviceApi';
 import { useAuthStore } from '@/stores/auth';
 import { openModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
