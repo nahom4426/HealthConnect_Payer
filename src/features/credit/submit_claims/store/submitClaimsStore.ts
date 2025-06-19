@@ -1,5 +1,6 @@
+import { getActiveInstitutions } from "@/features/instution_settings/api/institutionSettingsApi";
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 // Medication Item interface
 export interface MedicationItem {
@@ -15,6 +16,7 @@ export interface ClaimService {
   invoiceNumber: string;
   dispensingUuid: string;
   payerUuid: string;
+  payerName?: string;
   patientName: string;
   insuranceId: string | null;
   dispensingDate: string;
@@ -28,75 +30,89 @@ export interface ClaimService {
   medicationItems: MedicationItem[];
 }
 
-export const claimServices = defineStore("claimServicesStore", () => {
-  const claimServices = ref<ClaimService[]>([]);
+// Institution interface based on your API response
+interface Institution {
+  payerUuid: string;
+  payerName: string;
+  email?: string;
+  telephone?: string;
+  // Add other fields as needed
+}
 
+export const claimServices = defineStore("submitServicesStore", () => {
+  const claimServices = ref<ClaimService[]>([]);
+  const institutions = ref<Institution[]>([]);
+  const loadingInstitutions = ref(false);
+
+  // Fetch active institutions from API
+  const fetchActiveInstitutions = async () => {
+    loadingInstitutions.value = true;
+    try {
+      const response = await getActiveInstitutions();
+      
+      // Handle the nested content array in the response
+      if (response?.data?.content && Array.isArray(response.data.content)) {
+        institutions.value = response.data.content.map(item => ({
+          uuid: item.payerUuid,  // Map payerUuid to uuid
+          name: item.payerName,  // Map payerName to name
+          ...item                // Include all other properties
+        }));
+      } else {
+        console.warn("Unexpected API response structure:", response);
+        institutions.value = [];
+      }
+    } catch (error) {
+      console.error("Error fetching institutions:", error);
+      institutions.value = [];
+    } finally {
+      loadingInstitutions.value = false;
+    }
+  };
+
+  // Get payer options with proper mapping
+  const payerOptions = computed(() => {
+    return institutions.value.map(inst => ({
+      label: inst.name,
+      value: inst.uuid,
+      originalData: inst  // Include original data if needed
+    }));
+  });
+
+  // Standard store methods
   function getAll(): ClaimService[] {
     return claimServices.value;
   }
 
   function set(data: ClaimService[]): void {
-    console.log("Setting claim services in store:", data);
-    
-    if (!Array.isArray(data)) {
-      console.error("Invalid data format for claim services:", data);
-      claimServices.value = [];
-      return;
-    }
-    
-    claimServices.value = data;
-  }
-
-  // Alias for set
-  function setClaimServices(data: ClaimService[]): void {
-    set(data);
-  }
-
-  // Alias for set
-  function setAll(data: ClaimService[]): void {
-    set(data);
+    claimServices.value = Array.isArray(data) ? data : [];
   }
 
   function add(data: ClaimService): void {
-    console.log("Adding claim service to store:", data);
     claimServices.value.unshift(data);
   }
 
   function update(id: string, data: Partial<ClaimService>): void {
-    console.log(`Updating claim service with UUID: ${id}`, data);
-    
-    const idx = claimServices.value.findIndex((el) => el.dispensingUuid === id);
-    if (idx === -1) {
-      console.warn(`[Claim Services Store] No claim service found with UUID: ${id}`);
-      if (data.dispensingUuid) {
-        console.log("Claim service not found for update, adding instead:", data);
-        add(data as ClaimService);
-      }
-      return;
+    const idx = claimServices.value.findIndex(el => el.dispensingUuid === id);
+    if (idx !== -1) {
+      claimServices.value.splice(idx, 1, {
+        ...claimServices.value[idx],
+        ...data,
+      });
     }
-
-    claimServices.value.splice(idx, 1, {
-      ...claimServices.value[idx],
-      ...data,
-    });
   }
 
   function remove(id: string): void {
-    const idx = claimServices.value.findIndex((el) => el.dispensingUuid === id);
-    if (idx === -1) {
-      console.warn(`[Claim Services Store] No claim service found with UUID: ${id}`);
-      return;
-    }
-
-    claimServices.value.splice(idx, 1);
+    claimServices.value = claimServices.value.filter(el => el.dispensingUuid !== id);
   }
 
   return {
     claimServices,
+    institutions,
+    loadingInstitutions,
+    payerOptions,
+    fetchActiveInstitutions,
     getAll,
     set,
-    setClaimServices,
-    setAll,
     add,
     update,
     remove,

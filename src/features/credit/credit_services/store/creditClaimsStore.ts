@@ -16,6 +16,7 @@ export interface ClaimService {
   invoiceNumber: string;
   dispensingUuid: string;
   payerUuid: string;
+  payerName: string;
   patientName: string;
   insuranceId: string | null;
   dispensingDate: string;
@@ -61,28 +62,29 @@ export const claimServices = defineStore("claimServicesStore", () => {
 // In your claimServices store
 function add(apiResponse: any, formValues: any): void {
   console.log("Raw API response:", apiResponse);
-  
-  // Transform the API response to match ClaimService interface
+
   const newService: ClaimService = {
     invoiceNumber: apiResponse.invoiceNumber || `INV-${Date.now()}`,
     dispensingUuid: apiResponse.dispensingUuid,
     payerUuid: formValues.payerUuid || apiResponse.payerUuid,
-    patientName: formValues.patientName || apiResponse.patientName || 'Unknown Patient',
+    payerName: formValues.payerName || apiResponse.payerName || 'Unknown Payer',
+    patientName: formValues.patientName || 'Unknown Patient',
     insuranceId: apiResponse.insuranceId || null,
-    dispensingDate: formValues.dispensingDate || apiResponse.dispensingDate,
-    prescriptionNumber: formValues.prescriptionNumber || apiResponse.prescriptionNumber,
-    pharmacyTransactionId: formValues.pharmacyTransactionId || apiResponse.pharmacyTransactionId,
-    totalAmount: apiResponse.totalAmount ,
-    patientResponsibility: apiResponse.patientResponsibility || 0,
-    insuranceCoverage: apiResponse.insuranceCoverage || 0,
+    dispensingDate: formValues.dispensingDate || apiResponse.recordedAt || new Date().toISOString(),
+    prescriptionNumber: formValues.prescriptionNumber || '',
+    pharmacyTransactionId: formValues.pharmacyTransactionId || '',
+    totalAmount: apiResponse.totalAmount ?? 0,
+    patientResponsibility: apiResponse.patientResponsibility ?? 0,
+    insuranceCoverage: apiResponse.insuranceCoverage ?? 0,
     branchName: apiResponse.branchName || null,
     createdAt: apiResponse.createdAt || new Date().toISOString(),
-    
+    medicationItems: formValues.medicationItems || [] // fallback from form
   };
 
   console.log("Properly transformed claim service:", newService);
-  claimServices.value = [newService, ...claimServices.value]; // Add to beginning of array
+  claimServices.value = [newService, ...claimServices.value];
 }
+
   function update(id: string, data: Partial<ClaimService>): void {
     console.log(`Updating claim service with UUID: ${id}`, data);
     

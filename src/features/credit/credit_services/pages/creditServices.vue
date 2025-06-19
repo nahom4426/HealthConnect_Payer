@@ -68,7 +68,7 @@ const { claimServices: services } = storeToRefs(claimServicesStore); // Destruct
       :pending="pending"
       :headers="{
         head: [
-          '#',
+      
           'Invoice ID',
           'Payer',
           'Patient Name',
@@ -78,9 +78,9 @@ const { claimServices: services } = storeToRefs(claimServicesStore); // Destruct
           'Actions',
         ],
         row: [
-          'index',
+        
           'invoiceNumber',
-          'payerUuid',  // Changed from 'payerName' to 'payerUuid'
+          'payerName',  
           'patientName',
           'dispensingDate',
           'branchName',

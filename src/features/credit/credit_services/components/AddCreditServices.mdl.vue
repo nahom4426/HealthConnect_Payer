@@ -14,13 +14,13 @@ import { claimServices } from "../store/creditClaimsStore";
 const claimServicesStore = claimServices();
 const auth = useAuthStore();
 
-const pending = ref(false);
+const formPending = ref(false); 
 const router = useRouter();
 const formDataProvider = ref();
 
 async function handleSubmit(formValues: any) {
   try {
-    pending.value = true;
+     formPending.value = true; // Start loading
     
     const payload = {
       providerUuid: auth.auth?.user?.providerUuid || '',
@@ -40,12 +40,7 @@ async function handleSubmit(formValues: any) {
     
     if (result.success) {
       toasted(true, 'Success', result.data.message || 'Credit service added successfully');
-      
-      // Pass both API response and form values to the store
-      claimServicesStore.add(result.data, {
-        ...formValues
-      });
-      
+      claimServicesStore.add(result.data, { ...formValues });
       closeModal();
       router.push('/credit_services');
     }
@@ -53,7 +48,7 @@ async function handleSubmit(formValues: any) {
     console.error('Submission error:', error);
     toasted(false, 'Error', error.message || 'Failed to add credit service');
   } finally {
-    pending.value = false;
+    formPending.value = false; // End loading
   }
 }
 </script>
@@ -66,11 +61,11 @@ async function handleSubmit(formValues: any) {
       title="Add Credit Service" 
       subtitle="To add a new credit service, please fill out the information in the fields below."
     >
-      <div class="bg-white rounded-lg">
+     <div class="bg-white rounded-lg">
         <creditServicesFormDataProvider ref="formDataProvider">
-          <template #default="{ pending: insuredPending }">
+          <template #default="{ pending: dataProviderPending }">
             <CreditServicesForm
-              :pending="pending"
+              :pending="formPending || dataProviderPending"
               :onSubmit="handleSubmit"
               :onCancel="() => closeModal()"
             />

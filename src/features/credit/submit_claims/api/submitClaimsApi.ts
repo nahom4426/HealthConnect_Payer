@@ -26,6 +26,19 @@ export function getCreditClaimsbyProviderUuid(id: string, query = {}, config = {
 		throw error;
 	});
 }
+export function submitClaimsStatusUpdate(providerUuid: string, dispensingUuids: string[]) {
+  return api.addAuthenticationHeader().put(
+    `${basePath}/dispensing/update-status/${providerUuid}`,
+    dispensingUuids, // ✅ Send raw array
+    {
+      params: { newStatus: 'AUTHORIZED' },
+      headers: { 'Content-Type': 'application/json' }
+    }
+  );
+}
+
+
+
 export function getPayerbyPayerUuid(id: string, query = {}, config = {}) {
 	return api.addAuthenticationHeader().get(`/payer/${id}`, {
 		params: query,
