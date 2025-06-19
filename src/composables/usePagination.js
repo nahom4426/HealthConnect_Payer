@@ -180,7 +180,6 @@ export function usePagination(options = {}) {
   provide("searching", searching);
   provide("send", send);
   provide("sendPagination", sendPagination);
-
   provide(
     "perPage",
     computed(() => perPage.value)
@@ -208,7 +207,7 @@ export function usePagination(options = {}) {
     if (page) {
       pagination.reset();
       searchPagination.reset();
-      pagination.limit.value = limit;
+      pagination.page.value = page;
       console.log(searchPagination);
     } else {
       pagination.reset();

@@ -96,6 +96,7 @@ const totalPages = inject("totalPages", 1);
 
 const perPage = inject("perPage", 25);
 const totalElements = inject("totalElements");
+const pageChanger = inject("pageChanger", () => {});
 console.log(totalElements);
 
 const selectedValue = ref(25);
@@ -192,13 +193,16 @@ const active = ref(1);
     <div class="text-base-clr">
       Showing {{ totalElements }} out of {{ selectedValue }} records
     </div>
-    <div class="flex gap-[10px] items-center justify-between">
+    <div class="flex gap-6 items-center justify-between">
       <div @click="previousPage" class="cursor-pointer">
-        <i class="px-3" v-html="icons.chevron_left"></i>
+        <i class="" v-html="icons.chevron_left"></i>
       </div>
       <div
-        @click="sendPagination(selectedValue, key + 1)"
-        v-for="(key, index) in 4"
+        @click="
+          sendPagination(value, key - 1);
+          active = key;
+        "
+        v-for="(key, index) in totalPages"
         :key="index"
         class="font-semibold rounded py-1 px-3 cursor-pointer"
         :class="[active === key ? 'border border-base-clr' : ' ']"
@@ -206,7 +210,7 @@ const active = ref(1);
         {{ key }}
       </div>
       <div class="cursor-pointer" @click="nextPage">
-        <i class="px-3" v-html="icons.chevron_right"></i>
+        <i class="" v-html="icons.chevron_right"></i>
       </div>
     </div>
   </div>

@@ -5,43 +5,49 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
 import { useRoute } from "vue-router";
-import ServiceForm from "../components/form/ServiceForm.vue";
-import { useService } from "../store/serviceStore";
-import { getServiceByid, updateService } from "../api/serviceApi.js";
 
 import { ref } from "vue";
-import { useServiceListStore } from "../store/serviceListStore";
+import { useDrugStore } from "../store/drugStore";
+import { updateDrug } from "../api/drugApi";
+import DrugForm from "./form/DrugForm.vue";
+import { closeModal } from "@customizer/modal-x";
+import { data } from "autoprefixer";
 const props = defineProps({
   data: String,
 });
 
-const { submit } = useForm("serviceForm");
-const serviceStore = useServiceListStore();
+const { submit } = useForm("drugForm");
+const drugStore = useDrugStore();
 
-const service = ref(
-  serviceStore.serviceList.find((el) => el.serviceUuid == props.data) || {}
-);
+const drug = ref(drugStore.drugs.find((el) => el.drugUuid == props.data) || {});
 const req = useApiRequest();
+console.log(drug.value);
+console.log(Object.keys(drug.value));
 
-if (!Object.keys(service.value).length) {
+if (!Object.keys(drug.value).length) {
   req.send(
     () => getServiceByid(props.data),
     (res) => {
       if (res.success) {
-        service.value = res.data;
+        drug.value = res.data;
       }
     }
   );
 }
 
 function update({ values }) {
+  console.log(props.data);
+
   values.status = "ACTIVE";
   req.send(
-    () => updateService(props.data, values),
+    () => updateDrug(props.data, values),
     (res) => {
       toasted(res.success, "Successfully Updated", res.error);
       if (res.success) {
-        serviceStore.update(props.data, { ...service.value, ...values });
+        console.log(drug);
+
+        drugStore.update(props.data, { ...drug.value, ...values });
+        closeModal();
       }
     }
   );
@@ -52,19 +58,19 @@ function update({ values }) {
     <NewFormParent
       size="md"
       class="flex justify-center bg-white"
-      title="Update Service"
-      subtitle="Update medical service"
+      title="Update Drug"
+      subtitle="Update  drug information"
     >
-      <ServiceForm :services="service" />
+      <DrugForm :drugs="drug" />
 
       <template #bottom>
         <div class="flex justify- w-full p-2 px-4">
           <Button
-            class="flex w-full items-center gap-3 bg-primary"
+            class="flex w-full items-center gap-3 bg-primary !text-white"
             :pending="req.pending.value"
             type="primary"
             @click.prevent="submit(update)"
-            >Update Service</Button
+            >Update Drug</Button
           >
         </div>
       </template>
