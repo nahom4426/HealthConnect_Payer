@@ -1,61 +1,84 @@
 <script setup>
 import { ref } from "vue";
-import { useApiRequest } from "@/composables/useApiRequest";
-import { useAuthStore } from "@/stores/auth";
-import Table from "@/components/Table.vue";
-import DefaultPage from "@/components/DefaultPage.vue";
-import { getAllServices, removeService } from "../api/serviceApi.ts";
-import { usePagination } from "@/composables/usePagination";
 import icons from "@/utils/icons";
+import { toasted } from "@/utils/utils";
+import Drugs from "../components/Drugs.vue";
+import ServiceList from "../components/ServiceList.vue";
 import Button from "@/components/Button.vue";
 import { openModal } from "@customizer/modal-x";
-import { toasted } from "@/utils/utils";
-const api = useApiRequest();
-const authStore = useAuthStore();
-const pagination = usePagination({
-  cb: (data) =>
-    getAllServices(authStore.auth?.user?.providerUuid, {
-      ...data,
-    }),
-});
 
-function remove(id) {
-  api.send(
-    () => removeService(id),
-    (res) => {
-      toasted(res.success, "Service Removed Successfully", res.error);
-    }
-  );
-}
+const items = ["Services", "Drugs"];
+const active = ref(0);
+
+const setActive = (item) => {
+  active.value = item;
+};
+const components = [
+  {
+    name: "Services",
+    component: ServiceList,
+  },
+  {
+    name: "Drugs",
+    component: Drugs,
+  },
+];
+const search = ref("");
 </script>
 <template>
-  <div class="flex flex-col gap-8 px-4">
-    <DefaultPage v-model="search">
-      <div class="flex w-full justify-end pt-4 text-white">
-        <Button @click.prevent="openModal('AddService')" class="bg-primary"
-          >Add Service</Button
+  <div class="flex flex-col gap-6 p-6 bg-white rounded-lg">
+    <div class="flex justify-between items-center">
+      <div class="flex border border-base-clr rounded w-fit">
+        <div
+          v-for="(item, index) in components"
+          :key="index"
+          @click="setActive(index)"
+          :class="[
+            'px-4 py-3 transition-colors cursor-pointer duration-300',
+            active === index
+              ? index === 0
+                ? 'bg-base-clr w-fit text-white rounded-l font-medium'
+                : 'bg-base-clr text-white rounded-r  font-medium'
+              : '',
+          ]"
         >
+          {{ item.name }}
+        </div>
       </div>
-      <Table
-        :pending="pagination.pending.value"
-        :rows="pagination.data.value"
-        :headers="{
-          head: ['Category', 'Sub Category', 'Services', 'actions'],
-          row: ['serviceName', 'subCategory', 'item'],
-        }"
-      >
-        <template #actions="{ row }">
-          <div class="flex gap-4 items-center">
-            <button
-              class="size-8 shadow-md rounded-full bg-accent flex justify-center items-center"
-              @click="openModal('ServiceManagement', row?.serviceUuid)"
-            >
-              <i v-html="icons.edit" />
-            </button>
-            <button @click="remove(row?.serviceUuid)">delete</button>
-          </div>
-        </template>
-      </Table>
-    </DefaultPage>
+      <div class="flex gap-3">
+        <div
+          tabindex="0"
+          class="w-full md:m bg-base-clr3 focus-within:border-primary flex items-center rounded-lg overflow-hidden"
+        >
+          <span
+            class="w-10 h-full text-base-clr grid place-items-center"
+            v-html="icons.search"
+          />
+          <input
+            v-model="search"
+            :placeholder="active === 0 ? 'Search Services' : 'Search Drugs'"
+            class="flex-1 bg-transparent px- py-2 h-full outline-none"
+          />
+        </div>
+        <button
+          v-if="active === 0"
+          class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
+          @click="openModal('AddService')"
+        >
+          <i v-html="icons.plus_circle" class=""></i>
+          Add Service
+        </button>
+        <button
+          v-else
+          class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
+          @click="openModal('AddDrug')"
+        >
+          <i v-html="icons.plus_circle" class=""></i>
+
+          AddDrug
+        </button>
+      </div>
+    </div>
+    <component :search="search" :is="components[active].component"></component>
   </div>
 </template>

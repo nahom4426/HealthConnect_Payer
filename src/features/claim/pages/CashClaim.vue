@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import CustomSelect from "@/components/CustomSelect.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import { usePagination } from "@/composables/usePagination"; 
+import { usePagination } from "@/composables/usePagination";
 import InstitutionPolicyByStatusDataProvider from "@/features/institutions/components/InstitutionPolicyByStatusDataProvider.vue";
 import { computed, ref, watch } from "vue";
-import { getCashCreditByInstitution, requestCashClaim } from "../api/cashCreditApi";
+import {
+  getCashCreditByInstitution,
+  requestCashClaim,
+} from "../api/cashCreditApi";
 import Table from "@/components/Table.vue";
 import { formatCurrency, toasted } from "@/utils/utils";
 import { searchInsuredByInstitution } from "@/features/insured_persons/api/insuredPersonsApi";
@@ -15,7 +18,7 @@ import { openModal } from "@customizer/modal-x";
 import { useSearchedCashCreditInsuredByInstitutionStore } from "../store/searchCashCreditInsuredInstitutionStore";
 import { useApiRequest } from "@/composables/useApiRequest";
 import InsuredInformationCard from "../components/InsuredInformationCard.vue";
-import TableWithCheckBox from "@/components/TableWithCheckBox.vue";
+// import TableWithCheckBox from "@/components/TableWithCheckBox.vue";
 
 const institution = ref("");
 
@@ -51,48 +54,51 @@ const selected = ref<Selectedinsured>({
   name: "",
 });
 
-const requestClaimReq = useApiRequest()
+const requestClaimReq = useApiRequest();
 function requestClaim() {
-  if(requestClaimReq.pending.value) return
-  
-  openModal('Comment', {}, (comment: string) => {
-    if(comment) {
+  if (requestClaimReq.pending.value) return;
+
+  openModal("Comment", {}, (comment: string) => {
+    if (comment) {
       requestClaimReq.send(
-        () => requestCashClaim({
-          comment: comment.trim(),
-          cashCreditUuidRequest: checked.value.map(el => ({cashCreditUuid: el}))
-        }),
-        res => {
-          if(res.success) {
-            toasted(true, 'Request Created')
-            cashCreditInsuredStore.removeAll([...checked.value])
-            checked.value = []
+        () =>
+          requestCashClaim({
+            comment: comment.trim(),
+            cashCreditUuidRequest: checked.value.map((el) => ({
+              cashCreditUuid: el,
+            })),
+          }),
+        (res) => {
+          if (res.success) {
+            toasted(true, "Request Created");
+            cashCreditInsuredStore.removeAll([...checked.value]);
+            checked.value = [];
           }
         }
-      )
+      );
     }
-  })
+  });
 }
 
 interface InsuredDetail {
-  insuredName?: string,
-  phone?: string,
-  insuranceId?: string
+  insuredName?: string;
+  phone?: string;
+  insuranceId?: string;
 }
 
-const focusedInsured = ref<InsuredDetail>({})
-let timeout: number
+const focusedInsured = ref<InsuredDetail>({});
+let timeout: number;
 function assignUser(value: InsuredDetail) {
-  if(timeout) clearTimeout(timeout)
+  if (timeout) clearTimeout(timeout);
   timeout = setTimeout(() => {
-    focusedInsured.value = value
-  }, 100)
+    focusedInsured.value = value;
+  }, 100);
 }
 
-const checked = ref([])
+const checked = ref([]);
 watch(checked, () => {
-  console.log('checked', checked.value);
-})
+  console.log("checked", checked.value);
+});
 </script>
 
 <template>
@@ -157,11 +163,13 @@ watch(checked, () => {
                     <i class="*:size-4" v-html="icons.insured" />
                   </div>
                   <b
-                    @mouseover="assignUser({
-                      insuranceId: insured.insuranceId,
-                      insuredName: insured.insuredFullName,
-                      phone: insured.phone
-                    })"
+                    @mouseover="
+                      assignUser({
+                        insuranceId: insured.insuranceId,
+                        insuredName: insured.insuredFullName,
+                        phone: insured.phone,
+                      })
+                    "
                     v-ripple
                     @click="
                       () => {
@@ -177,11 +185,13 @@ watch(checked, () => {
                     <p class="text-[9px] font-semibold">dependants</p>
                     <div class="flex flex-col gap-2">
                       <div
-                        @mouseover="assignUser({
-                          insuranceId: insured.insuranceId,
-                          insuredName: dep.dependantFullName,
-                          phone: insured.phone
-                        })"
+                        @mouseover="
+                          assignUser({
+                            insuranceId: insured.insuranceId,
+                            insuredName: dep.dependantFullName,
+                            phone: insured.phone,
+                          })
+                        "
                         v-ripple
                         @click="
                           () => {
@@ -230,7 +240,7 @@ watch(checked, () => {
           Process Claim
         </Button>
       </template>
-      <TableWithCheckBox
+      <!-- <TableWithCheckBox
         v-model="checked"
         to-be-selected="cashCreditUuid"
         :pending="cashCredit.pending.value"
@@ -265,7 +275,7 @@ watch(checked, () => {
             Edit
           </button>
         </template>
-      </TableWithCheckBox>
+      </TableWithCheckBox> -->
     </DefaultPage>
   </InstitutionPolicyByStatusDataProvider>
 </template>

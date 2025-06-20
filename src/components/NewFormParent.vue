@@ -12,8 +12,7 @@ const props = defineProps({
     required: true,
     type: String,
   },
-   subtitle: {
-    required: true,
+  subtitle: {
     type: String,
   },
   goBack: {
@@ -31,36 +30,34 @@ const props = defineProps({
 <template>
   <div
     :class="[$style[size]]"
-    class="overflow-hidden flex flex-col justify-between bg-white m-6 rounded-lg px-3 py-6 rounded-md"
+    class="overflow-hidden flex flex-col justify-between bg-white p-6 gap-11 rounded-2xl"
   >
-    <div
-      class="flex justify-between  border-text-secondary-clr/30 items-center"
-    >
-      <div class="flex justify-between mx-3 pb-4  bg-[#F6F7FA] rounded-lg w-full  items-center gap-4">
+    <div class="flex justify-between border-text-secondary-clr/30 items-center">
+      <div
+        class="flex justify-between p-4 bg-[#F6F7FA] rounded-lg w-full items-center gap-4"
+      >
         <div>
           <button
             @click="onGoBack"
             v-if="goBack"
-            class="grid place-items-center rounded-md border border-text-clr"
+            class="grid place-items-center rounded-lg border border-text-clr"
           ></button>
-          <p class="font-bold text-lg px-4 p-3">{{ title }}</p>
-          <p class="font-normal text-[#75778B] text-sm px-4 ">{{ subtitle }}</p>
+          <p class="font-bold text-lg">{{ title }}</p>
+          <p class="font-normal text-[#75778B] text-sm">{{ subtitle }}</p>
         </div>
         <div
           @click="closeModal()"
-          class="flex items-center text-center  mt-4 cursor-pointer justify-center   p-2"
+          class="flex items-center text-center cursor-pointer justify-center"
         >
           <i v-html="icons.closes"></i>
         </div>
       </div>
       <div class="flex items-center gap-4">
         <slot name="right-actions"></slot>
-        <button class=" rounded-full" @click="closeModal()"></button>
+        <button class="rounded-full" @click="closeModal()"></button>
       </div>
     </div>
-    <div
-      class="flex flex-col gap-4 form-scrollbar flex-1 overflow-auto p-2  "
-    >
+    <div class="flex flex-col gap-4 form-scrollbar flex-1 overflow-auto">
       <slot />
       <ResponseError :error="error" />
     </div>
@@ -75,14 +72,13 @@ const props = defineProps({
 }
 
 .lg {
-  width: 60rem;
+  width: 65rem;
   height: 100%;
 }
 .xl {
   width: 66rem;
   height: 100%;
 }
-
 
 .xs {
   width: auto;

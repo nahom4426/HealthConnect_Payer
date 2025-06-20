@@ -4,25 +4,25 @@ import { useForm } from "@/components/new_form_builder/useForm";
 import NewFormParent from "@/components/NewFormParent.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import icons from "@/utils/icons";
-import ServiceForm from "../components/form/ServiceForm.vue";
-import { createService } from "../api/serviceApi";
-import { useService } from "../store/serviceStore";
 import { useAuthStore } from "@/stores/auth";
 import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
-import { useServiceListStore } from "../store/serviceListStore";
+import { useDrugStore } from "../store/drugStore";
+import { createDrug } from "../api/drugApi";
+import DrugForm from "./form/DrugForm.vue";
 
-const { submit } = useForm("serviceForm");
+const { submit } = useForm("drugForm");
 const req = useApiRequest();
-const serviceStore = useServiceListStore();
+const drugStore = useDrugStore();
 const authStore = useAuthStore();
 function create({ values, reset }) {
   values.status = "ACTIVE";
+
   req.send(
-    () => createService(authStore.auth?.user?.providerUuid, values),
+    () => createDrug(authStore.auth?.user?.providerUuid, values),
     (res) => {
       if (res.success) {
-        serviceStore.add(res.data);
+        drugStore.add(res.data);
         closeModal();
       }
       toasted(res.success, "Serivice Created Successfully", res.error);
@@ -35,10 +35,10 @@ function create({ values, reset }) {
     <NewFormParent
       size="lg"
       class="flex justify-center bg-white"
-      title="Add New Services"
-      subtitle="Add a new medical service"
+      title="Add Drug"
+      subtitle="Add New Drug"
     >
-      <ServiceForm />
+      <DrugForm />
 
       <template #bottom>
         <div class="flex gap-5 justify-end items-center w-full">
@@ -56,7 +56,7 @@ function create({ values, reset }) {
             class="flex rounded px-6 text-base font-bold items-center !text-white"
             size="lg"
           >
-            Add Service
+            Add Drug
           </Button>
         </div>
       </template>

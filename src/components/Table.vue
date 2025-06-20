@@ -4,6 +4,7 @@ import { inject, ref, useAttrs, watch } from "vue";
 import GenericTableRow from "./GenericTableRow.vue";
 import TableRowSkeleton from "./TableRowSkeleton.vue";
 import icons from "@/utils/icons";
+import Button from "./Button.vue";
 
 const emit = defineEmits([
   "row",
@@ -87,6 +88,17 @@ watch(
 const nextPage = inject("next", null);
 const previousPage = inject("previous", null);
 const send = inject("send", () => {});
+const sendPagination = inject("sendPagination", () => {});
+
+const page = inject("page", 1);
+const searchTotalPages = inject("searchTotalPages");
+const totalPages = inject("totalPages", 1);
+
+const perPage = inject("perPage", 25);
+const totalElements = inject("totalElements");
+const pageChanger = inject("pageChanger", () => {});
+console.log(totalElements);
+
 const selectedValue = ref(25);
 const active = ref(1);
 </script>
@@ -99,6 +111,9 @@ const active = ref(1);
   >
     <template v-if="lastCol" #lastColHeader="{ row }">
       <slot name="lastColHeader" :row="row" />
+    </template>
+    <template v-if="firstCol" #headerFirst="{ row }">
+      <slot name="headerFirst" :row="row" />
     </template>
     <template v-if="rowCom">
       <component
@@ -122,6 +137,7 @@ const active = ref(1);
         :cells="cells"
       >
         <template v-if="firstCol" #select="{ row }">
+          {{ console.log("kkk") }}
           <slot name="select" :row="row" />
         </template>
         <template v-if="lastCol" #lastCol="{ row }">
@@ -164,7 +180,7 @@ const active = ref(1);
     <div class="flex gap-5 items-center">
       <span class="text-base-clr">Showing</span>
       <select
-        @change="send(parseInt($event.target.value))"
+        @change="sendPagination(parseInt($event.target.value))"
         class="px-3 py-2 rounded-md bg-base-clr3"
         v-model="selectedValue"
       >
@@ -175,23 +191,27 @@ const active = ref(1);
       </select>
     </div>
     <div class="text-base-clr">
-      Showing {{ selectedValue - 24 }} to {{ selectedValue }} out of records
+      Showing {{ totalElements }} out of {{ selectedValue }} records
     </div>
-    <div class="flex gap-[10px] items-center justify-between">
-      <i @click="" class="px-3" v-html="icons.chevron_left"></i>
+    <div class="flex gap-6 items-center justify-between">
+      <div @click="previousPage" class="cursor-pointer">
+        <i class="" v-html="icons.chevron_left"></i>
+      </div>
       <div
-        @click="active > key ? nextPage : previousPage"
-        v-for="key in 4"
+        @click="
+          sendPagination(value, key - 1);
+          active = key;
+        "
+        v-for="(key, index) in totalPages"
+        :key="index"
         class="font-semibold rounded py-1 px-3 cursor-pointer"
         :class="[active === key ? 'border border-base-clr' : ' ']"
       >
         {{ key }}
       </div>
-      <i
-        @click="nextPage"
-        class="px-3 cursor-pointer"
-        v-html="icons.chevron_right"
-      ></i>
+      <div class="cursor-pointer" @click="nextPage">
+        <i class="" v-html="icons.chevron_right"></i>
+      </div>
     </div>
   </div>
 </template>

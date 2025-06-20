@@ -56,9 +56,9 @@ export function createInsuredPerson(data: any) {
 	return api.addAuthenticationHeader().post(`${baseUrl}/insuredperson`, data)
 }
 // In your creditServicesApi.ts
-export const authorizeClaims = async (claimUuids: string[]) => {
+export const authorizeClaims = async (dispensingUuid: string[]) => {
   try {
-    const response = await api.post('/claims/authorize', { claimUuids });
+    const response = await api.post('/claims/authorize', dispensingUuid );
     return response.data;
   } catch (error) {
     throw error;

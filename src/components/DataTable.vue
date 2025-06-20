@@ -20,16 +20,16 @@ const props = defineProps({
   },
 });
 
-const next = inject("next", () => { });
-const previous = inject("previous", () => { });
+const next = inject("next", () => {});
+const previous = inject("previous", () => {});
 
 const page = inject("page", 1);
 const totalPages = inject("totalPages", 1);
 </script>
 <template>
   <table class="min-w-full border rounded-lg">
-    <thead class="bg-[#F9FAFF] capitalize text-black">
-      <tr class="text-base-clr border border-t-0">
+    <thead class="capitalize text-black">
+      <tr class="text-base-clr">
         <th v-if="firstCol" class="th p-2 text-left uppercase tracking-wider">
           <slot name="headerFirst"></slot>
         </th>

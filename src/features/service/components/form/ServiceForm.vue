@@ -1,6 +1,7 @@
 <script setup>
 import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
+import Textarea from "@/components/new_form_elements/Textarea.vue";
 
 const props = defineProps({
   services: {
@@ -8,6 +9,7 @@ const props = defineProps({
     Required: false,
   },
 });
+console.log(props.services);
 </script>
 <template>
   <Form
@@ -16,47 +18,41 @@ const props = defineProps({
     id="serviceForm"
     v-slot="{}"
   >
-    <div class="grid grid-cols-10 col-span-3 gap-4">
-      <div class="col-span-3">
-        <Input
-          class="col-span-3"
-          name="itemCode"
-          validation="required"
-          label="Item Code"
-          :value="props.services?.itemCode || ''"
-          :attributes="{
-            placeholder: 'Item Code',
-          }"
-        />
-      </div>
-      <div class="col-span-3">
-        <Input
-          name="item"
-          validation="required"
-          label="Item"
-          :value="props.services?.item || ''"
-          :attributes="{
-            placeholder: 'Item',
-          }"
-        />
-      </div>
-      <div class="col-span-3">
-        <Input
-          name="category"
-          validation="required"
-          label="Category"
-          :value="props.services?.category || ''"
-          :attributes="{
-            placeholder: 'Category',
-          }"
-        />
-      </div>
+    <div class="col-span-3">
+      <Input
+        name="serviceName"
+        validation="required"
+        label="Service Name"
+        :value="props.services?.serviceName || ''"
+        :attributes="{
+          placeholder: 'Enter Service Name',
+        }"
+      />
     </div>
     <Input
-      name="subCategory"
+      name="serviceCode"
+      validation="required"
+      label="Item Code"
+      :value="props.services?.serviceCode || ''"
+      :attributes="{
+        placeholder: 'Item Code',
+      }"
+    />
+
+    <Input
+      name="serviceCategory"
+      validation="required"
+      label="Category"
+      :value="props.services?.serviceCategory || ''"
+      :attributes="{
+        placeholder: 'Category',
+      }"
+    />
+    <Input
+      name="serviceSubCategory"
       validation="required"
       label="Sub Category"
-      :value="props.services?.subCategory || ''"
+      :value="props.services?.serviceSubCategory || ''"
       :attributes="{
         placeholder: 'Sub Category',
       }"
@@ -71,5 +67,15 @@ const props = defineProps({
         placeholder: 'Price',
       }"
     />
+    <div class="col-span-3">
+      <Textarea
+        name="serviceDescription"
+        label="Description"
+        :value="props.services?.serviceDescription || ''"
+        :attributes="{
+          placeholder: 'Enter Description',
+        }"
+      />
+    </div>
   </Form>
 </template>
