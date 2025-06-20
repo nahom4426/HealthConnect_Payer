@@ -166,7 +166,7 @@ function selectedClaims(id: any) {
     @click.self="props.onRowClick(row)"
     class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out"
   >
-    <td class="px-4" @click.stop>
+    <td class="px-2" @click.stop>
       <Button>
         <input
           type="checkbox"

@@ -7,9 +7,14 @@ const props = defineProps(["label", "error"]);
 <template>
   <div class="flex flex-col items-start gap-1">
     <div class="flex flex-col gap-1 w-full">
-      <span :title="label" class="text-sm capitalize truncate" v-if="label">{{ label }}</span>
+      <span
+        :title="label"
+        class="text-sm capitalize text-[#75778B] truncate"
+        v-if="label"
+        >{{ label }}</span
+      >
       <div
-        class=" max-w-full border-dark/10 bg-[#F9F9FD] p-2 overflow-hidden text-base rounded-md min-h-9 flex"
+        class="max-w-full border-dark/10 bg-[#F9F9FD] p-2 overflow-hidden text-base rounded-md min-h-9 flex"
         :class="$attrs.class"
       >
         <slot></slot>

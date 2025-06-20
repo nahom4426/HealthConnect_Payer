@@ -71,6 +71,7 @@ export function usePagination(options = {}) {
         }
 
         pagination.totalPages.value = res.data?.totalPages || 1;
+
         pagination.totalElements = res.data?.totalElements || 0;
         totalElements.value = pagination.totalElements || 0;
         paginationOptions.value.totalElements = totalElements.value;

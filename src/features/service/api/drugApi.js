@@ -33,13 +33,13 @@ export function removeDrug(id) {
 }
 
 // Function to import services
-export function importDrug(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  return api.addAuthenticationHeader().post(`${basePath}/import`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+export function importDrug(id, data, config) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${basePath}/import?branchUuid=${id}`, data, {
+      ...config,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
 }

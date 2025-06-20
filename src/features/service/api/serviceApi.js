@@ -49,11 +49,10 @@ export function removeService(id) {
 }
 
 // Function to import services
-export function importServices(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  return api.addAuthenticationHeader().post(`${basePath}/import`, formData, {
+export function importServices(id = {}, data, config) {
+  const qr = getQueryFormObject(id);
+  return api.addAuthenticationHeader().post(`${basePath}/import${qr}`, data, {
+    ...config,
     headers: {
       "Content-Type": "multipart/form-data",
     },
