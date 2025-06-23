@@ -1,5 +1,5 @@
 <script setup>
-import LoginForm from "./LoginForm.vue";
+import LoginTemp from "./components/LoginTemp.vue";
 import { ref, onMounted } from "vue";
 
 const isLoading = ref(true);
@@ -14,43 +14,20 @@ onMounted(() => {
 
 <template>
   <div
-    class="flex flex-col md:flex-row rounded-lg min-h-screen w-full bg-white"
+    class="flex flex-col gap-6 md:grid md:grid-cols-5 overflow-y-scroll scrollbar-hide rounded-lg p-6 bg-[#F6F7FA] min-h-screen w-full"
   >
-    <!-- Left: Image (hidden on small screens) -->
-    <div
-      class="hidden md:block md:w-1/2 rounded-lg m-6 lg:w-1/2 sticky top-0 h-screen"
-    >
+    <div class="hidden md:block md:col-span-3 rounded-lg sticy h-screen">
       <img
         :src="loginImageUrl"
         alt="Login background"
-        class="object-cover w-full h-full rounded-lg"
+        class="w-full h-full rounded-2xl"
       />
     </div>
 
-    <!-- Right: Login Form -->
     <div
-      class="w-full md:w-1/2 lg:w-1/2 bg-[#DFF1F1] rounded-md flex items-center justify-center"
+      class="md:col-span-2 overflow-y-auto bg-[#DFF1F1] rounded-2xl h-full flex items md:items-center md:justify-center"
     >
-      <div class="">
-        <LoginForm />
-      </div>
+      <LoginTemp />
     </div>
   </div>
 </template>
-
-<style scoped>
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-/* Make right-side form area scrollable independently */
-@media (max-width: 768px) {
-  .overflow-y-auto {
-    max-height: 100vh;
-  }
-}
-</style>

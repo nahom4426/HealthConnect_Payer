@@ -60,23 +60,40 @@ const search = ref("");
             class="flex-1 bg-transparent px- py-2 h-full outline-none"
           />
         </div>
-        <button
-          v-if="active === 0"
-          class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
-          @click="openModal('AddService')"
-        >
-          <i v-html="icons.plus_circle" class=""></i>
-          Add Service
-        </button>
-        <button
-          v-else
-          class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
-          @click="openModal('AddDrug')"
-        >
-          <i v-html="icons.plus_circle" class=""></i>
+        <div v-if="active === 0" class="flex gap-2">
+          <button
+            class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
+            @click="openModal('AddService')"
+          >
+            <i v-html="icons.plus_circle" class=""></i>
+            Add Service
+          </button>
+          <button
+            class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
+            @click="openModal('Import')"
+          >
+            <i v-html="icons.plus_circle" class=""></i>
+            Import Service
+          </button>
+        </div>
+        <div v-else class="flex gap-2">
+          <button
+            class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
+            @click="openModal('AddDrug')"
+          >
+            <i v-html="icons.plus_circle" class=""></i>
 
-          AddDrug
-        </button>
+            Add Drug
+          </button>
+          <button
+            class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
+            @click="openModal('Import', 'drug')"
+          >
+            <i v-html="icons.plus_circle" class=""></i>
+
+            Import Drug
+          </button>
+        </div>
       </div>
     </div>
     <component :search="search" :is="components[active].component"></component>

@@ -1,6 +1,7 @@
 import Authorization from "@/features/credit/authorization/pages/authorization.vue";
 import AuthorizationDetails from "@/features/credit/authorization/pages/authorizationDetails.vue";
 import AuthorizationIndex from "@/features/credit/authorization/pages/authorizationIndex.vue";
+import BatchAuthorization from "@/features/credit/authorization/pages/BatchAuthorization.vue";
 
 
 export default [
@@ -16,7 +17,7 @@ export default [
           {
             path: '',
             name: 'Authorization List',
-            component: Authorization,
+            component: BatchAuthorization,
           },
           {
             path: 'detail/:authorizationUuid',

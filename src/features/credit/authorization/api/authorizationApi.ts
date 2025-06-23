@@ -159,3 +159,8 @@ export function downloadInsuredTemplate(): Promise<Blob> {
     responseType: 'blob'
   });
 }
+
+export function getAuthorizationBatch(query={}) {
+  const qs=getQueryFormObject(query)
+  return api.addAuthenticationHeader().get(`${basePath}/batch${qs}`);
+}
