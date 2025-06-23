@@ -1,23 +1,36 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
-// Medication Item interface
-// In your store file
-export interface MedicationItem {
-  medicationName?: string;
-  quantity?: number;
-  unitOfMeasure?: string;
-  unitPrice?: number;
-  totalPrice?: number;
+export interface ServiceItem {
+  serviceUuid: string;
+  medicationName: string;
+  primaryDiagnosis: string;
+  secondaryDiagnosis: string;
+  totalPrice: number;
+  itemType: 'SERVICE';
 }
 
-// Claim Service interface
+export interface DrugItem {
+  drugUuid: string;
+  medicationName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  route: string;
+  frequency: string;
+  dose: string;
+  duration: string;
+  itemType: 'DRUG';
+}
+
 export interface ClaimService {
   invoiceNumber: string;
   dispensingUuid: string;
   payerUuid: string;
   payerName: string;
   patientName: string;
+  employeeId?: string;
+  phone?: string;
   insuranceId: string | null;
   dispensingDate: string;
   prescriptionNumber: string;
@@ -27,9 +40,10 @@ export interface ClaimService {
   insuranceCoverage: number;
   branchName: string | null;
   createdAt: string;
-  medicationItems: MedicationItem[];
+  medicationItems?: ServiceItem[];
+  drugItems?: DrugItem[];
+  type: 'service' | 'drug';
 }
-
 export const claimServices = defineStore("claimServicesStore", () => {
   const claimServices = ref<ClaimService[]>([]);
 
@@ -38,61 +52,78 @@ export const claimServices = defineStore("claimServicesStore", () => {
   }
 
   function set(data: ClaimService[]): void {
-    console.log("Setting claim services in store:", data);
-    
     if (!Array.isArray(data)) {
       console.error("Invalid data format for claim services:", data);
       claimServices.value = [];
       return;
     }
-    
-    claimServices.value = data;
+
+    // Transform legacy medicationItems to new structure if needed
+    claimServices.value = data.map(item => {
+      if (item.medicationItems) {
+        return transformLegacyClaim(item);
+      }
+      return {
+        ...item,
+        type: item.type || (item.medicationItems ? 'service' : 'drug')
+      };
+    });
   }
 
-  // Alias for set
-  function setClaimServices(data: ClaimService[]): void {
-    set(data);
-  }
-
-  // Alias for set
-  function setAll(data: ClaimService[]): void {
-    set(data);
-  }
-
-// In your claimServices store
-function add(apiResponse: any, formValues: any): void {
-  console.log("Raw API response:", apiResponse);
-
-  const newService: ClaimService = {
-    invoiceNumber: apiResponse.invoiceNumber || `INV-${Date.now()}`,
-    dispensingUuid: apiResponse.dispensingUuid,
+// In your store file
+function add(formValues: any, apiResponse: any = {}): void {
+  const isDrugClaim = formValues.drugItems !== undefined;
+  
+  const newClaim: ClaimService = {
+    invoiceNumber: apiResponse.invoiceNumber || formValues.invoiceNumber || `INV-${Date.now()}`,
+    dispensingUuid: apiResponse.dispensingUuid || formValues.dispensingUuid || generateUUID(),
     payerUuid: formValues.payerUuid || apiResponse.payerUuid,
-    payerName: formValues.payerName || apiResponse.payerName || 'Unknown Payer',
-    patientName: formValues.patientName || 'Unknown Patient',
+    payerName: formValues.payerName || apiResponse.payerName, // Use provided payerName
+    patientName: formValues.patientName || apiResponse.patientName, // Use provided patientName
+    employeeId: formValues.employeeId,
+    phone: formValues.phone,
     insuranceId: apiResponse.insuranceId || null,
     dispensingDate: formValues.dispensingDate || apiResponse.recordedAt || new Date().toISOString(),
     prescriptionNumber: formValues.prescriptionNumber || '',
     pharmacyTransactionId: formValues.pharmacyTransactionId || '',
-    totalAmount: apiResponse.totalAmount ?? 0,
+    totalAmount: apiResponse.totalAmount ?? calculateTotal(formValues),
     patientResponsibility: apiResponse.patientResponsibility ?? 0,
-    insuranceCoverage: apiResponse.insuranceCoverage ?? 0,
+    insuranceCoverage: apiResponse.insuranceCoverage ?? (calculateTotal(formValues) - (apiResponse.patientResponsibility ?? 0)),
     branchName: apiResponse.branchName || null,
     createdAt: apiResponse.createdAt || new Date().toISOString(),
-    medicationItems: formValues.medicationItems || [] // fallback from form
+    type: isDrugClaim ? 'drug' : 'service'
   };
 
-  console.log("Properly transformed claim service:", newService);
-  claimServices.value = [newService, ...claimServices.value];
-}
+  if (isDrugClaim) {
+    newClaim.drugItems = formValues.drugItems.map((item: any) => ({
+      drugUuid: item.drugUuid,
+      medicationName: item.drugName || 'Unknown Drug',
+      quantity: Number(item.quantity) || 1,
+      unitPrice: item.price || 0,
+      totalPrice: (item.price || 0) * (Number(item.quantity) || 1),
+      route: item.route || 'oral',
+      frequency: item.frequency || 'daily',
+      dose: item.dose || '1',
+      duration: item.duration || '7 days',
+      itemType: 'DRUG'
+    }));
+  } else {
+    newClaim.medicationItems = formValues.medicationItems?.map((item: any) => ({
+      serviceUuid: item.serviceUuid,
+      medicationName: item.serviceName || 'Unknown Service',
+      primaryDiagnosis: item.primaryDiagnosis || '',
+      secondaryDiagnosis: item.secondaryDiagnosis || '',
+      totalPrice: item.totalPrice || 0,
+      itemType: 'SERVICE'
+    })) || [];
+  }
 
+  claimServices.value = [newClaim, ...claimServices.value];
+}
   function update(id: string, data: Partial<ClaimService>): void {
-    console.log(`Updating claim service with UUID: ${id}`, data);
-    
     const idx = claimServices.value.findIndex((el) => el.dispensingUuid === id);
     if (idx === -1) {
-      console.warn(`[Claim Services Store] No claim service found with UUID: ${id}`);
       if (data.dispensingUuid) {
-        console.log("Claim service not found for update, adding instead:", data);
         add(data as ClaimService);
       }
       return;
@@ -101,25 +132,84 @@ function add(apiResponse: any, formValues: any): void {
     claimServices.value.splice(idx, 1, {
       ...claimServices.value[idx],
       ...data,
+      type: data.type || claimServices.value[idx].type
     });
   }
 
   function remove(id: string): void {
-    const idx = claimServices.value.findIndex((el) => el.dispensingUuid === id);
-    if (idx === -1) {
-      console.warn(`[Claim Services Store] No claim service found with UUID: ${id}`);
-      return;
+    claimServices.value = claimServices.value.filter((el) => el.dispensingUuid !== id);
+  }
+
+  // Helper functions
+  function generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  function calculateTotal(formValues: any): number {
+    let total = 0;
+
+    if (Array.isArray(formValues.drugItems)) {
+      total += formValues.drugItems.reduce(
+        (sum: number, item: any) => sum + (item.totalPrice || (item.price || 0) * (Number(item.quantity) || 1)),
+        0
+      );
     }
 
-    claimServices.value.splice(idx, 1);
+    if (Array.isArray(formValues.medicationItems)) {
+      total += formValues.medicationItems.reduce(
+        (sum: number, item: any) => sum + (parseFloat(item.paymentAmount?.replace('ETB ', '')) || 0) * (Number(item.quantity) || 1),
+        0
+      );
+    }
+
+    return total;
+  }
+
+  function transformLegacyClaim(legacyClaim: any): ClaimService {
+    const isDrug = legacyClaim.medicationItems[0]?.drugUuid !== undefined;
+
+    if (isDrug) {
+      return {
+        ...legacyClaim,
+        drugItems: legacyClaim.medicationItems.map((item: any) => ({
+          drugUuid: item.drugUuid,
+          medicationName: item.medicationName || 'Unknown Drug',
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          route: item.route || 'oral',
+          frequency: item.frequency || 'daily',
+          dose: item.dose || '1',
+          duration: item.duration || '7 days',
+          unitOfMeasure: item.unitOfMeasure || 'unit',
+          itemType: 'DRUG'
+        })),
+        type: 'drug'
+      };
+    } else {
+      return {
+        ...legacyClaim,
+        medicationItems: legacyClaim.medicationItems.map((item: any) => ({
+          serviceUuid: item.serviceUuid,
+          medicationName: item.medicationName || 'Unknown Service',
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          unitOfMeasure: item.unitOfMeasure || 'service',
+          itemType: 'SERVICE'
+        })),
+        type: 'service'
+      };
+    }
   }
 
   return {
     claimServices,
     getAll,
     set,
-    setClaimServices,
-    setAll,
     add,
     update,
     remove,

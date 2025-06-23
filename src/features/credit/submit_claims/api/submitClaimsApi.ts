@@ -31,7 +31,7 @@ export function submitClaimsStatusUpdate(providerUuid: string, dispensingUuids: 
     `${basePath}/dispensing/update-status/${providerUuid}`,
     dispensingUuids, // ✅ Send raw array
     {
-      params: { newStatus: 'AUTHORIZED' },
+      params: { newStatus: 'SUBMITTED' },
       headers: { 'Content-Type': 'application/json' }
     }
   );

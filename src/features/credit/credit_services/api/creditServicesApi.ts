@@ -6,8 +6,15 @@ const api = new ApiService()
 const path = '/integration/pharmacy'
 const baseUrl = import.meta.env.v_API_URI
 const basePath = '/integration/pharmacy';
-export function createCredit(data: any): Promise<AsyncResponse<any>> {
+export function createCreditService(data: any): Promise<AsyncResponse<any>> {
   return api.addAuthenticationHeader().post(`${path}/dispensing-records`, data, {
+    headers: {
+      'Content-Type': 'application/json' // Adjust the content type as needed
+    }
+  });
+}
+export function createCreditDrug(data: any): Promise<AsyncResponse<any>> {
+  return api.addAuthenticationHeader().post(`${path}/drug-dispensing-records`, data, {
     headers: {
       'Content-Type': 'application/json' // Adjust the content type as needed
     }

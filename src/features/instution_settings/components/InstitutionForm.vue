@@ -397,7 +397,7 @@ const categoryOptions = [
       </Button>
       <ModalFormSubmitButton
         :pending="pending"
-        :btn-text="isEdit ? 'Update Institution' : 'Add Institution'"
+        :btn-text="isEdit ? 'Update Payer' : 'Add Payer'"
         class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
       />
     </div>
