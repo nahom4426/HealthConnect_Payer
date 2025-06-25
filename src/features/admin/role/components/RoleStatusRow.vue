@@ -1,12 +1,12 @@
-<script setup>
+<script setup lang="ts">
 import { defineProps, onMounted, onUnmounted } from 'vue';
+import Button from "@/components/Button.vue";
 import { openModal } from '@customizer/modal-x';
+import { useRoles } from "../store/roleStore";
+import { changeRoleStatus } from "../Api/RoleApi";
 import { useToast } from '@/toast/store/toast';
-import { useInstitutions } from "@/features/instution_settings/store/InstitutionsStore";
 import icons from "@/utils/icons";
-import { changeInstutionStatus } from '../api/institutionsApi';
-
-
+import { useRouter } from 'vue-router';
 const props = defineProps({
   rowData: {
     type: Array,
@@ -41,9 +41,15 @@ const props = defineProps({
     default: () => {}
   }
 });
-
+const router = useRouter();
 const { addToast } = useToast();
-const payersStore = useInstitutions();
+const rolesStore = useRoles();
+
+// Helper function to capitalize first letter
+function capitalizeFirstLetter(string) {
+  if (!string) return '';
+  return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+}
 
 function getStatusStyle(status) {
   if (status === 'ACTIVE' || status === 'Active') {
@@ -55,31 +61,10 @@ function getStatusStyle(status) {
   }
 }
 
-function getBaseUrl() {
-  return import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-}
-
-function handleImageError(event) {
-  event.target.src = '/assets/placeholder-logo.png';
-}
-
-function handleEdit(row) {
-  console.log('Edit button clicked with row data:', row);
-  
-  openModal('EditPayer', { 
-    payerUuid: row.payerUuid, 
-    payer: row,
-    onUpdated: (updatedPayer) => {
-      console.log('Payer updated:', updatedPayer);
-      payersStore.update(updatedPayer.payerUuid, updatedPayer);
-    }
-  });
-}
-
-function toggleDropdown(event, rowId) {
+function toggleDropdown(event, roleId) {
   event.stopPropagation();
   closeAllDropdowns();
-  const dropdown = document.getElementById(`dropdown-${rowId}`);
+  const dropdown = document.getElementById(`dropdown-${roleId}`);
   if (dropdown) {
     dropdown.classList.toggle('hidden');
   }
@@ -99,58 +84,68 @@ onUnmounted(() => {
   window.removeEventListener('click', closeAllDropdowns);
 });
 
-function handleEditWithClose(row) {
+function handleEditWithClose(role) {
   closeAllDropdowns();
-  handleEdit(row);
+  handleEdit(role);
 }
 
-function handleViewWithClose(rowId) {
+function handleViewWithClose(roleId) {
   closeAllDropdowns();
-  props.onView(rowId);
+  props.onView(roleId);
 }
 
-async function handleActivateWithClose(payerUuid) {
+function handleEdit(role) {
+  if (role.roleUuid) {
+    router.push(`/edit_role/${role.roleUuid}`);
+  } else if (typeof props.onEdit === 'function') {
+    props.onEdit(role);
+  } else {
+    console.error("No valid role UUID or edit handler provided.");
+  }
+}
+
+async function handleActivateWithClose(roleId) {
   closeAllDropdowns();
   try {
-    const response = await changeInstutionStatus(payerUuid, 'ACTIVE');
+    const response = await changeRoleStatus(roleId, 'ACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
-        message: 'Payer has been activated successfully'
+        message: 'Role has been activated successfully'
       });
-      payersStore.update(payerUuid, { status: 'ACTIVE' });
+      rolesStore.update(roleId, { status: 'ACTIVE' });
     } else {
-      throw new Error(response.error || 'Failed to activate payer');
+      throw new Error(response.error || 'Failed to activate role');
     }
   } catch (error) {
     addToast({
       type: 'error',
       title: 'Activation Failed',
-      message: error.message || 'An error occurred while activating the payer'
+      message: error.message || 'An error occurred while activating the role'
     });
   }
 }
 
-async function handleDeactivateWithClose(payerUuid) {
+async function handleDeactivateWithClose(roleId) {
   closeAllDropdowns();
   try {
-    const response = await changeInstutionStatus(payerUuid, 'INACTIVE');
+    const response = await changeRoleStatus(roleId, 'INACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
-        message: 'Payer has been deactivated successfully'
+        message: 'Role has been deactivated successfully'
       });
-      payersStore.update(payerUuid, { status: 'INACTIVE' });
+      rolesStore.update(roleId, { status: 'INACTIVE' });
     } else {
-      throw new Error(response.error || 'Failed to deactivate payer');
+      throw new Error(response.error || 'Failed to deactivate role');
     }
   } catch (error) {
     addToast({
       type: 'error',
       title: 'Deactivation Failed',
-      message: error.message || 'An error occurred while deactivating the payer'
+      message: error.message || 'An error occurred while deactivating the role'
     });
   }
 }
@@ -165,10 +160,19 @@ async function handleDeactivateWithClose(payerUuid) {
   >  
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
-    <!-- Payer Logo Column (added to match provider) -->
-
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
-      <div v-if="key === 'status'" class="truncate">  
+      <!-- Role Name field -->
+      <span v-if="key === 'roleName'" class="font-medium text-gray-700">
+        {{ capitalizeFirstLetter(row.roleName) }}
+      </span>
+
+      <!-- Role Description field -->
+      <span v-else-if="key === 'roleDescription'" class="text-gray-600">
+        {{ row.roleDescription || 'No description' }}
+      </span>
+
+      <!-- Status field -->
+      <div v-else-if="key === 'status'" class="truncate">  
         <span 
           class="px-2.5 py-1 rounded-full text-xs font-medium"
           :class="getStatusStyle(row.status)"
@@ -176,46 +180,18 @@ async function handleDeactivateWithClose(payerUuid) {
           {{ row.status }}
         </span>
       </div>
-      <div v-else-if="key === 'payerName'" class="text-gray-700 flex items-center gap-2.5 ">
-       
-      <div class="flex justify-center items-center">
-        <img 
-          v-if="row.logoBase64" 
-          :src="row.logoBase64" 
-          alt="Payer Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-        />
-        <img 
-          v-else-if="row.logoUrl" 
-          :src="row.logoUrl" 
-          alt="Payer Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-        />
-        <img 
-          v-else-if="row.logoPath" 
-          :src="`${getBaseUrl()}/payer/logo/${row.logoPath}`" 
-          alt="Payer Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-          @error="handleImageError"
-        />
-        <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
-          <span class="text-gray-500 text-xs">No Logo</span>
-        </div>
-      </div>
-       <div>
-        {{ row.payerName }}
-      </div>
-      </div>
+
+      <!-- Default field rendering with capitalization -->
       <span v-else class="text-gray-700">
-        {{ row[key] }}
+        {{ typeof row[key] === 'string' ? capitalizeFirstLetter(row[key]) : row[key] }}
       </span>
     </td>  
 
     <td class="p-3" v-if="headKeys.includes('Actions') || headKeys.includes('actions')">  
       <div class="dropdown-container relative w-full">
         <button 
-          @click.stop="toggleDropdown($event, row.payerUuid || row.id)"
-          class="inline-flex items-start justify-start p-2 w-full text-sm font-medium text-start pl-8 text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 "
+          @click.stop="toggleDropdown($event, row.roleUuid || row.id)"
+          class="inline-flex items-start justify-start p-2 w-full text-sm font-medium text-start text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
           type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -224,34 +200,34 @@ async function handleDeactivateWithClose(payerUuid) {
         </button>
 
         <div 
-          :id="`dropdown-${row.payerUuid || row.id}`"
+          :id="`dropdown-${row.roleUuid || row.id}`"
           class="dropdown-menu hidden absolute right-0 z-10 w-full bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         >
           <div class="py-1" role="none">
             <button 
               @click.stop="handleEditWithClose(row)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              <div class="flex items-center justify-start pl-4 gap-4">
+              <div class="flex items-start justify-start pl-4 gap-4">
                 <i v-html="icons.edits" />
                 Edit
               </div>
             </button>
             
             <button 
-              @click.stop="handleViewWithClose(row.payerUuid || row.id)"
+              @click.stop="handleViewWithClose(row.roleUuid || row.id)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               <div class="flex items-center justify-start pl-4 gap-4">
                 <i v-html="icons.details" />
-                Detail
+                Details
               </div>
             </button>
             
             <template v-if="row.status">
               <button 
                 v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
-                @click.stop="handleActivateWithClose(row.payerUuid || row.id)"
+                @click.stop="handleActivateWithClose(row.roleUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
@@ -259,10 +235,10 @@ async function handleDeactivateWithClose(payerUuid) {
                   Activate
                 </div>
               </button>
-             
+              
               <button 
                 v-if="row.status === 'ACTIVE' || row.status === 'Active'"
-                @click.stop="handleDeactivateWithClose(row.payerUuid || row.id)"
+                @click.stop="handleDeactivateWithClose(row.roleUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">

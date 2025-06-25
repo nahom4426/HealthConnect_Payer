@@ -22,6 +22,7 @@ async function handleSubmit(formValues: any) {
 
     const requiredFields = [
       'providerName',
+      'threeDigitAcronym',
       'email',
       'telephone',
       'address',
@@ -41,6 +42,7 @@ async function handleSubmit(formValues: any) {
 
     const providerData = {
       providerName: formValues.providerName,
+      threeDigitAcronym: formValues.threeDigitAcronym,
       providerCode: formValues.providerCode,
       description: formValues.description || "",
       email: formValues.email,

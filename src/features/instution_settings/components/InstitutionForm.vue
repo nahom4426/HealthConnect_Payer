@@ -37,6 +37,7 @@ const props = defineProps({
 // Form data
 const payerLogo = ref<File | null>(null);
 const payerName = ref('');
+const DependentCoverage = ref(true);
 const category = ref('');
 const telephone = ref('');
 const countryCode = ref('+251');
@@ -50,15 +51,17 @@ const previewImage = ref('');
 
 // Initialize form data from props
 onMounted(() => {
-  console.log('InstitutionForm mounted with initialData:', props.initialData);
+  console.log('PayerForm mounted with initialData:', props.initialData);
   
   if (props.initialData) {
     // Initialize form fields from props
     payerName.value = props.initialData.payerName || '';
+    DependentCoverage.value = props.initialData.dependentCoverage || true;
     category.value = props.initialData.category || '';
+    email.value = props.initialData.email || '';
     address.value = props.initialData.address || props.initialData.address1 || '';
     tin.value = props.initialData.tinNumber || '';
-    email.value = props.initialData.email || '';
+   
     memo.value = props.initialData.description || props.initialData.memo || '';
 
     const fullTelephone = props.initialData.telephone || props.initialData.contactPersonPhone || '';
@@ -85,12 +88,13 @@ onMounted(() => {
   }
   console.log('Form fields initialized:', {
     payerName: payerName.value,
+    DependentCoverage: DependentCoverage.value,
     category: category.value,
     telephone: telephone.value,
     countryCode: countryCode.value,
     address: address.value,
     tin: tin.value,
-    email: email.value,
+   
     memo: memo.value
   });
 });
@@ -153,11 +157,12 @@ function handleSubmit() {
   // Create form data object with all the values
   const formData = {
     payerName: payerName.value,
+    DependentCoverage: DependentCoverage.value,
     category: category.value,
     telephone: `${countryCode.value}${telephone.value}`,
     address: address.value,
     tinNumber: tin.value,
-    email: email.value,
+   email: email.value,
     description: memo.value
   };
 
@@ -178,12 +183,13 @@ function handleSubmit() {
 function resetForm() {
   payerLogo.value = null;
   payerName.value = '';
+  email.value = '';
   category.value = '';
   telephone.value = '';
   countryCode.value = '+251';
   address.value = '';
   tin.value = '';
-  email.value = '';
+ 
   memo.value = '';
   previewImage.value = '';
 }
@@ -191,8 +197,7 @@ function resetForm() {
 const categoryOptions = [
   'Insurance Company',
   'Government Agency',
-  'Healthcare Provider',
-  'Corporate Entity',
+  'Private company',
   'Non-Profit Organization'
 ];
 </script>
@@ -207,10 +212,10 @@ const categoryOptions = [
     @submit.prevent="handleSubmit"
   >
     <div class="p-4 space-y-6">
-      <!-- Institution Logo -->
+      <!-- Payer Logo -->
       <div class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
-          Institution logo <span v-if="!isEdit" class="text-red-500">*</span>
+          Payer logo <span v-if="!isEdit" class="text-red-500">*</span>
         </label>
         <div 
           @dragover="handleDragOver"
@@ -257,21 +262,74 @@ const categoryOptions = [
         </div>
       </div>
       
-      <!-- Institution Name -->
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-[#75778B]">
-          Institution Name <span class="text-red-500">*</span>
-        </label>
-        <Input
-          v-model="payerName"
-          name="payerName"
-          validation="required"
-          :attributes="{
-            placeholder: 'Enter institution\'s legal name',
-            required: true
-          }"
+      <!-- Payer Name -->
+   <div class="flex gap-6">
+  <!-- Payer Name -->
+  <div class="w-full gap-3 space-y-2">
+    <label class="block text-sm font-medium text-[#75778B]">
+      Payer Name <span class="text-red-500">*</span>
+    </label>
+    <Input
+      v-model="payerName"
+      name="payerName"
+      validation="required"
+      :attributes="{
+        placeholder: 'Enter Payer\'s legal name',
+        required: true
+      }"
+    />
+  </div>
+
+  <!-- Dependent Coverage -->
+<div class="px-2 space-y-2">
+    <label class="block text-sm font-medium text-[#75778B]">
+      Dependent Coverage <span class="text-red-500">*</span>
+    </label>
+    <div class="flex gap-4 mt-1">
+      <label
+        class="flex items-center gap-2 pr-8 pl-4 py-4 rounded-lg cursor-pointer "
+        :class="DependentCoverage === true ? 'bg-[#DFF1F1] text-[#02676B] border-[#02676B]' : 'bg-[#F9F9FD] text-gray-600 border-gray-300'"
+      >
+        <input
+          type="radio"
+          v-model="DependentCoverage"
+          :value="true"
+          class="sr-only"
         />
-      </div>
+        <div
+          class="w-5 h-5 flex items-center justify-center rounded-md border"
+          :class="DependentCoverage === true ? 'bg-[#02676B] text-white' : 'border-gray-400'"
+        >
+          <svg v-if="DependentCoverage === true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <span class="text-sm font-medium">Yes</span>
+      </label>
+
+      <label
+        class="flex items-center gap-2 pr-8 pl-4 py-4  cursor-pointer "
+        :class="DependentCoverage === false ? 'bg-[#DFF1F1] text-[#02676B] border-[#02676B]' : 'bg-[#F9F9FD] text-gray-600 border-gray-300'"
+      >
+        <input
+          type="radio"
+          v-model="DependentCoverage"
+          :value="false"
+          class="sr-only"
+        />
+        <div
+          class="w-5 h-5 flex items-center justify-center rounded-md border"
+          :class="DependentCoverage === false ? 'bg-[#02676B] text-white' : 'border-gray-400'"
+        >
+          <svg v-if="DependentCoverage === false" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <span class="text-sm font-medium">No</span>
+      </label>
+    </div>
+  </div>
+</div>
       
       <!-- Two column layout -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -286,7 +344,7 @@ const categoryOptions = [
             validation="required"
             :options="categoryOptions"
             :attributes="{
-              placeholder: 'Select institution category',
+              placeholder: 'Select Payer category',
               required: true
             }"
           />
@@ -297,12 +355,15 @@ const categoryOptions = [
           <label class="block text-sm font-medium text-[#75778B]">
             Phone Number <span class="text-red-500">*</span>
           </label>
-          <div class="flex w-full gap-2">
+          <div class="flex w-full gap-2 ">
             <Select
               v-model="countryCode"
               name="countryCode"
               :options="['+251', '+1', '+44', '+91']"
-              :attributes="{ required: true }"
+              :attributes="{
+                class: 'pr-2 my-2 bg-[#F9F9FD]',
+                required: true
+              }"
             />
             <Input
               v-model="telephone"
@@ -310,7 +371,7 @@ const categoryOptions = [
               validation="required"
               :attributes="{
                 placeholder: 'Enter phone number',
-                class: 'px-14 my-2 bg-[#F9F9FD]',
+                class: 'pr-40 my-2 bg-[#F9F9FD]',
                 required: true
               }"
             />
@@ -330,7 +391,7 @@ const categoryOptions = [
             name="address"
             validation="required"
             :attributes="{
-              placeholder: 'Enter institution address',
+              placeholder: 'Enter Payer address',
               required: true
             }"
           />
@@ -354,16 +415,16 @@ const categoryOptions = [
       </div>
       
       <!-- Admin User -->
-      <div class="space-y-2">
+     <div class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
-          Admin User <span class="text-red-500">*</span>
+          company's email  <span class="text-red-500">*</span>
         </label>
         <InputEmail
           v-model="email"
           name="email"
           validation="required|email"
           :attributes="{
-            placeholder: 'Email of the admin user',
+            placeholder: 'Email of the Company',
             required: true
           }"
         />
@@ -397,7 +458,7 @@ const categoryOptions = [
       </Button>
       <ModalFormSubmitButton
         :pending="pending"
-        :btn-text="isEdit ? 'Update Institution' : 'Add Institution'"
+        :btn-text="isEdit ? 'Update Payer' : 'Add Payer'"
         class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
       />
     </div>

@@ -15,8 +15,13 @@ export function getRoleById(id) {
   return api.addAuthenticationHeader().get(`${path}/${id}`);
 }
 export function updateRolebyId(id, data) {
-  return api.addAuthenticationHeader().put(`${path}/updateRole/${id}`, data);
+  return api.addAuthenticationHeader().put(`${path}/${id}`, data);
 }
 export function removeRoleById(id) {
   return api.addAuthenticationHeader().delete(`${path}/${id}`);
+}
+export function changeRoleStatus(roleId, status) {
+  return api.addAuthenticationHeader().put(`${path}/${roleId}/status`, null, {
+    params: { status }
+  });
 }

@@ -14,7 +14,7 @@ export function createPrivilege(data) {
     .post(`${path}/privilege`, data);
 }
 
-export function removePrivilege(id) {
+export function deletePrivilege(id) {
   return api.addAuthenticationHeader().delete(`${path}/privilege/${id}`);
 }
 export function getPrivilegeById(id) {
@@ -22,4 +22,10 @@ export function getPrivilegeById(id) {
 }
 export function updatePrivilege(id, data) {
   return api.addAuthenticationHeader().put(`${path}/privilege/${id}`, data);
+}
+
+export function changePrivilegeStatus(privilegeId, status) {
+  return api.addAuthenticationHeader().put(`${path}/${privilegeId}/status`, null, {
+    params: { status }
+  });
 }

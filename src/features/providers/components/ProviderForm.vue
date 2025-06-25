@@ -37,6 +37,7 @@ const props = defineProps({
 // Form data
 const providerLogo = ref<File | null>(null);
 const providerName = ref('');
+const threeDigitAcronym = ref('');
 const category = ref('');
 const telephone = ref('');
 const countryCode = ref('+251');
@@ -50,6 +51,7 @@ const previewImage = ref('');
 onMounted(() => {
   if (props.initialData && Object.keys(props.initialData).length > 0) {
     providerName.value = props.initialData.providerName || '';
+    threeDigitAcronym.value = props.initialData.providerCode || '';
     category.value = props.initialData.category || '';
     address.value = props.initialData.address1 || '';
     tin.value = props.initialData.tinNumber || '';
@@ -131,6 +133,7 @@ function handleDrop(event: DragEvent) {
 function resetForm() {
   providerLogo.value = null;
   providerName.value = '';
+  threeDigitAcronym.value = '';
   category.value = '';
   telephone.value = '';
   countryCode.value = '+251';
@@ -150,6 +153,7 @@ function handleSubmit() {
 
   const formData = {
     providerName: providerName.value,
+    threeDigitAcronym: threeDigitAcronym.value,
     category: category.value,
     telephone: `${countryCode.value}${telephone.value}`,
     address: address.value,
@@ -177,11 +181,9 @@ function handleSubmit() {
 }
 
 const categoryOptions = [
-  'Insurance Company',
-  'Government Agency',
-  'Healthcare Provider',
-  'Corporate Entity',
-  'Non-Profit Organization'
+  'Government provider',
+  'Private provider',
+  'NGO provider'
 ];
 </script>
 
@@ -252,15 +254,31 @@ const categoryOptions = [
         <label class="block text-sm font-medium text-[#75778B]">
           Provider Name <span class="text-red-500">*</span>
         </label>
+        <div class="flex w-full gap-2">
+        <Input
+          v-model="threeDigitAcronym"
+          name="threeDigitAcronym"
+          validation="required"
+          :attributes="{
+            placeholder: 'Enter three characters ID ',
+            class: 'pr-4 my-2 bg-[#F9F9FD]',
+            maxlength: 3,
+            pattern: '^[A-Z]{3}$',
+            title: 'Three-digit acronym must be uppercase letters (e.g., ABC)',
+            required: true
+          }"
+        />
         <Input
           v-model="providerName"
           name="providerName"
           validation="required"
           :attributes="{
             placeholder: 'Enter provider\'s legal name',
+             class: 'pr-[30rem] my-2 bg-[#F9F9FD]',
             required: true
           }"
         />
+        </div>
       </div>
       
       <!-- Two column layout -->
@@ -288,22 +306,25 @@ const categoryOptions = [
     Phone Number <span class="text-red-500">*</span>
   </label>
   <div class="flex w-full gap-2">
-    <Select
-      v-model="countryCode"
-      name="countryCode"
-      :options="['+251', '+1', '+44', '+91']"
-      :attributes="{ required: true }"
-    />
-    <Input
-      v-model="telephone"
-      name="phoneNumber"
-      validation="required"
-      :attributes="{
-        placeholder: 'Enter phone number',
-        class: 'px-14 my-2 bg-[#F9F9FD]',
-        required: true
-      }"
-    />
+     <Select
+              v-model="countryCode"
+              name="countryCode"
+              :options="['+251', '+1', '+44', '+91']"
+              :attributes="{
+                class: 'pr-2 my-2 bg-[#F9F9FD]',
+                required: true
+              }"
+            />
+            <Input
+              v-model="telephone"
+              name="phoneNumber"
+              validation="required"
+              :attributes="{
+                placeholder: 'Enter phone number',
+                class: 'pr-40 my-2 bg-[#F9F9FD]',
+                required: true
+              }"
+            />
   </div>
 </div>
 
@@ -347,14 +368,14 @@ const categoryOptions = [
       <!-- Admin User -->
       <div class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
-          Admin User <span class="text-red-500">*</span>
+         Provider's Email <span class="text-red-500">*</span>
         </label>
         <InputEmail
           v-model="email"
           name="email"
           validation="required|email"
           :attributes="{
-            placeholder: 'Email of the admin user',
+            placeholder: 'Email of the provider',
             required: true
           }"
         />

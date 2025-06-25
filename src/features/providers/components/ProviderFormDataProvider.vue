@@ -32,6 +32,7 @@ function register(formData: FormData) {
     
     const requiredProviderFields = [
       'providerName', 
+      'threeDigitAcronym',
       'email', 
       'telephone',
       'address1', 

@@ -45,7 +45,7 @@ console.log("Initial selected privileges:", props.selectPrivilege);
             <SelectPrivilegeInput 
                 label="Select Privileges" 
                 validation="required" 
-                name="privileges"
+                name="privilegeUuid"
                 :options="privileges" 
                 :selectedPrivilege="selectPrivilege || []" 
             />

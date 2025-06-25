@@ -15,7 +15,10 @@ const payersStore = useInstitutions();
 const pending = ref(false);
 const router = useRouter();
 const formDataProvider = ref();
-
+function cleanPhoneNumber(phone: string): string {
+  // Remove a leading 0 after the country code (e.g., +2510xxxx → +251xxxx)
+  return phone.replace(/^(\+\d{3})0/, '$1');
+}
 async function handleSubmit(formValues: any) {
   try {
     pending.value = true;
@@ -39,22 +42,24 @@ async function handleSubmit(formValues: any) {
       formData.append('logo', formValues.payerLogo);
     }
 
-    const payerData = {
-      payerName: formValues.payerName,
-      description: formValues.memo || "",
-      email: formValues.email,
-      telephone: `${formValues.telephone}`,
-      category: formValues.category,
-      address1: formValues.address,
-      address2: formValues.address2 || "",
-      address3: formValues.address3 || "",
-      state: formValues.state || "Ethiopia",
-      country: formValues.country || "Ethiopia",
-      latitude: formValues.latitude || 0,
-      longitude: formValues.longitude || 0,
-      tinNumber: formValues.tinNumber,
-      status: formValues.status || "ACTIVE"
-    };
+ const payerData = {
+  payerName: formValues.payerName,
+  DependentCoverage: formValues.DependentCoverage,
+  description: formValues.description || formValues.memo,
+ telephone: cleanPhoneNumber(formValues.telephone),
+  category: formValues.category,
+  email: formValues.email,
+  address1: formValues.address,
+  address2: formValues.address2 || "",
+  address3: formValues.address3 || "",
+  state: formValues.state || "Ethiopia",
+  country: formValues.country || "Ethiopia",
+  latitude: formValues.latitude || 0,
+  longitude: formValues.longitude || 0,
+  tinNumber: formValues.tinNumber,
+  status: formValues.status || "ACTIVE"
+};
+
 
     formData.append('payerRequest', JSON.stringify(payerData));
 

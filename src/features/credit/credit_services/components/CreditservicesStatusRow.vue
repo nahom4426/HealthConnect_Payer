@@ -3,7 +3,6 @@ import { defineProps, onMounted, onUnmounted, ref } from 'vue';
 import Button from "@/components/Button.vue";
 import { openModal } from '@customizer/modal-x';
 import { claimServices } from "../store/creditClaimsStore";
-import { changeInsuredStatus, getPayerbyPayerUuid } from "../api/creditServicesApi";
 import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
 import { watch } from 'vue';
@@ -22,43 +21,7 @@ const props = defineProps({
 
 const { addToast } = useToast();
 const insuredStore = claimServices();
-const payerNames = ref<Record<string, string>>({});
 
-async function fetchPayerName(payerUuid: string) {
-  if (!payerUuid) return 'Unknown Payer';
-  if (payerNames.value[payerUuid]) return payerNames.value[payerUuid];
-
-  try {
-    const response = await getPayerbyPayerUuid(payerUuid);
-    if (response?.payerName) {
-      payerNames.value[payerUuid] = response.payerName;
-      return response.payerName;
-    }
-    return 'Unknown Payer';
-  } catch (error) {
-    console.error('Error fetching payer name:', error);
-    return 'Unknown Payer';
-  }
-}
-watch(
-  () => props.rowData,
-  async (newData) => {
-    if (newData && newData.length > 0) {
-      const uniquePayerUuids = [...new Set(newData.map(row => row.payerUuid))];
-      await Promise.all(uniquePayerUuids.map(uuid => fetchPayerName(uuid)));
-    }
-  },
-  { immediate: true }
-);
-onMounted(async () => {
-  window.addEventListener('click', closeAllDropdowns);
-  const uniquePayerUuids = [...new Set(props.rowData.map(row => row.payerUuid))];
-  await Promise.all(uniquePayerUuids.map(uuid => fetchPayerName(uuid)));
-});
-
-onUnmounted(() => {
-  window.removeEventListener('click', closeAllDropdowns);
-});
 
 function handleImageError(event) {
   event.target.src = '/assets/placeholder-profile.png';
@@ -138,9 +101,7 @@ async function handleDeactivateWithClose(insuredId) {
         </span>
       </div>
       
-      <div v-else-if="key === 'payerUuid'" class="text-gray-700">
-        {{ payerNames[row[key]] || row[key] || 'Loading...' }}
-      </div>
+     
 
       <span v-else class="text-gray-700">
         {{ row[key] }}
