@@ -171,9 +171,9 @@ const goBack = () => {
         </div>
          -->
         <Button 
-            size="xl" 
-            type="primary" 
-            class="flex justify-center items-center mt-3 gap-3 p-2 bg-primary"
+            size="md" 
+           
+            class="flex justify-center items-center mt-3 gap-3 p-4  text-white bg-primary"
             :pending="updateReq.pending.value" 
             @click.prevent="submit(update)"
         >

@@ -45,6 +45,7 @@ async function createCredit(formData: CreditServiceData): Promise<any> {
       payerName: formData.payerName || '', // Ensure payerName is included
       phone: formData.phone,
       employeeId: formData.employeeId,
+      insuredUuid: formData.insuredUuid,  
       dispensingDate: formData.dispensingDate,
       prescriptionNumber: formData.prescriptionNumber,
       pharmacyTransactionId: formData.pharmacyTransactionId,

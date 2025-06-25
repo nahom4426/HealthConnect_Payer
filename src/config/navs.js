@@ -2,29 +2,31 @@ import icons from "@/utils/icons";
 
 // icon set called streamline
 export default [
-  {
-    path: "/dashboard",
-    name: "Dashboard",
-    icon: icons.dashboard,
-    // category: "main",
-    // privilege: ['Read-Privileges'],
-  },
+ {
+  path: "/dashboard",
+  name: "Dashboard",
+  icon: icons.dashboard,
+  privilege: ['CREATE_USER'], 
+},
 
   {
     path: "/payer_list",
     name: "Payer List",
     icon: icons.payerList,
+     privilege: ['CREATE_USER'], 
     // category: "Admin",
   },
   {
     path: "/provider_list",
     name: "Providers list",
     icon: icons.Activeprovider,
+     privilege: ['CREATE_USER'], 
   },
   {
     path: "/payer_contracts",
     name: "Payer Conttracts",
     icon: icons.payerContracts,
+     privilege: ['CREATE_USER'], 
     // category: "Admin",
   },
   {

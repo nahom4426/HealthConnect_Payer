@@ -49,6 +49,13 @@ const editUser = (userUuid: string) => {
 const openAddUserModal = () => {
   router.push('/add_user');
 };
+
+// function handleAddUser() {
+//   // Open the add user modal
+//   openModal("AddUser", {
+   
+//   });
+// }
 </script>
 
 <template>
@@ -67,7 +74,7 @@ const openAddUserModal = () => {
         </div>
 
         <div class="flex items-center space-x-4">
-          <button @click="openAddUserModal"
+          <button  @click.prevent="openModal('AddUser')"
             class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white">
                <i v-html="icons.plus_circle"></i>
             Add User
@@ -82,19 +89,25 @@ const openAddUserModal = () => {
             'Fullname',
             'Email',
             'Mobile Phone',
+            'User Type',
             'Role Name',
             'Gender',
+            'Status',
             'Actions',
           ],
           row: [
             'fullname',
             'email',
             'mobilePhone',
+            'userType',
             'roleName',
+            
             'gender',
+            'status',
           ]
         }" 
         :rows="usersStore.users"
+          :rowCom="UserStatusRow"
         :Fallback="TableRowSkeleton"
       >
         <template #row="{ row }">

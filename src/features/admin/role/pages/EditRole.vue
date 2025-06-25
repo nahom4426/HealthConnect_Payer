@@ -8,9 +8,8 @@ import NewFormParent from '../components/NewFormParent.vue';
 import PrivilegesDataProvider from '../../privilege/components/PrivilegesDataProvider.vue';
 import Button from '@/components/Button.vue';
 import RoleForm from '../form/RoleForm.vue';
-import { toasted } from '@/utils/utils';
 import { useForm } from '@/components/new_form_builder/useForm';
-const router = useRouter();
+import { toasted } from '@/utils/utils';
 
 const roleStore = useRoles();
 const route = useRoute()
@@ -31,92 +30,21 @@ if (!Object.keys(role.value).length) {
     );
     console.log(role);
 }
+    console.log(role);
+
 function update({ values }) {
-    console.log("Form values before formatting:", values);
-    
-    // Get the privileges from the form or from the role object
-    let privileges = values.privileges;
-    
-    // If privileges is missing from values, try to get it from the hidden input directly
-    if (!privileges) {
-        const privilegesInput = document.querySelector('input[name="privileges"]');
-        if (privilegesInput) {
-            privileges = privilegesInput.value;
-        }
-    }
-    
-    // If still no privileges, try to get from the role object
-    if (!privileges && role.value && role.value.privileges) {
-        privileges = role.value.privileges;
-    }
-    
-    // Parse privileges if it's a string
-    if (typeof privileges === 'string') {
-        try {
-            // Check if it's a JSON string
-            if (privileges.startsWith('[')) {
-                privileges = JSON.parse(privileges);
-            } else {
-                // If it's not a JSON string, wrap it in an array
-                privileges = [privileges];
-            }
-        } catch (e) {
-            console.error("Error parsing privileges:", e);
-            privileges = [];
-        }
-    }
-    
-    // Ensure privileges is an array
-    if (!Array.isArray(privileges)) {
-        privileges = [];
-    }
-    
-    // Extract just the UUIDs if privileges contains objects
-    const privilegeUuids = privileges.map(priv => {
-        if (typeof priv === 'string') {
-            return priv;
-        } else if (priv && priv.privilegeUuid) {
-            return priv.privilegeUuid;
-        }
-        return null;
-    }).filter(uuid => uuid !== null);
-    
-    // Format the data for the API
-    const formattedData = {
-        roleName: values.roleName,
-        roleDescription: values.roleDescription,
-        privilegeUuid: privilegeUuids // Send only the UUIDs
-    };
-    
-    // Check if privileges exist
-    if (!formattedData.privilegeUuid.length) {
-        console.error("No privileges found in form values");
-        toasted(false, '', 'No privileges selected. Please select at least one privilege.');
-        return;
-    }
-    
-    console.log("Formatted data for API:", formattedData);
-    
+    console.log(values);
     updateReq.send(
-        () => updateRolebyId(roleUuid, formattedData),
+        () => updateRolebyId(roleUuid, values),
         (res) => {
             if (res.success) {
-                // Update the store with the original values to maintain UI consistency
-                roleStore.update(roleUuid, { 
-                    ...role.value, 
-                    roleName: values.roleName,
-                    roleDescription: values.roleDescription,
-                    privileges: privileges // Keep the full privileges for UI
-                });
-                router.push('/roles');
-                toasted(res.success, 'Successfully Updated', res.error);
-            } else {
-                toasted(false, '', res.error || 'Failed to update role');
+                roleStore.update(roleUuid, { ...role, ...values });
             }
+            toasted(res.success, 'Successfully Updated', res.error);
         }
     );
 }
-
+const router = useRouter();
 const goBack = () => {
     router.go(-1);
 }
@@ -138,14 +66,29 @@ const goBack = () => {
 
         </div>
     </button>
-    <NewFormParent size="xl" title="Update Roles">
-        <PrivilegesDataProvider :pre-page="500" v-slot="{ privileges, pending }">
-            <RoleForm v-if="!pending" :selectPrivilege="role?.privileges" :privileges="privileges" :roles="role" />
-        </PrivilegesDataProvider>
-        <Button size="sm" type="primary" class="flex justify-center items-center mt-3 gap-3 p-2 bg-primary"
-            :pending="updateReq.pending.value" @click="submit(update)">
-            Update Role
-        </Button>
+   <NewFormParent size="xl" title="Update Roles">
+  <PrivilegesDataProvider :pre-page="500" v-slot="{ privileges, pending }">
+    <RoleForm
+      v-if="!pending"
+      :selectPrivilege="role?.privilegeList"
+      :privileges="privileges"
+      :roles="role"
+    />
+  </PrivilegesDataProvider>
 
-    </NewFormParent>
+  <!-- ✅ Button in the bottom slot -->
+  <template #bottom>
+    <div class="p-4  flex justify-center">
+      <Button
+        size="sm"
+        class="flex justify-center w-full items-center text-white gap-3 p-4 bg-primary"
+        :pending="updateReq.pending.value"
+        @click.prevent="submit(update)"
+      >
+        Update Role
+      </Button>
+    </div>
+  </template>
+</NewFormParent>
+
 </template>

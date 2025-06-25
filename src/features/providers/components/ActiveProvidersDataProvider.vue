@@ -30,7 +30,7 @@ const pagination = usePagination({
   reset: true,
   cb: (data) => getProviders({
     ...data,
-    status: props.status,
+    // status: props.status,
     search: props.search.trim() || undefined // Send search term to API
   })
 });

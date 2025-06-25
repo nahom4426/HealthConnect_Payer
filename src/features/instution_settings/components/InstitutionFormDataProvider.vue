@@ -32,7 +32,6 @@ function register(formData: FormData) {
     // Required field list must exactly match what you're validating on frontend
     const requiredPayerFields = [
       'payerName', 
-      'email', 
       'telephone',
       'address1', 
       'tinNumber', 

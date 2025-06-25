@@ -28,7 +28,8 @@ async function handleSubmit(formValues: any) {
     const commonPayload = {
       providerUuid: auth.auth?.user?.providerUuid || '',
       payerUuid: formValues.payerUuid,
-      payerName: formValues. payerName, // Add payerName here
+      payerName: formValues. payerName, 
+      insuredUuid: formValues.insuredUuid ,
       phone: formValues.phone,
       patientName: formValues.patientName || 'Unknown Patient',
       employeeId: formValues.employeeId,
@@ -110,6 +111,7 @@ async function handleSubmit(formValues: any) {
   } finally {
     formPending.value = false;
   }
+  console.log('Form submitted with values:', formValues);
 }
 </script>
 

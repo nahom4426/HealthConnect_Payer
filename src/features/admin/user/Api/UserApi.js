@@ -48,3 +48,8 @@ export function fetchUserFilesView() {
 export function fetchUserFiles() {
   return api.addAuthenticationHeader().get(`${path}`);
 }
+export function changeUserStatus(providerId, status) {
+  return api.addAuthenticationHeader().put(`${path}/${providerId}/status`, null, {
+    params: { status }
+  });
+}

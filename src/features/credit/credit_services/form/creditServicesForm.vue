@@ -27,6 +27,7 @@ interface Employee {
   insuredUuid: string;
   fullName: string;
   phone: string;
+  insuredIdNumber: string;
   position: string;
   idNumber: string;
   birthDate: string;
@@ -65,6 +66,7 @@ interface Drug {
 interface CreditServiceFormData {
   payerUuid: string;
   payerName: string;
+  insuredUuid: string;
   phone: string;
   dispensingDate: string;
   prescriptionNumber?: string;
@@ -131,6 +133,7 @@ const employeeDetails = computed(() => {
     employeeId: selectedEmployee.value.idNumber,
     role: selectedEmployee.value.position,
     phone: selectedEmployee.value.phone,
+    insuredUuid: selectedEmployee.value.insuredUuid,
     email: selectedEmployee.value.email || 'N/A',
     gender: selectedEmployee.value.gender || 'Unknown',
     address: selectedEmployee.value.address || 'Unknown',
@@ -498,6 +501,7 @@ function handleSubmit() {
       payerUuid: selectedPayer.value!,
       payerName: getPayerLabel(selectedPayer.value!), // Add this
       phone: selectedEmployee.value!.phone,
+      insuredUuid: selectedEmployee.value!.insuredUuid,
       patientName: selectedEmployee.value!.fullName, // Add this
       employeeId: selectedEmployee.value!.idNumber,
       dispensingDate: dispensingDate.value,

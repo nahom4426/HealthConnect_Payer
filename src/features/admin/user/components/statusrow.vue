@@ -1,24 +1,38 @@
 <script setup>
-import { computed } from 'vue';
+import { defineProps, onMounted, onUnmounted } from 'vue';
+import Button from "@/components/Button.vue";
+import { openModal } from '@customizer/modal-x';
+import { useUsers } from "../store/userStore";
+import { changeUserStatus } from "../Api/UserApi";
+import { useToast } from '@/toast/store/toast';
+import icons from "@/utils/icons";
 
-const props = defineProps({  
-  rowData: {  
-    type: Array,  
-    required: true,  
-  },  
-  headKeys: {  
-    type: Array,  
-    required: true,
-  },  
-  rowKeys: {  
-    type: Array,  
-    required: true,  
+const props = defineProps({
+  rowData: {
+    type: Array,
+    required: true
+  },
+  rowKeys: {
+    type: Array,
+    required: true
+  },
+  headKeys: {
+    type: Array,
+    required: true
+  },
+  onView: {
+    type: Function,
+    default: () => {}
   },
   onEdit: {
     type: Function,
     default: () => {}
   },
-  onDelete: {
+  onActivate: {
+    type: Function,
+    default: () => {}
+  },
+  onDeactivate: {
     type: Function,
     default: () => {}
   },
@@ -26,7 +40,10 @@ const props = defineProps({
     type: Function,
     default: () => {}
   }
-}); 
+});
+
+const { addToast } = useToast();
+const usersStore = useUsers();
 
 // Helper function to capitalize first letter
 function capitalizeFirstLetter(string) {
@@ -44,21 +61,16 @@ function formatFullName(row) {
   return `${title} ${firstName} ${fatherName} ${grandFatherName}`.trim();
 }
 
-// Helper function to get status styling
 function getStatusStyle(status) {
-  switch(status?.toLowerCase()) {
-    case 'active':
-      return 'bg-green-100 text-green-800';
-    case 'inactive':
-      return 'bg-red-100 text-red-800';
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
+  if (status === 'ACTIVE' || status === 'Active') {
+    return 'bg-[#DFF1F1] text-[#02676B]';
+  } else if (status === 'INACTIVE' || status === 'Inactive') {
+    return 'bg-red-100 text-red-800';
+  } else {
+    return 'bg-gray-100 text-gray-800';
   }
 }
 
-// Helper function to get gender styling
 function getGenderStyle(gender) {
   switch(gender?.toLowerCase()) {
     case 'male':
@@ -69,9 +81,122 @@ function getGenderStyle(gender) {
       return 'bg-gray-100 text-gray-800';
   }
 }
+
+function toggleDropdown(event, rowId) {
+  event.stopPropagation();
+  closeAllDropdowns();
+  const dropdown = document.getElementById(`dropdown-${rowId}`);
+  if (dropdown) {
+    dropdown.classList.toggle('hidden');
+  }
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown-menu').forEach(el => {
+    el.classList.add('hidden');
+  });
+}
+
+onMounted(() => {
+  window.addEventListener('click', closeAllDropdowns);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', closeAllDropdowns);
+});
+
+function handleEditWithClose(row) {
+  closeAllDropdowns();
+  handleEdit(row);
+}
+
+function handleViewWithClose(rowId) {
+  closeAllDropdowns();
+  props.onView(rowId);
+}
+
+function handleEdit(row) {
+  if (row.userUuid) {
+    openModal('EditUser', { 
+      userUuid: row.userUuid, 
+      user: row,
+      onUpdated: (updatedUser) => {
+        usersStore.update(updatedUser.userUuid, updatedUser);
+      }
+    });
+  } else if (typeof props.onEdit === 'function') {
+    props.onEdit(row);
+  }
+}
+
+async function handleActivateWithClose(userId) {
+  closeAllDropdowns();
+  try {
+    const response = await changeUserStatus(userId, 'ACTIVE');
+    if (response.success) {
+      addToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: 'User has been activated successfully'
+      });
+      usersStore.update(userId, { status: 'ACTIVE' });
+    } else {
+      throw new Error(response.error || 'Failed to activate user');
+    }
+  } catch (error) {
+    addToast({
+      type: 'error',
+      title: 'Activation Failed',
+      message: error.message || 'An error occurred while activating the user'
+    });
+  }
+}
+
+async function handleDeactivateWithClose(userId) {
+  closeAllDropdowns();
+  try {
+    const response = await changeUserStatus(userId, 'INACTIVE');
+    if (response.success) {
+      addToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: 'User has been deactivated successfully'
+      });
+      usersStore.update(userId, { status: 'INACTIVE' });
+    } else {
+      throw new Error(response.error || 'Failed to deactivate user');
+    }
+  } catch (error) {
+    addToast({
+      type: 'error',
+      title: 'Deactivation Failed',
+      message: error.message || 'An error occurred while deactivating the user'
+    });
+  }
+}
+function getUserType(row) {
+  const hasPayer = !!row.payerUuid;
+  const hasProvider = !!row.providerUuid;
+
+  if (hasPayer && !hasProvider) return 'Payer';
+  if (!hasPayer && hasProvider) return 'Provider';
+  if (!hasPayer && !hasProvider) return 'Admin';
+  if (hasPayer && hasProvider) return 'Payer and Provider';
+}
+
+function getTypeStyle(statusOrType) {
+  switch (statusOrType) {
+    case 'Payer': return 'bg-blue-100 text-blue-800';
+    case 'Provider': return 'bg-green-100 text-green-800';
+    case 'Admin': return 'bg-yellow-100 text-yellow-800';
+    case 'Payer and Provider': return 'bg-purple-100 text-purple-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
 </script>
 
-<template>  
+<template>
   <tr 
     v-for="(row, idx) in rowData" 
     :key="idx"
@@ -110,6 +235,24 @@ function getGenderStyle(gender) {
           {{ capitalizeFirstLetter(row.gender) }}
         </span>
       </span>
+<div v-else-if="key === 'status'" class="truncate">  
+        <span 
+          class="px-2.5 py-1 rounded-full text-xs font-medium"
+          :class="getStatusStyle(row.status)"
+        >
+          {{ row.userStatus }}
+        </span>
+      </div>
+      <!-- Status field -->
+     <div v-else-if="key === 'userType'" class="truncate">
+ <span 
+  class="px-2.5 py-1 rounded-full text-xs font-medium"
+  :class="getTypeStyle(getUserType(row))"
+>
+  {{ getUserType(row) }}
+</span>
+</div>
+
 
       <!-- Default field rendering with capitalization -->
       <span v-else class="text-gray-700">
@@ -118,26 +261,95 @@ function getGenderStyle(gender) {
     </td>  
 
     <td class="p-3" v-if="headKeys.includes('Actions') || headKeys.includes('actions')">  
-      <div class="flex gap-2">
-        <button class="rounded-lg bg-gray-600 text-white px-2 py-1 border-gray-300 flex gap-1"
-          @click.stop.prevent="onEdit(row?.userUuid)">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+      <div class="dropdown-container relative w-full">
+        <button 
+          @click.stop="toggleDropdown($event, row.userUuid || row.id)"
+          class="inline-flex items-center justify-center p-2 w-full text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
+          type="button"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
           </svg>
-          Edit
         </button>
-        <button class="rounded-lg bg-[#FF4C4C] text-white px-2 py-1 border-gray-300 flex gap-1"
-          @click.stop.prevent="onDelete(row?.userUuid)">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 6h18"></path>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            <line x1="10" y1="11" x2="10" y2="17"></line>
-            <line x1="14" y1="11" x2="14" y2="17"></line>
-          </svg>
-          Delete
-        </button>
+
+        <div 
+          :id="`dropdown-${row.userUuid || row.id}`"
+          class="dropdown-menu hidden absolute right-0 z-10 w-full bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+        >
+          <div class="py-1" role="none">
+            <button 
+              @click.stop="handleEditWithClose(row)"
+              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <div class="flex items-start justify-start pl-4 gap-4">
+                <i v-html="icons.edits" />
+                Edit
+              </div>
+            </button>
+            
+            <button 
+              @click.stop="handleViewWithClose(row.userUuid || row.id)"
+              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <div class="flex items-center justify-start pl-4 gap-4">
+                <i v-html="icons.details" />
+                Detail
+              </div>
+            </button>
+            
+            <template v-if="row.userStatus">
+              <button 
+                v-if="row.userStatus === 'INACTIVE' || row.userStatus === 'Inactive'"
+                @click.stop="handleActivateWithClose(row.userUuid || row.id)"
+                class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
+              >
+                <div class="flex items-center justify-start pl-4 gap-4">
+                  <i v-html="icons.activate" />
+                  Activate
+                </div>
+              </button>
+              
+              <button 
+                v-if="row.userStatus === 'ACTIVE' || row.userStatus === 'Active'"
+                @click.stop="handleDeactivateWithClose(row.userUuid || row.id)"
+                class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
+              >
+                <div class="flex items-center justify-start pl-4 gap-4">
+                  <i v-html="icons.deactivate" />
+                  Deactivate
+                </div>
+              </button>
+            </template>
+          </div>
+        </div>
       </div>
-    </td>  
+    </td>
   </tr>
 </template>
+
+<style scoped>
+.dropdown-container {
+  min-width: 80px;
+}
+
+.dropdown-menu {
+  min-width: 150%;
+  transition: all 0.2s ease-out;
+  transform-origin: top right;
+}
+
+.dropdown-menu.hidden {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.dropdown-menu:not(.hidden) {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.dropdown-container button {
+  width: 100%;
+}
+</style>

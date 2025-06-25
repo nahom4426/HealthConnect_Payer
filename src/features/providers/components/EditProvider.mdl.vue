@@ -68,6 +68,7 @@ async function handleSubmit(formValues: any) {
 
     const providerPayload = {
       providerName: formValues.providerName,
+      threeDigitAcronym: formValues.threeDigitAcronym,
       providerCode: formValues.providerCode,
       description: formValues.description || "",
       email: formValues.email,

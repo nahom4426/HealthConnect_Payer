@@ -1,86 +1,217 @@
-<script setup>
-import Table from '@/components/Table.vue';
-import PrivilegesDataProvider from '../components/PrivilegesDataProvider.vue';
-import { usePagination } from '@/composables/usePagination';
-import { usePrivilege } from '../store/privilegeStore';
-import { useApiRequest } from '@/composables/useApiRequest';
-import { toasted } from '@/utils/utils';
-import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
-import { getAllPrivilege, removePrivilege } from '../Api/PrivilegeApi';
-import { openModal } from '@customizer/modal-x';
-import Dropdown from '@/components/Dropdown.vue';
-import BaseIcon from '@/components/base/BaseIcon.vue';
-import { mdiDeleteAlert, mdiDotsVertical, mdiPencil } from '@mdi/js';
+<script setup lang="ts">
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import Table from "@/components/Table.vue";
+import DefaultPage from "@/components/DefaultPage.vue";
+import PrivilegesDataProvider from "../components/PrivilegesDataProvider.vue";
+import Button from "@/components/Button.vue";
+import { Status } from "@/types/interface";
+import { changePrivilegeStatus, deletePrivilege } from "../Api/PrivilegeApi";
+import { addToast } from "@/toast";
+import { useApiRequest } from "@/composables/useApiRequest";
+import StatusRow from "../components/PrivilegeStatusRow.vue";
+import { openModal } from "@customizer/modal-x";
+import { usePrivilege } from "../store/privilegeStore";
+import icons from "@/utils/icons";
 
+const router = useRouter();
+const dataProvider = ref();
 const privilegeStore = usePrivilege();
-const pagination = usePagination({
-  state: privilegeStore,
-  cb: getAllPrivilege,
-})
+const statusReq = useApiRequest();
+const deleteReq = useApiRequest();
 
-const removeReq = useApiRequest();
+function refreshData() {
+  if (dataProvider.value) {
+    dataProvider.value.refresh();
+  }
+}
 
-function remove(id) {
-  // Use the same pattern as in other files that successfully use modals
+function handlePageChange(page: number) {
+  if (dataProvider.value) {
+    dataProvider.value.setPage(page);
+  }
+}
+
+function handleLimitChange(limit: number) {
+  if (dataProvider.value) {
+    dataProvider.value.setLimit(limit);
+  }
+}
+
+function viewDetails(id: string) {
+  router.push(`/privileges/${id}`);
+}
+
+function openEditModal(privilege: any) {
+  if (!privilege || !privilege.privilegeUuid) {
+    console.error("Invalid privilege data:", privilege);
+    return;
+  }
+
+  openModal("EditPrivilege", {
+    privilegeUuid: privilege.privilegeUuid,
+    privilege: privilege,
+    onUpdated: handlePrivilegeUpdated,
+  });
+}
+
+function handlePrivilegeUpdated(updatedPrivilege: any) {
+  if (updatedPrivilege && updatedPrivilege.privilegeUuid) {
+    privilegeStore.update(updatedPrivilege.privilegeUuid, updatedPrivilege);
+    refreshData();
+    addToast({
+      type: "success",
+      title: "Privilege Updated",
+      message: `Privilege "${updatedPrivilege.privilegeName}" has been updated successfully`,
+    });
+  }
+}
+
+function handleStatusChange(id: string, newStatus: Status) {
+  statusReq.send(
+    () => changePrivilegeStatus(id, newStatus),
+    (res) => {
+      if (res.success) {
+        privilegeStore.update(id, { status: newStatus });
+        addToast({
+          type: "success",
+          title: "Status Updated",
+          message: `Privilege status has been updated to ${newStatus}`,
+        });
+        refreshData();
+      } else {
+        addToast({
+          type: "error",
+          title: "Update Failed",
+          message: res.error || "Failed to update privilege status",
+        });
+      }
+    }
+  );
+}
+
+function handleDelete(id: string) {
   openModal('Confirmation', {
-    title: 'Remove Privilege',
-    message: 'Are you sure you want to delete this privilege?'
-  }, (res) => {
-    if (res) {
-      removeReq.send(
-        () => removePrivilege(id),
+    title: 'Delete Privilege',
+    message: 'Are you sure you want to delete this privilege? This action cannot be undone.'
+  }, (confirmed) => {
+    if (confirmed) {
+      deleteReq.send(
+        () => deletePrivilege(id),
         (res) => {
           if (res.success) {
             privilegeStore.remove(id);
-            toasted(true, 'Removed Successfully');
+            addToast({
+              type: "success",
+              title: "Privilege Deleted",
+              message: "Privilege has been successfully deleted",
+            });
+            refreshData();
           } else {
-            toasted(false, '', res.error || 'Failed to remove privilege');
+            addToast({
+              type: "error",
+              title: "Delete Failed",
+              message: res.error || "Failed to delete privilege",
+            });
           }
         }
       );
     }
   });
 }
+
+function handleActivate(id: string) {
+  handleStatusChange(id, Status.ACTIVE);
+}
+
+function handleDeactivate(id: string) {
+  handleStatusChange(id, Status.INACTIVE);
+}
+
+function handleAddPrivilege() {
+ const openAddRoleModal = () => {
+  router.push('/create-role');
+};
+}
 </script>
 
 <template>
-  <div class="p-7">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-semibold">Privileges</h1>
-      <button class="bg-primary text-white px-4 py-2 rounded-md" @click="$router.push('/add_privilege')">
-        Add Privilege
+  <DefaultPage placeholder="Search Privileges">
+    <template #filter>
+      <button
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
+      >
+        <i v-html="icons.filter"></i>
+        <p class="text-base">Filters</p>
       </button>
-    </div>
+    </template>
+
+    <template #add-action>
+      <button class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white" @click="$router.push('/add_privilege')">
+       <i v-html="icons.plus_circle"></i> <p class="text-base">Add Privilege</p>
+      </button>
     
-    <PrivilegesDataProvider v-slot="{ privileges, pending }">
-      <Table :headers="{
-        head: [
-          'Privilege Name',
-          'Privilege Description',
-          'Privilege Category',
-          'Actions',
-        ],
-        row: [
-          'privilegeName',
-          'privilegeDescription',
-          'privilegeCategory',
-        ]
-      }" :pending="pending" :rows="privileges || []">
-        <template #actions="{ row }">
-          <div class="flex gap-2">
-            <button class="rounded-lg bg-gray-600 text-white px-2 py-1 border-gray-300 flex gap-1"
-              @click='$router.push("/edit_privilege/" + row?.privilegeUuid)'>
-              <BaseIcon :path="mdiPencil" />
-              Edit
-            </button>
-            <button class="rounded-lg bg-[#FF4C4C] text-white px-2 py-1 border-gray-300 flex gap-1"
-              @click="remove(row?.privilegeUuid)">
-              <BaseIcon :path="mdiDeleteAlert" />
-              Delete
-            </button>
-          </div>
-        </template>
-      </Table>
-    </PrivilegesDataProvider>
-  </div>
+    </template>
+
+    <template #default="{ search }">
+      <PrivilegesDataProvider
+        ref="dataProvider"
+        :search="search"
+        v-slot="{ privileges, pending, currentPage, itemsPerPage, totalPages }"
+      >
+        <Table
+          :pending="pending"
+          :headers="{
+            head: [
+              'Privilege Name',
+              'Description',
+              'Category',
+              
+              'Actions',
+            ],
+            row: [
+              'privilegeName',
+              'privilegeDescription',
+              'privilegeCategory',
+              
+            ],
+          }"
+          :rows="privileges"
+          :rowCom="StatusRow"
+          :pagination="{
+            currentPage,
+            itemsPerPage,
+            totalPages,
+            onPageChange: handlePageChange,
+            onLimitChange: handleLimitChange,
+          }"
+        >
+          <template #row>
+            <StatusRow
+              :rowData="privileges"
+              :rowKeys="[
+                'privilegeName',
+                'privilegeDescription',
+                'privilegeCategory',
+                
+              ]"
+              :headKeys="[
+                'Privilege Name',
+                'Description',
+                'Category',
+              
+                'Actions',
+              ]"
+              :onView="viewDetails"
+              :onEdit="openEditModal"
+              :onActivate="handleActivate"
+              :onDeactivate="handleDeactivate"
+              :onDelete="handleDelete"
+              :onRowClick="(row) => {}"
+            />
+          </template>
+        </Table>
+      </PrivilegesDataProvider>
+    </template>
+  </DefaultPage>
 </template>

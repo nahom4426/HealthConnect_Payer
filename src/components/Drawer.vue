@@ -30,10 +30,12 @@ const props = defineProps({
 });
 const emit = defineEmits(["toggle-sidebar", "toggle-menu"]);
 
-const userData = computed(() => auth.auth || {});
+const userData = computed(() => auth.auth?.user || {});
 const hasPrivilege = (requiredPrivileges) => {
   if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
-  const userPrivileges = userData.value.privileges || [];
+  const userPrivileges = userData.value.authorities || [];
+  console.log("User Privileges:", userPrivileges);
+ 
   const userRole = userData.value.roleName;
   return (
     userRole === "Super Admin" ||

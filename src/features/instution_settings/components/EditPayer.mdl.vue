@@ -22,7 +22,10 @@ const pending = ref(false);
 const payerData = ref({});
 const payerUuid = ref('');
 const payersStore = useInstitutions();
-
+function cleanPhoneNumber(phone: string): string {
+  // Remove a leading 0 after the country code (e.g., +2510xxxx → +251xxxx)
+  return phone.replace(/^(\+\d{3})0/, '$1');
+}
 onMounted(() => {
   console.log('EditPayer modal mounted with data prop:', props.data);
   if (props.data) {
@@ -62,9 +65,10 @@ async function handleSubmit(formValues: any) {
     const payerRequestObj = {
       payerName: formValues.payerName || "",
       tinNumber: formValues.tinNumber || 0,
-      email: formValues.email || "",
-      description: formValues.description || "",
-      telephone: formValues.telephone || "",
+      DependentCoverage: formValues.DependentCoverage,
+      description: formValues.description || formValues.memo || "",
+       email: formValues.email,
+      telephone: cleanPhoneNumber(formValues.telephone),
       category: formValues.category || "",
       address1: formValues.address || "",
       state: formValues.state || "Ethiopia",

@@ -9,6 +9,7 @@ export interface Provider {
   providerUuid: string;
   email: string;
   providerName: string;
+  threeDigitAcronym: string;
   description: string;
   telephone: string;
   category: string;

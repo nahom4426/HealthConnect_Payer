@@ -98,11 +98,15 @@ const goBack = () => {
             @update:privilegeDescription="updateFormData('privilegeDescription', $event)"
             @update:privilegeCategory="updateFormData('privilegeCategory', $event)"
         />
-        
+          <div class="mt-4 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p class="text-sm text-yellow-700">
+                <strong>Note:</strong> All fields must be at least 3 characters long. Privilege Name and Category must be less than 50 characters.
+            </p>
+        </div>
         <Button 
-            size="xl" 
-            type="primary" 
-            class="flex justify-center items-center mt-3 gap-3 p-2 bg-primary"
+            size="md" 
+           
+            class="flex justify-center items-center mt-3 gap-3 p-4  text-white bg-primary"
             :pending="req.pending.value" 
             @click.prevent="submit(create)"
         >
