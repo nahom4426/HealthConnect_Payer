@@ -11,12 +11,12 @@ export function createNewGroup(id, query = {}) {
   });
 }
 export function getGroup(id, query = {}) {
-  return api.addAuthenticationHeader().get(`${path1}/list/${id}`, {
+  return api.addAuthenticationHeader().get(`${path1}/payerGroups/${id}`, {
     params: query,
   });
 }
-export function createGroup(id, query = {}) {
-  return api.addAuthenticationHeader().post(`${path1}`, {
-    params: query,
-  });
+export function createGroup(data) {
+  console.log(data);
+
+  return api.addAuthenticationHeader().post(`${path1}`, data);
 }

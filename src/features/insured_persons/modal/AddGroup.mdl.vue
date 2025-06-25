@@ -8,12 +8,15 @@ import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import Button from "@/components/Button.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { createGroup, createNewGroup } from "../api/groupServiceApi";
+import { createGroup } from "../api/groupServiceApi";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
 import Select from "@/components/new_form_elements/Select.vue";
 
 const groupApi = useApiRequest();
 function handleCreateGroup({ values }) {
+  console.log(values);
+  values.status = "ACTIVE";
+  values.estimatedMembers = 4;
   groupApi.send(
     () => createGroup(values),
     (res) => {
@@ -32,7 +35,11 @@ function handleCreateGroup({ values }) {
       title="New Employee / Family Group"
       subtitle="Create a new group for employees or their families."
     >
-      <Form class="grid grid-cols-2 gap-4" id="groupNameForm" v-slot="{}">
+      <Form
+        class="grid grid-cols-2 gap-4"
+        id="groupNameForm"
+        v-slot="{ submit }"
+      >
         <Input
           name="groupName"
           label="Enter Group Name"
@@ -44,9 +51,9 @@ function handleCreateGroup({ values }) {
         <Select
           name="type"
           label="Select Type"
-          validation="required"
           :attributes="{
             placeholder: 'Select Type',
+            validation: 'required',
           }"
           :options="['EMPLOYEE', 'DEPENDENT']"
         />
@@ -66,10 +73,11 @@ function handleCreateGroup({ values }) {
           </Button>
 
           <Button
+            :pending="groupApi.pending.value"
             size="md"
             class="!text-white"
             type="primary"
-            @click.prevent="handleCreateGroup"
+            @click.prevent="submit(handleCreateGroup)"
           >
             Create Group
           </Button>

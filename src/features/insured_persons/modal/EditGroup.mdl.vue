@@ -3,51 +3,26 @@ import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import { closeModal } from "@customizer/modal-x";
 import { ref } from "vue";
-import GroupForm from "../form/GroupForm.vue";
-import ServiceDataProvider from "@/features/service/components/ServiceDataProvider.vue";
-import GroupService from "../components/GroupComponents/GroupService.vue";
-import GroupDrug from "../components/GroupComponents/GroupDrug.vue";
-import ActiveProvidersDataProvider from "@/features/providers/components/ActiveProvidersDataProvider.vue";
 import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import Button from "@/components/Button.vue";
-import { useSelectedServicesStore } from "../store/selectedServicesStore";
-import { toasted } from "@/utils/utils";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { createNewGroup } from "../api/groupServiceApi";
-const active = ref(0);
+import { createGroup } from "../api/groupServiceApi";
+import Textarea from "@/components/new_form_elements/Textarea.vue";
+import Select from "@/components/new_form_elements/Select.vue";
 
-const setActive = (item) => {
-  active.value = item;
-};
-const components = [
-  {
-    name: "Services",
-    component: GroupService,
-  },
-  {
-    name: "Drugs",
-    component: GroupDrug,
-  },
-];
-const useSelectedServices = useSelectedServicesStore();
-
-const selectedProvider = ref("");
-const serviceApi = useApiRequest();
-function createGroup({ values }) {
-  if (useSelectedServices.selectedValues.length === 0) {
-    return toasted(false, "", "Please select a service");
-  } else {
-    serviceApi.send(
-      () => createNewGroup(),
-      (res) => {
-        if (res?.success) {
-        }
-        toasted(res.success, "Group created successfully", res.error);
+const props = defineProps({
+  data: Object,
+});
+const groupApi = useApiRequest();
+function handleCreateGroup({ values }) {
+  groupApi.send(
+    () => createGroup(values),
+    (res) => {
+      if (res.success) {
       }
-    );
-  }
-  console.log(data);
+    }
+  );
 }
 </script>
 
@@ -55,88 +30,56 @@ function createGroup({ values }) {
   <ModalParent>
     <NewFormParent
       class=""
-      size="lg"
-      title="New Employee / Family Group"
+      size="md"
+      title="Update Employee / Family Group"
       subtitle="Create a new group for employees or their families."
     >
-      <ActiveProvidersDataProvider v-slot="{ providers, pending }">
-        <div class="flex flex-col gap-10">
-          <Form class="grid grid-cols-1 gap-4" id="groupNameForm" v-slot="{}">
-            <Input
-              class="bg-base-clr3"
-              name="groupName"
-              label="Enter Group Name"
-              validation="required"
-              :attributes="{
-                placeholder: 'Enter Group Name',
-              }"
-            />
+      <Form class="grid grid-cols-2 gap-4" id="groupNameForm" v-slot="{}">
+        <Input
+          name="groupName"
+          label="Enter Group Name"
+          :value="props.data?.groupName"
+          validation="required"
+          :attributes="{
+            placeholder: 'Enter Group Name',
+          }"
+        />
+        <Select
+          name="type"
+          :value="props.data?.type"
+          label="Select Type"
+          validation="required"
+          :attributes="{
+            placeholder: 'Select Type',
+          }"
+          :options="['EMPLOYEE', 'DEPENDENT']"
+        />
+        <Textarea
+          class="col-span-2"
+          :value="props.data?.groupDescription"
+          name="groupDescription"
+          label="Group Description"
+          validation="required"
+          :attributes="{
+            placeholder: 'Enter Group Description',
+          }"
+        />
 
-            <div class="flex flex-col gap-6 bg-base-clr3 w-full p-6 rounded-lg">
-              <div class="grid grid-cols-2 gap-4">
-                <div
-                  class="grid grid-cols-2 border border-base-clr rounded w-full"
-                >
-                  <div
-                    v-for="(item, index) in components"
-                    :key="index"
-                    @click="setActive(index)"
-                    :class="[
-                      'px-4 py-3 transition-colors text-center cursor-pointer duration-300',
-                      active === index
-                        ? index === 0
-                          ? 'bg-base-clr  text-white rounded-l font-medium'
-                          : 'bg-base-clr text-white rounded-r  font-medium'
-                        : '',
-                    ]"
-                  >
-                    {{ item.name }}
-                  </div>
-                </div>
+        <div class="flex col-span-2 justify-end gap-4">
+          <Button @click.prevent="closeModal()" class="border border-base-clr">
+            Cancel
+          </Button>
 
-                <select
-                  v-model="selectedProvider"
-                  class="rounded-md bg-white px-4"
-                  name=""
-                  id=""
-                >
-                  <option disabled selected value="">Select Provider</option>
-                  <option
-                    v-for="data in providers"
-                    :key="data.providerName"
-                    :value="data.providerUuid"
-                  >
-                    {{ data.providerName }}
-                  </option>
-                </select>
-              </div>
-
-              <component
-                :id="selectedProvider"
-                :search="search"
-                :is="components[active].component"
-              ></component>
-            </div>
-            <div class="flex justify-end gap-4">
-              <Button
-                @click.prevent="closeModal()"
-                class="border border-base-clr"
-              >
-                Cancel
-              </Button>
-
-              <Button
-                size="md"
-                class="!text-white"
-                type="primary"
-                @click.prevent="createGroup"
-              >
-                Create Group
-              </Button>
-            </div>
-          </Form>
+          <Button
+            size="md"
+            class="!text-white"
+            type="primary"
+            @click.prevent="handleCreateGroup"
+          >
+            Update Group
+          </Button>
         </div>
-      </ActiveProvidersDataProvider>
+      </Form>
     </NewFormParent>
   </ModalParent>
 </template>
