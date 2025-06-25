@@ -22,6 +22,7 @@ const institutionId = ref(auth.auth?.user?.payerUuid || "");
     v-slot="{ group, pending }"
   >
     <Table
+      :show-pagination="false"
       :pending="pending"
       :headers="{
         head: [
@@ -30,7 +31,7 @@ const institutionId = ref(auth.auth?.user?.payerUuid || "");
           'Number of Employees',
           'Actions',
         ],
-        row: ['groupName', 'groupDescription', 'phone'],
+        row: ['groupName', 'groupDescription', 'estimatedMembers'],
       }"
       :rows="group"
     >
@@ -49,13 +50,23 @@ const institutionId = ref(auth.auth?.user?.payerUuid || "");
             :ref="setRef"
           >
             <button
-              @click="openModal('EditGroup', row?.groupUuid)"
+              @click="openModal('EditGroup', row)"
               class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
             >
               <i v-html="icons.edits" />
               <span>Edit</span>
             </button>
+            <!-- <button
+              @click=""
+              class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+            >
+              <i v-html="icons.edits" />
+              <span>View</span>
+            </button> -->
             <button
+              @click="
+                $router.push(`/insured_list/group-insured/${row?.groupUuid}`)
+              "
               class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
             >
               <i v-html="icons.details" />

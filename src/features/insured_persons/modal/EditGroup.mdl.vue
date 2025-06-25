@@ -7,19 +7,24 @@ import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import Button from "@/components/Button.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { createGroup } from "../api/groupServiceApi";
+import { updateGroup } from "../api/groupServiceApi";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
 import Select from "@/components/new_form_elements/Select.vue";
+import { useFamily } from "../store/FamilyStore";
 
 const props = defineProps({
   data: Object,
 });
+const familyStore = useFamily();
+
 const groupApi = useApiRequest();
-function handleCreateGroup({ values }) {
+function handleUpdateGroup({ values }) {
+  delete props.data?.payerUuid;
   groupApi.send(
-    () => createGroup(values),
+    () => updateGroup(props.data?.groupUuid, { ...props.data, ...values }),
     (res) => {
       if (res.success) {
+        familyStore.update(props.data?.groupUuid, { ...props.data, ...values });
       }
     }
   );
@@ -34,7 +39,7 @@ function handleCreateGroup({ values }) {
       title="Update Employee / Family Group"
       subtitle="Create a new group for employees or their families."
     >
-      <Form class="grid grid-cols-2 gap-4" id="groupNameForm" v-slot="{}">
+      <Form class="grid grid-cols-2 gap-4" id="updateGroup" v-slot="{ submit }">
         <Input
           name="groupName"
           label="Enter Group Name"
@@ -44,12 +49,14 @@ function handleCreateGroup({ values }) {
             placeholder: 'Enter Group Name',
           }"
         />
+
         <Select
-          name="type"
           :value="props.data?.type"
+          name="type"
           label="Select Type"
           validation="required"
           :attributes="{
+            type: 'text',
             placeholder: 'Select Type',
           }"
           :options="['EMPLOYEE', 'DEPENDENT']"
@@ -71,10 +78,11 @@ function handleCreateGroup({ values }) {
           </Button>
 
           <Button
+            :pending="groupApi.pending.value"
             size="md"
             class="!text-white"
             type="primary"
-            @click.prevent="handleCreateGroup"
+            @click.prevent="submit(handleUpdateGroup)"
           >
             Update Group
           </Button>

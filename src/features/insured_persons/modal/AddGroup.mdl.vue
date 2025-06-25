@@ -2,8 +2,6 @@
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import { closeModal } from "@customizer/modal-x";
-import { ref } from "vue";
-import ActiveProvidersDataProvider from "@/features/providers/components/ActiveProvidersDataProvider.vue";
 import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
 import Button from "@/components/Button.vue";
@@ -11,16 +9,20 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { createGroup } from "../api/groupServiceApi";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
 import Select from "@/components/new_form_elements/Select.vue";
+import { useAuthStore } from "@/stores/auth";
+import { useFamily } from "../store/FamilyStore";
 
+const authStore = useAuthStore();
 const groupApi = useApiRequest();
+const familyStore = useFamily();
 function handleCreateGroup({ values }) {
-  console.log(values);
   values.status = "ACTIVE";
-  values.estimatedMembers = 4;
   groupApi.send(
-    () => createGroup(values),
+    () => createGroup(authStore.auth?.user?.payerUuid, values),
     (res) => {
       if (res.success) {
+        familyStore.add({ groupUuid: res.data?.groupUuid, ...values });
+        closeModal();
       }
     }
   );
@@ -51,9 +53,10 @@ function handleCreateGroup({ values }) {
         <Select
           name="type"
           label="Select Type"
+          validation="required"
           :attributes="{
+            type: 'text',
             placeholder: 'Select Type',
-            validation: 'required',
           }"
           :options="['EMPLOYEE', 'DEPENDENT']"
         />

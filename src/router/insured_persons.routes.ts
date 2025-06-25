@@ -5,6 +5,7 @@ import InsuredPersonView from "@/features/insured_persons/components/InsuredPers
 import InsuredPersonsIndex from "@/features/insured_persons/pages/InsuredPersonsIndex.vue";
 import InsuredDetails from "@/features/insured_persons/pages/insuredDetails.vue";
 import Insured from "@/features/insured_persons/pages/Insured.vue";
+import GroupInsuredDetail from "@/features/insured_persons/pages/GroupInsuredDetail.vue";
 
 export default [
     {
@@ -31,6 +32,17 @@ export default [
             path: 'detail/:insuredPersonUuid',
             name: 'Insured Person Details',
             component: InsuredDetails,
+            props: true,
+            // meta: {
+            //   requiresAuth: true,
+            //   privileges: ['create_user','View_card'],
+            // }
+          },
+
+          {
+            path: 'group-insured/:id',
+            name: 'Group detail',
+            component: GroupInsuredDetail,
             props: true,
             // meta: {
             //   requiresAuth: true,
