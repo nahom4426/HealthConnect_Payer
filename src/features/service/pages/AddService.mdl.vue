@@ -11,6 +11,7 @@ import { useAuthStore } from "@/stores/auth";
 import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { useServiceListStore } from "../store/serviceListStore";
+import ModalParent from "@/components/ModalParent.vue";
 
 const { submit } = useForm("serviceForm");
 const req = useApiRequest();
@@ -31,7 +32,7 @@ function create({ values, reset }) {
 }
 </script>
 <template>
-  <div class="bg-black/50 min-h-full p-6 grid place-items-center">
+  <ModalParent>
     <NewFormParent
       size="lg"
       class="flex justify-center bg-white"
@@ -61,5 +62,5 @@ function create({ values, reset }) {
         </div>
       </template>
     </NewFormParent>
-  </div>
+  </ModalParent>
 </template>

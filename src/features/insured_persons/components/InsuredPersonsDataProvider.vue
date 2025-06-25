@@ -6,25 +6,26 @@ import { Status } from "@/types/interface";
 import { insuredMembers } from "../store/insuredPersonsStore";
 import { ref, watch, onMounted, computed } from "vue";
 import { debounce } from "@/utils/debounce";
+import { removeUndefined } from "@/utils/utils";
 
 // Props
 const props = defineProps({
   auto: {
     type: Boolean,
-    default: true
+    default: true,
   },
   institutionId: {
     type: String,
-    required: true
+    required: true,
   },
   status: {
     type: String as PropType<Status>,
-    default: Status.ACTIVE
+    default: Status.ACTIVE,
   },
   search: {
     type: String,
-    default: ""
-  }
+    default: "",
+  },
 });
 
 const insuredStore = insuredMembers();
@@ -37,10 +38,14 @@ const totalItems = ref(0);
 const pagination = usePagination({
   auto: false,
   cb: async (data: any) => {
-    const response = await searchInsuredByInstitution(props.institutionId, {
-      ...data,
-      status: props.status
-    });
+    const response = await searchInsuredByInstitution(
+      props.institutionId,
+      removeUndefined({
+        ...data,
+        status: props.status,
+        search: props.search,
+      })
+    );
 
     const paginated = response?.data || response;
 
@@ -55,19 +60,15 @@ const pagination = usePagination({
     }
 
     return paginated;
-  }
+  },
 });
-
-// ✅ Debounced search watcher
-const debouncedSearch = debounce((newSearch: string) => {
-  pagination.search.value = newSearch;
-  pagination.send();
-}, 300);
 
 watch(
   () => props.search,
   (newSearch) => {
-    debouncedSearch(newSearch);
+    console.log("hhh");
+
+    pagination.send();
   }
 );
 
@@ -88,7 +89,7 @@ defineExpose({
   currentPage: computed(() => currentPage.value),
   itemsPerPage: computed(() => itemsPerPage.value),
   setPage: pagination.setPage,
-  setLimit: pagination.setLimit
+  setLimit: pagination.setLimit,
 });
 </script>
 

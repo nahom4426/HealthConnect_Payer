@@ -51,15 +51,15 @@ function handleForgotPassword({ values }) {
         </div>
       </div>
       <div class="flex flex-col gap-4 items-center">
-        <h1 class="flex gap-2">
-          Remember your password?
-          <p
-            class="text-base-clr cursor-pointer"
-            @click.prevent="emit('previous')"
-          >
-            Login now
-          </p>
-        </h1>
+        <!-- <h1 class="flex gap-2">
+          Remember your password? -->
+        <p
+          class="text-base-clr cursor-pointer"
+          @click.prevent="emit('previous')"
+        >
+          Login now
+        </p>
+        <!-- </h1> -->
         <h1 class="text-base-clr text-xs">©HealthConnect 2025</h1>
       </div>
     </div>

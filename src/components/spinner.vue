@@ -47,7 +47,7 @@
 }
 
 .spinner-inner::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 5px;
   left: 5px;
@@ -61,7 +61,7 @@
 }
 
 .loading-text {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 1rem;
   font-weight: 500;
   color: #4b5563;
@@ -104,7 +104,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.8;
   }
   50% {

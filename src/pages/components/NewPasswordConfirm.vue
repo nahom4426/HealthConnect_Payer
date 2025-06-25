@@ -35,7 +35,7 @@ function handleNewPassword({ values }) {
   <NewFormLayout v-slot="{ submit }" id="forgot-password-form">
     <div class="flex flex-col items-center justify-center gap-4">
       <h1 class="font-semibold text-xl">Provide your new password</h1>
-      <h2 class="w-[360px] text-center">
+      <h2 class="w-[320px] text-center">
         Enter your new password in the provided field. After creating a strong
         password, confirm it by entering it again. Keep your password
         confidential and avoid using easily guessable information.

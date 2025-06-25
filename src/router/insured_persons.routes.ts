@@ -4,6 +4,7 @@ import SuspendedInsuredPersons from "@/features/insured_persons/pages/SuspendedI
 import InsuredPersonView from "@/features/insured_persons/components/InsuredPersonView.vue";
 import InsuredPersonsIndex from "@/features/insured_persons/pages/InsuredPersonsIndex.vue";
 import InsuredDetails from "@/features/insured_persons/pages/insuredDetails.vue";
+import Insured from "@/features/insured_persons/pages/Insured.vue";
 
 export default [
     {
@@ -24,7 +25,7 @@ export default [
           {
             path: '',
             name: 'Insured Persons List',
-            component: InsuredPersons,
+            component: Insured,
           },
           {
             path: 'detail/:insuredPersonUuid',

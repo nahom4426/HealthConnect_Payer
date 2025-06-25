@@ -25,7 +25,7 @@ onMounted(() => {
     </div>
 
     <div
-      class="md:col-span-2 overflow-y-auto bg-[#DFF1F1] rounded-2xl h-full flex items md:items-center md:justify-center"
+      class="md:col-span-2 overflow-y-auto bg-[#DFF1F1] mr-12 rounded-2xl h-full flex items items-center md:justify-center"
     >
       <LoginTemp />
     </div>

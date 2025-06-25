@@ -10,6 +10,7 @@ import { closeModal } from "@customizer/modal-x";
 import { useDrugStore } from "../store/drugStore";
 import { createDrug } from "../api/drugApi";
 import DrugForm from "./form/DrugForm.vue";
+import ModalParent from "@/components/ModalParent.vue";
 
 const { submit } = useForm("drugForm");
 const req = useApiRequest();
@@ -31,7 +32,7 @@ function create({ values, reset }) {
 }
 </script>
 <template>
-  <div class="bg-black/50 min-h-full p-6 grid place-items-center">
+  <ModalParent>
     <NewFormParent
       size="lg"
       class="flex justify-center bg-white"
@@ -61,5 +62,5 @@ function create({ values, reset }) {
         </div>
       </template>
     </NewFormParent>
-  </div>
+  </ModalParent>
 </template>

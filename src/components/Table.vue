@@ -137,7 +137,6 @@ const active = ref(1);
         :cells="cells"
       >
         <template v-if="firstCol" #select="{ row }">
-          {{ console.log("kkk") }}
           <slot name="select" :row="row" />
         </template>
         <template v-if="lastCol" #lastCol="{ row }">

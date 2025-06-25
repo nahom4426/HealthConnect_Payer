@@ -164,3 +164,6 @@ export function getAuthorizationBatch(query={}) {
   const qs=getQueryFormObject(query)
   return api.addAuthenticationHeader().get(`${basePath}/batch${qs}`);
 }
+export function getAuthorizationDetail(id: any) {
+  return api.addAuthenticationHeader().get(`${basePath}/medications/${id}`);
+}

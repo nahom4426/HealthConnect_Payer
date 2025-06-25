@@ -6,8 +6,8 @@ import BatchAuthorization from "@/features/credit/authorization/pages/BatchAutho
 
 export default [
     {
-        path: '/authorization',
-        name: 'Authorization',
+        path: '/claim-approval',
+        name: 'Claim Approval',
         component: AuthorizationIndex,
         // meta: {
         //   requiresAuth: true,
@@ -16,11 +16,11 @@ export default [
         children: [
           {
             path: '',
-            name: 'Authorization List',
+            name: 'Claim Approval',
             component: BatchAuthorization,
           },
           {
-            path: 'detail/:authorizationUuid',
+            path: 'detail/:id',
             name: 'Authorization Details',
             component: AuthorizationDetails,
             props: true,
