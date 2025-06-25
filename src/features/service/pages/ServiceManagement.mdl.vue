@@ -11,6 +11,7 @@ import { getServiceByid, updateService } from "../api/serviceApi.js";
 
 import { ref } from "vue";
 import { useServiceListStore } from "../store/serviceListStore";
+import ModalParent from "@/components/ModalParent.vue";
 const props = defineProps({
   data: String,
 });
@@ -48,7 +49,7 @@ function update({ values }) {
 }
 </script>
 <template>
-  <div class="bg-black/50 min-h-full p-4 grid place-items-center">
+  <ModalParent>
     <NewFormParent
       size="md"
       class="flex justify-center bg-white"
@@ -60,7 +61,7 @@ function update({ values }) {
       <template #bottom>
         <div class="flex justify- w-full p-2 px-4">
           <Button
-            class="flex w-full items-center gap-3 bg-primary"
+            class="flex w-full items-center gap-3 bg-primary !text-white py-2"
             :pending="req.pending.value"
             type="primary"
             @click.prevent="submit(update)"
@@ -69,5 +70,5 @@ function update({ values }) {
         </div>
       </template>
     </NewFormParent>
-  </div>
+  </ModalParent>
 </template>

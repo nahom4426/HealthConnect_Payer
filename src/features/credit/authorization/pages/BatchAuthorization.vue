@@ -7,10 +7,11 @@ import icons from "@/utils/icons";
 import DefaultPage from "@/components/DefaultPage.vue";
 import AuthorizationBatchDataProvider from "../components/AuthorizationBatchDataProvider.vue";
 import Dropdown from "@/components/Dropdown.vue";
+import { formatDateToYYMMDD } from "@/utils/utils";
 </script>
 
 <template>
-  <DefaultPage placeholder="Search Claim">
+  <DefaultPage placeholder="Search Claim Batch">
     <template #filter>
       <Dropdown v-slot="{ setRef, toggleDropdown }">
         <button
@@ -60,12 +61,21 @@ import Dropdown from "@/components/Dropdown.vue";
               'status',
             ],
           }"
+          ,
+          :cells="{
+            requestedOn: (requestedOn) => {
+              const date = new Date(requestedOn);
+              if (!isNaN(date.getTime())) {
+                return formatDateToYYMMDD(date);
+              }
+            },
+          }"
         >
           <template #actions="{ row }">
             <div class="flex gap-2">
               <Button type="link" size="xs">
-                <RouterLink :to="`/institution/alerts/${row.id}`">
-                  View Details
+                <RouterLink :to="`claim-approval/detail/${row.batchCode}`">
+                  View
                 </RouterLink>
               </Button>
             </div>

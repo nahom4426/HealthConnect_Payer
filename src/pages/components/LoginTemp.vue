@@ -35,8 +35,6 @@ const form = [
 const values = ref(new Array(form.length));
 const confirmationCode = ref("");
 const next = (value) => {
-  console.log(activeForm.value);
-
   if (activeForm.value == 2) {
     confirmationCode.value = value;
   }
@@ -52,7 +50,7 @@ function prevous() {
 </script>
 <template>
   <div
-    class="flex flex-col rounded-2xl max-h-[32rem] scrollbar-hide overflow-auto bg-white p-9"
+    class="flex flex-col rounded-2xl max-h-[32rem] scrollbar-hide overflow-y-auto bg-white p-9"
   >
     <div
       class="flex gap-2 items-center justify-center mb-6 border-b border-base-clr3 pb-6"

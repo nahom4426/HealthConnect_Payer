@@ -66,18 +66,21 @@ export function usePagination(options = {}) {
       (res) => {
         console.log(res);
 
-        if (paginationOptions.value.store && res.success) {
-          paginationOptions.value.store.set(res.data?.content || []);
+        if (paginationOptions.value.store && res?.success) {
+          paginationOptions.value.store.set(res?.data?.content || []);
         }
 
-        pagination.totalPages.value = res.data?.totalPages || 1;
+        pagination.totalPages.value = res?.data?.totalPages || 1;
 
-        pagination.totalElements = res.data?.totalElements || 0;
+        pagination.totalElements = res?.data?.totalElements || 0;
         totalElements.value = pagination.totalElements || 0;
         paginationOptions.value.totalElements = totalElements.value;
-        perPage.value = res.data?.perPage;
+        perPage.value = res?.data?.perPage;
 
-        if (res.success && res.data?.content?.length < pagination.limit.value) {
+        if (
+          res?.success &&
+          res?.data?.content?.length < pagination.limit.value
+        ) {
           pagination.done.value = true;
         }
       },
@@ -203,13 +206,10 @@ export function usePagination(options = {}) {
     fetch();
   }
   function sendPagination(limit, page) {
-    console.log(page);
-
     if (page) {
       pagination.reset();
       searchPagination.reset();
       pagination.page.value = page;
-      console.log(searchPagination);
     } else {
       pagination.reset();
       searchPagination.reset();

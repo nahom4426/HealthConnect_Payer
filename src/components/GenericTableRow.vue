@@ -30,12 +30,12 @@ const emit = defineEmits(["row"]);
       @click="emit('row', row)"
       class="cursor-pointer even:bg-white odd:bg-[#F9F9FF] hover:bg-gray-"
     >
-      <td v-if="firstCol" class="p-3">
+      <td v-if="firstCol" class="p-2">
         <slot name="select" :row="row" />
       </td>
-      <td class="p-4 font-medium">{{ index + 1 }}</td>
+      <td class="p-4 font-medium text-base-clr">{{ index + 1 }}</td>
       <td
-        class="p-2 py-4 font-medium max-w-40"
+        class="p-2 py-4 font-medium max-w-40 text-base-clr"
         :key="key"
         v-for="key in rowKeys"
       >

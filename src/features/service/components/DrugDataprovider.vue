@@ -7,6 +7,10 @@ import { getAllDrugs } from "../api/drugApi";
 import { removeUndefined } from "@/utils/utils";
 
 const props = defineProps({
+  auto: {
+    type: Boolean,
+    default: true,
+  },
   prePage: {
     type: Number,
     default: 25,
@@ -15,31 +19,42 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  id: {
+    type: String,
+  },
 });
-watch(
-  () => props.search,
-  () => {
-    pagination.send();
-  }
-);
+
 const authStore = useAuthStore();
 
 const drugStore = useDrugStore();
 
 const pagination = usePagination({
+  auto: props.auto,
   store: drugStore,
   cb: (data) =>
     getAllDrugs(
-      authStore.auth?.user?.providerUuid,
+      props.id || authStore.auth?.user?.providerUuid,
       removeUndefined({ searchKey: props.search, ...data })
     ),
 });
+watch(
+  () => props.search,
+  () => {
+    if (props.id || authStore.auth?.user?.providerUuid) {
+      pagination.send();
+    }
+  }
+);
+watch(
+  () => props.id,
+  () => {
+    pagination.send();
+  }
+);
 
-if (drugStore.drugs.length == 0) {
+if (drugStore.drugs.length == 0 && authStore.auth?.user?.providerUuid) {
   pagination.send();
 }
-
-watch(pagination.data, console.log, { immediate: true });
 </script>
 <template>
   <slot

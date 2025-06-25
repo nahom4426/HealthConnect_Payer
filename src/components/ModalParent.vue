@@ -49,7 +49,7 @@ onUnmounted(() => {
   <div
     @click.self="autoClose && closeModal()"
     :class="[!modal?.active ? '__inactive' : '__active']"
-    class="modal-parent p-4 grid place-items-center min-h-full bg-primary/10"
+    class="modal-parent p-4 grid place-items-center min-h-full bg-[#292A36]/60"
   >
     <div class="modal-content">
       <slot v-bind="modal || {}"></slot>

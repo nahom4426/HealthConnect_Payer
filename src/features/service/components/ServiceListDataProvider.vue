@@ -7,6 +7,10 @@ import { useAuthStore } from "@/stores/auth";
 import { removeUndefined } from "@/utils/utils";
 
 const props = defineProps({
+  auto: {
+    type: Boolean,
+    default: true,
+  },
   prePage: {
     type: Number,
     default: 25,
@@ -15,9 +19,19 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  id: {
+    type: String,
+    default: "",
+  },
 });
 watch(
   () => props.search,
+  () => {
+    if (props.id || authStore.auth?.user?.providerUuid) pagination.send();
+  }
+);
+watch(
+  () => props.id,
   () => {
     pagination.send();
   }
@@ -28,14 +42,18 @@ const serviceListStore = useServiceListStore();
 
 const pagination = usePagination({
   store: serviceListStore,
+  auto: props.auto,
   cb: (data) =>
     getAllServices(
-      authStore.auth?.user?.providerUuid,
+      props.id || authStore.auth?.user?.providerUuid,
       removeUndefined({ searchKey: props.search, ...data })
     ),
 });
 
-if (serviceListStore.serviceList.length == 0) {
+if (
+  serviceListStore.serviceList.length == 0 &&
+  authStore.auth?.user?.providerUuid
+) {
   pagination.send();
 }
 

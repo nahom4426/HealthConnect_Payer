@@ -35,7 +35,7 @@ export default [
     icon: icons.Services,
   },
 
-    {
+  {
     name: "Credits",
     icon: icons.Credits,
     //  privilege: ['Read-Privileges'],
@@ -56,8 +56,8 @@ export default [
         // privilege: ['Read-Privileges'],
       },
       {
-        path: "/authorization",
-        name: "Authorization",
+        path: "/claim-approval",
+        name: "Claim Approval",
         icon: icons.Authorization,
         category: "Pages",
         // privilege: ['Read-Privileges'],
@@ -69,15 +69,14 @@ export default [
         category: "service",
         // privilege: ['Read-Privileges'],
       },
-    
     ],
   },
-   {
-        path: "/insured_list",
-        name: "Employees list",
-        icon: icons.active_insured_persons,
-        // privilege: ['Read-Privileges'],
-      },
+  {
+    path: "/insured_list",
+    name: "Employees list",
+    icon: icons.active_insured_persons,
+    // privilege: ['Read-Privileges'],
+  },
   {
     name: "Claims",
     icon: icons.claimManagement,
@@ -133,7 +132,7 @@ export default [
       },
     ],
   },
- 
+
   {
     path: "/users",
     name: "Users",
