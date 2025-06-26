@@ -59,7 +59,14 @@ const search = ref("");
             class="flex-1 bg-transparent px- py-2 h-full outline-none"
           />
         </div>
-
+<button
+  v-if="active === 0"
+            class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
+            @click="openModal('employeeImport')"
+          >
+            <i v-html="icons.plus_circle" class=""></i>
+            Import Employee
+          </button>
         <button
           v-if="active === 0"
           class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"

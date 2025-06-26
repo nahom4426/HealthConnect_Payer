@@ -145,7 +145,7 @@ function handleSubmit() {
   props.onSubmit(formData);
 }
 
-const genderOptions = ["Male", "Female", "Other"];
+const genderOptions = ["Male", "Female"];
 const statusOptions = ["ACTIVE", "INACTIVE"];
 </script>
 
@@ -258,7 +258,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
             <Input
               v-model="grandFatherName"
               name="grandFatherName"
-              validation="required"
+              
               :attributes="{
                 placeholder: 'Enter Grand father\'s name',
               }"
@@ -268,14 +268,14 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           <!-- Role -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
-              Role <span class="text-red-500">*</span>
+              Position <span class="text-red-500">*</span>
             </label>
             <Input
               v-model="role"
               name="role"
               validation="required"
               :attributes="{
-                placeholder: 'Enter Role',
+                placeholder: 'Enter Position',
               }"
             />
           </div>
@@ -359,6 +359,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
               name="countryCode"
               :options="['+251', '+1', '+44', '+91']"
               :attributes="{
+                 class: 'pr-2 my-2 bg-[#F9F9FD]',
                 required: true,
               }"
             />
@@ -368,7 +369,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
               validation="required"
               :attributes="{
                 placeholder: 'Enter phone number',
-
+                class: 'pr-32 my-2 bg-[#F9F9FD]',
                 required: true,
               }"
             />
@@ -457,16 +458,16 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 </template>
 
 <style scoped>
-:deep(input),
-:deep(select) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-teal-500 focus:border-teal-500;
-}
-
+/* Additional styling for the form */
 :deep(.form-control) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5;
+  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
 }
 
 :deep(.form-select) {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5;
+  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
+}
+
+:deep(.form-textarea) {
+  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
 }
 </style>

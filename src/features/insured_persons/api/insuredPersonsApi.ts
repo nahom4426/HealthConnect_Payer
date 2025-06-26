@@ -26,6 +26,7 @@ export function searchInsuredByInstitution(id: string, query = {}, config = {}) 
 		throw error;
 	});
 }
+
 export function getInsuredById(id: string, query = {}, config = {}) {
 	return api.addAuthenticationHeader().get(`${path}/${id}`, {
 		params: query,
@@ -53,27 +54,39 @@ export function getInsuredPersonById(uuid: string) {
 
 import { useAuthStore } from "@/stores/auth"; // Make sure to import the auth store
 
-export function importInsuredPersons(file: File, institutionUuid: string): Promise<AsyncResponse<any>> {
-  const formData = new FormData();
-  formData.append('file', file);
+// export function importInsuredPersons(file: File, payerUuid: string): Promise<AsyncResponse<any>> {
+//   const formData = new FormData();
+//   formData.append('file', file);
 
-  const auth = useAuthStore();
-  const token = auth.auth.token; // Get the token from the auth store
+//   const auth = useAuthStore();
+//   const token = auth.auth.token; // Get the token from the auth store
 
-  return api.addAuthenticationHeader().post(`${basePath}/import-insured-and-dependant?institutionUuid=${institutionUuid}`, formData, {
+//   return api.addAuthenticationHeader().post(`${basePath}/import-insured-and-dependant?payerUuid=${payerUuid}`, formData, {
+//     headers: {
+//       'Content-Type': 'multipart/form-data'
+//     },
+//     onUploadProgress: (progressEvent) => {
+//       if (progressEvent.total) {
+//         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+//         // You can emit this percentage if needed
+//       }
+//     }
+//   });
+// }
+
+export function importInsuredPersons(
+  id: Record<string, any> = {},
+  data: FormData,
+  config: Record<string, any> = {}
+): Promise<any> {
+  const qr = getQueryFormObject(id);
+  return api.addAuthenticationHeader().post(`${basePath}/import-insured-and-dependant${qr}`, data, {
+    ...config,
     headers: {
-      'Content-Type': 'multipart/form-data'
+      "Content-Type": "multipart/form-data",
     },
-    onUploadProgress: (progressEvent) => {
-      if (progressEvent.total) {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        // You can emit this percentage if needed
-      }
-    }
   });
 }
-
-
 export function getInsuredMembers(query = {}) {
   return api.addAuthenticationHeader().get<Insured[]>(`${basePath}/list`, {
     params: query

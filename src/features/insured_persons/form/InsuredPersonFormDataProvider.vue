@@ -34,15 +34,15 @@ function register(formData) {
     const insuredData = JSON.parse(insuredJson);
 
     const requiredInsuredFields = [
-      "payerUuid",
-      "firstName",
-      "fatherName",
-      "grandFatherName",
-      "gender",
-      "position",
-      "birthDate",
-      "idNumber",
-      "phone",
+      'payerUuid',
+      'firstName',
+      'fatherName',
+  
+      'gender',
+      'position',
+      'birthDate',
+      'idNumber',
+      'phone'
     ];
 
     const missingFields = requiredInsuredFields.filter((field) => {
@@ -51,18 +51,16 @@ function register(formData) {
     });
 
     if (missingFields.length > 0) {
-      const errorMsg = `Missing required Insured fields: ${missingFields.join(
-        ", "
-      )}`;
-      console.error("Validation failed:", errorMsg);
-      toasted(false, errorMsg);
+      const errorMsg = `Missing required Insured fields: ${missingFields.join(', ')}`;
+      console.error('Validation failed:', errorMsg);
+      // toasted(false, errorMsg);
       return Promise.reject(new Error(errorMsg));
     }
 
     return sendRegistrationRequest(formData);
   } catch (error) {
-    console.error("Error parsing insured data:", error);
-    toasted(false, "Invalid insured data format");
+    console.error('Error parsing insured data:', error);
+    // toasted(false, 'Invalid insured data format');
     return Promise.reject(error);
   }
 }

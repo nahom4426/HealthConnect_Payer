@@ -20,6 +20,7 @@ export function createCreditDrug(data: any): Promise<AsyncResponse<any>> {
     }
   });
 }
+
 export function getInsuredByContractId(id: string, query = {}) {
 	return api.addAuthenticationHeader().get<InsuredPerson[]>(`${path}/list/${id}`, {
 		params: query

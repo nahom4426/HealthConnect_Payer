@@ -70,6 +70,10 @@ const props = defineProps({
   width: 40rem;
   height: 100%;
 }
+.mdd {
+  width: 45rem;
+  height: auto;
+}
 
 .lg {
   width: 65rem;

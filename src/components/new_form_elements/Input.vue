@@ -15,10 +15,13 @@ const props = defineProps({
       <div class="flex w-full ">
         <slot class="" name="left" />
         <input
-          v-focus='focus'
+          v-focus="focus"
           :ref="setRef"
+      
+          v-bind="$attrs"
+          :value="value"
+          @input="changeValue($event.target.value)"
         />
-        <slot name="left" />
       </div>
     </InputLayout>
   </InputParent>

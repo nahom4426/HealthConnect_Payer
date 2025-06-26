@@ -69,10 +69,10 @@
           <h3 class="text-lg font-semibold">Dependants</h3>
           <button 
             @click="showNewDependentForm = !showNewDependentForm" 
-            class="px-4 py-2 bg-primary text-white rounded-md flex items-center"
+           
           >
-            <span v-if="showNewDependentForm">Cancel</span>
-            <span v-else>Add Dependant</span>
+            <span v-if="showNewDependentForm" class="px-6 py-3 border border-gray-300 rounded-md text-gray-700 bg-white">Cancel</span>
+            <span v-else  class="px-6 py-3 bg-primary text-white rounded-md flex items-center">Add Dependant</span>
           </button>
         </div>
 
@@ -306,19 +306,24 @@
   </td>
   
   <!-- Action Buttons -->
-  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-    <div class="flex space-x-2">
-      <button 
-        @click="saveEdit" 
-        class="text-green-600 hover:text-green-800"
-        :disabled="savingEdit"
-      >
-        <span v-if="savingEdit">⏳</span>
-        <span v-else>✓</span>
-      </button>
-      <button @click="cancelEdit" class="text-red-600 hover:text-red-800">✕</button>
-    </div>
-  </td>
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+  <div class="flex space-x-2">
+    <button 
+      @click="saveEdit" 
+      class="text-green-600 hover:text-green-800"
+      :disabled="savingEdit"
+    >
+      <span v-if="savingEdit"  class="px-6 py-3 bg-primary text-white rounded-md flex items-center">⏳</span>
+      <span v-else class="px-6 py-3 bg-primary text-white rounded-md flex items-center">✓   Save</span>
+    </button>
+    <button 
+      @click="cancelEdit" 
+       class="text-green-600 border hover:bg-green-700 p-2 ">
+      ✕   Cancel
+    </button>
+  </div>
+</td>
+
 </template>
               </tr>
 
@@ -453,10 +458,10 @@
                       class="text-green-600 hover:text-green-800"
                       :disabled="savingDependent"
                     >
-                      <span v-if="savingDependent">⏳</span>
-                      <span v-else>✓</span>
+                      <span v-if="savingDependent" class="px-6 py-3 bg-primary text-white rounded-md flex items-center">⏳</span>
+                      <span v-else class="px-6 py-3 bg-primary text-white rounded-md flex items-center">✓ save </span>
                     </button>
-                    <button @click="cancelAddDependent" class="text-red-600 hover:text-red-800">✕</button>
+                    <button @click="cancelAddDependent" class="text-green-600 border hover:bg-green-700 p-2 ">✕ cancel</button>
                   </div>
                 </td>
               </tr>
