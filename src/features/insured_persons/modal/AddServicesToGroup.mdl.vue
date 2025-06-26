@@ -1,20 +1,16 @@
 <script setup>
 import ModalParent from "@/components/ModalParent.vue";
-import NewFormParent from "@/components/NewFormParent.vue";
-import { closeModal } from "@customizer/modal-x";
-import { ref } from "vue";
-import GroupForm from "../form/GroupForm.vue";
-import ServiceDataProvider from "@/features/service/components/ServiceDataProvider.vue";
 import GroupService from "../components/GroupComponents/GroupService.vue";
 import GroupDrug from "../components/GroupComponents/GroupDrug.vue";
-import ActiveProvidersDataProvider from "@/features/providers/components/ActiveProvidersDataProvider.vue";
-import Form from "@/components/new_form_builder/Form.vue";
-import Input from "@/components/new_form_elements/Input.vue";
-import Button from "@/components/Button.vue";
-import { useSelectedServicesStore } from "../store/selectedServicesStore";
-import { toasted } from "@/utils/utils";
-import { useApiRequest } from "@/composables/useApiRequest";
-import { addServiceToGroup, createNewGroup } from "../api/groupServiceApi";
+import { ref } from "vue";
+
+import NewFormParent from "@/components/NewFormParent.vue";
+import ContractProvidersDataProvider from "@/features/providers/components/ContractProvidersDataProvider.vue";
+
+const props = defineProps({
+  data: String,
+});
+
 const active = ref(0);
 
 const setActive = (item) => {
@@ -30,24 +26,8 @@ const components = [
     component: GroupDrug,
   },
 ];
-const useSelectedServices = useSelectedServicesStore();
 
 const selectedProvider = ref("");
-const serviceApi = useApiRequest();
-function createGroup() {
-  if (useSelectedServices.selectedValues.length === 0) {
-    return toasted(false, "", "Please select a service");
-  } else {
-    serviceApi.send(
-      () => addServiceToGroup(),
-      (res) => {
-        if (res?.success) {
-        }
-        toasted(res.success, "Group created successfully", res.error);
-      }
-    );
-  }
-}
 </script>
 
 <template>
@@ -58,7 +38,7 @@ function createGroup() {
       title="New Employee / Family Group"
       subtitle="Create a new group for employees or their families."
     >
-      <ActiveProvidersDataProvider v-slot="{ providers, pending }">
+      <ContractProvidersDataProvider v-slot="{ providers, pending }">
         <div class="flex flex-col gap-10">
           <div class="flex flex-col gap-6 bg-base-clr3 w-full p-6 rounded-lg">
             <div class="grid grid-cols-2 gap-4">
@@ -100,30 +80,14 @@ function createGroup() {
             </div>
 
             <component
+              :groupId="props.data"
               :id="selectedProvider"
               :search="search"
               :is="components[active].component"
             ></component>
           </div>
-          <div class="flex justify-end gap-4">
-            <Button
-              @click.prevent="closeModal()"
-              class="border border-base-clr"
-            >
-              Cancel
-            </Button>
-
-            <Button
-              size="md"
-              class="!text-white"
-              type="primary"
-              @click.prevent="createGroup"
-            >
-              Create Group
-            </Button>
-          </div>
         </div>
-      </ActiveProvidersDataProvider>
+      </ContractProvidersDataProvider>
     </NewFormParent>
   </ModalParent>
 </template>

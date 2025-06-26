@@ -1,18 +1,19 @@
 <script setup>
 import Table from "@/components/Table.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { openModal } from "@customizer/modal-x";
+import { closeModal, openModal } from "@customizer/modal-x";
 import { useAuthStore } from "@/stores/auth";
 import { toasted } from "@/utils/utils";
 import { useDrugStore } from "@/features/service/store/drugStore";
 import DrugDataprovider from "@/features/service/components/DrugDataprovider.vue";
 import { useSelectedDrugStore } from "../../store/selectedDrugStore";
 import { computed, ref } from "vue";
+import Button from "@/components/Button.vue";
+import { addServiceToGroup } from "../../api/groupServiceApi";
 const api = useApiRequest();
-const authStore = useAuthStore();
-const drugStore = useDrugStore();
 const props = defineProps({
   id: String,
+  groupId: String,
 });
 
 const useSelectedDrug = useSelectedDrugStore();
@@ -37,6 +38,24 @@ function selectService(id, data = []) {
   }
 }
 const search = ref("");
+
+function handleAddDrugsToGroup() {
+  if (useSelectedDrug.selectedValues.length === 0) {
+    toasted(false, "", "Please Select Drugs");
+    return;
+  }
+  console.log(useSelectedDrug.selectedValues);
+
+  api.send(
+    () => addServiceToGroup(props.groupId, useSelectedDrug.selectedValues),
+    (res) => {
+      if (res.success) {
+        closeModal();
+      }
+      toasted(res.success, "Members Added To GroupSuccessfully", res.error);
+    }
+  );
+}
 </script>
 <template>
   <div>
@@ -90,6 +109,21 @@ const search = ref("");
               </Button>
             </template>
           </Table>
+        </div>
+        <div class="flex justify-end gap-4">
+          <Button @click.prevent="closeModal()" class="border border-base-clr">
+            Cancel
+          </Button>
+
+          <Button
+            :pending="api.pending.value"
+            @click.prevent="handleAddDrugsToGroup"
+            size="md"
+            class="!text-white"
+            type="primary"
+          >
+            Add Drugs
+          </Button>
         </div>
       </div>
     </DrugDataprovider>

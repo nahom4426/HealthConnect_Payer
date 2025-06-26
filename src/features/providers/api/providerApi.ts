@@ -10,6 +10,11 @@ export function getProviders(query = {}) {
     params: query
   });
 }
+export function getContaractedProviders(id:any,query = {}) {
+  return api.addAuthenticationHeader().get(`payer/${id}/providers-with-contract`, {
+    params: query
+  });
+}
 
 export function getProviderById(id: string): Promise<AsyncResponse<Provider>> {
   return api.addAuthenticationHeader().get(`${basePath}/${id}`);
