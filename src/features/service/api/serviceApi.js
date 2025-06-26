@@ -1,5 +1,5 @@
 import ApiService from "@/service/ApiService";
-import { getQueryFormObject } from "@/utils/utils.ts";
+import { getQueryFormObject } from "@/utils/utils.js";
 
 const api = new ApiService();
 const basePath = "/healthConnectProvider/service";

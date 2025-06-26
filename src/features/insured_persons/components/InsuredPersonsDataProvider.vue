@@ -88,8 +88,6 @@ defineExpose({
   refresh: pagination.send,
   currentPage: computed(() => currentPage.value),
   itemsPerPage: computed(() => itemsPerPage.value),
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
 });
 </script>
 

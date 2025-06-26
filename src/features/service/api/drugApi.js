@@ -1,5 +1,4 @@
 import ApiService from "@/service/ApiService";
-import { getQueryFormObject } from "@/utils/utils.ts";
 
 const api = new ApiService();
 const basePath = "/drugs";

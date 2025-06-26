@@ -72,13 +72,49 @@ import { formatDateToYYMMDD } from "@/utils/utils";
           }"
         >
           <template #actions="{ row }">
-            <div class="flex gap-2">
-              <Button type="link" size="xs">
-                <RouterLink :to="`claim-approval/detail/${row.batchCode}`">
-                  View
-                </RouterLink>
-              </Button>
-            </div>
+            <Dropdown v-slot="{ setRef, toggleDropdown }">
+              <div
+                @click.prevent="toggleDropdown"
+                class="flex items-center gap-2 px-5 py-3 rounded-lg cursor-pointer"
+              >
+                <button>
+                  <i v-html="icons.threeDots"></i>
+                </button>
+              </div>
+              <div
+                class="flex shadow-lg text-base p-2 mt-2 rounded-lg flex-col gap-2 w-40 bg-white"
+                :ref="setRef"
+              >
+                <button
+                  @click="
+                    $router.push(`claim-approval/detail/${row.batchCode}`)
+                  "
+                  class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+                >
+                  <i v-html="icons.edits" />
+                  <span>Detail</span>
+                </button>
+
+                <button
+                  @click="
+                    $router.push(
+                      `/insured_list/group-insured/${row?.groupUuid}`
+                    )
+                  "
+                  class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+                >
+                  <i v-html="icons.details" />
+                  <span>Approve</span>
+                </button>
+                <button
+                  @click="remove(row?.groupUuid)"
+                  class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
+                >
+                  <i v-html="icons.deactivate" />
+                  <span>Reject</span>
+                </button>
+              </div>
+            </Dropdown>
           </template>
         </Table>
       </AuthorizationBatchDataProvider>

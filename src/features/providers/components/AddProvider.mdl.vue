@@ -1,10 +1,10 @@
-<script setup lang="ts">
+<script setup>
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import ProviderForm from "../components/ProviderForm.vue";
 import ProviderFormDataProvider from "../components/ProviderFormDataProvider.vue";
 import Button from "@/components/Button.vue";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref } from "vue";
@@ -16,28 +16,28 @@ const formDataProvider = ref();
 // Initialize the providers store
 const providersStore = useProviders();
 
-async function handleSubmit(formValues: any) {
+async function handleSubmit(formValues) {
   try {
     pending.value = true;
 
     const requiredFields = [
-      'providerName',
-      'threeDigitAcronym',
-      'email',
-      'telephone',
-      'address',
-      'tinNumber',
-      'category'
+      "providerName",
+      "threeDigitAcronym",
+      "email",
+      "telephone",
+      "address",
+      "tinNumber",
+      "category",
     ];
-    
-    const missingFields = requiredFields.filter(field => !formValues[field]);
+
+    const missingFields = requiredFields.filter((field) => !formValues[field]);
     if (missingFields.length > 0) {
-      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+      throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
     }
 
     const formData = new FormData();
     if (formValues.providerLogo) {
-      formData.append('logo', formValues.providerLogo);
+      formData.append("logo", formValues.providerLogo);
     }
 
     const providerData = {
@@ -55,72 +55,77 @@ async function handleSubmit(formValues: any) {
       latitude: formValues.latitude || 0,
       longitude: formValues.longitude || 0,
       tinNumber: formValues.tinNumber,
-      status: formValues.status || "ACTIVE"
+      status: formValues.status || "ACTIVE",
     };
-    
-    formData.append('provider', JSON.stringify(providerData));
 
-    console.log('Submitting provider data:', providerData);
-    
+    formData.append("provider", JSON.stringify(providerData));
+
+    console.log("Submitting provider data:", providerData);
+
     const result = await formDataProvider.value.register(formData);
-    
+
     if (result.success) {
       // Process the provider data to include logo information
       const newProvider = {
         ...result.data,
         // If the API returns logoPath but no logoUrl, create a URL
-        logoUrl: result.data.logoUrl || (result.data.logoPath ? 
-          `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/provider/logo/${result.data.logoPath}` : 
-          null)
+        logoUrl:
+          result.data.logoUrl ||
+          (result.data.logoPath
+            ? `${
+                import.meta.env.VITE_API_URL || "http://localhost:8080/api"
+              }/provider/logo/${result.data.logoPath}`
+            : null),
       };
-      
+
       // Add the new provider to the store
       providersStore.add(newProvider);
-      
+
       // Show success message
-      
+
       // Call the onAdded callback if it exists
-      if (formDataProvider.value.props && formDataProvider.value.props.data && 
-          formDataProvider.value.props.data.onAdded && 
-          typeof formDataProvider.value.props.data.onAdded === 'function') {
+      if (
+        formDataProvider.value.props &&
+        formDataProvider.value.props.data &&
+        formDataProvider.value.props.data.onAdded &&
+        typeof formDataProvider.value.props.data.onAdded === "function"
+      ) {
         formDataProvider.value.props.data.onAdded(newProvider);
       }
-      
+
       closeModal();
-      router.push('/provider_list');
+      router.push("/provider_list");
     } else {
-      throw new Error(result.error || 'Registration failed');
+      throw new Error(result.error || "Registration failed");
     }
   } catch (error) {
-    console.error('Submission error:', error);
-    toasted(false, 'Failed to submit form', error.message);
+    console.error("Submission error:", error);
+    toasted(false, "Failed to submit form", error.message);
   } finally {
     pending.value = false;
   }
 }
-
 </script>
 
 <template>
   <ModalParent>
-    <NewFormParent 
-      class="" 
-      size="lg" 
-      title="New Provider" 
+    <NewFormParent
+      class=""
+      size="lg"
+      title="New Provider"
       subtitle="To add a new provider, please fill out the information in the fields below."
     >
       <div class="bg-white rounded-lg">
-       <ProviderFormDataProvider ref="formDataProvider">
-  <template #default="{ pending: providerPending }">
-    <!-- Keep sync with outer ref -->
-   <ProviderForm
-  :pending="pending"
-  :onSubmit="handleSubmit"
-  :onCancel="() => closeModal()"
-/>
-  </template>
-</ProviderFormDataProvider>
-
+        <ProviderFormDataProvider ref="formDataProvider">
+          <template #default="{ pending: providerPending }">
+            <!-- Keep sync with outer ref -->
+            <ProviderForm
+              :pending="pending"
+              :onSubmit="handleSubmit"
+              :onCancel="() => closeModal()"
+            />
+          </template>
+        </ProviderFormDataProvider>
       </div>
     </NewFormParent>
   </ModalParent>

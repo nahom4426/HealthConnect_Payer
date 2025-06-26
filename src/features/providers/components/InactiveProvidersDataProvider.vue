@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { usePagination } from "@/composables/usePagination";
 import { getProviders } from "../api/providerApi";
 import { useProviders } from "../store/providersStore";
@@ -8,8 +8,8 @@ import { Status } from "@/types/interface";
 const props = defineProps({
   search: {
     type: String,
-    default: ""
-  }
+    default: "",
+  },
 });
 
 const store = useProviders();
@@ -18,11 +18,12 @@ const pagination = usePagination({
   store: store,
   auto: true,
   reset: true,
-  cb: (data) => getProviders({
-    ...data,
-    status: Status.SUSPENDED,
-    search: props.search || undefined
-  })
+  cb: (data) =>
+    getProviders({
+      ...data,
+      status: Status.SUSPENDED,
+      search: props.search || undefined,
+    }),
 });
 
 // Watch for search changes
@@ -42,13 +43,13 @@ const totalPages = computed(() => pagination.totalPages?.value || 1);
 const isPending = computed(() => pagination.pending?.value || false);
 
 // Methods for pagination control
-function setPage(page: number) {
+function setPage(page) {
   if (pagination.page) {
     pagination.page.value = page;
   }
 }
 
-function setLimit(limit: number) {
+function setLimit(limit) {
   if (pagination.limit) {
     pagination.limit.value = limit;
   }
@@ -62,15 +63,15 @@ function refresh() {
 defineExpose({
   setPage,
   setLimit,
-  refresh
+  refresh,
 });
 </script>
 
 <template>
   <div>
-    <slot 
-      :providers="providers" 
-      :pending="isPending" 
+    <slot
+      :providers="providers"
+      :pending="isPending"
       :currentPage="currentPage"
       :itemsPerPage="itemsPerPage"
       :totalPages="totalPages"

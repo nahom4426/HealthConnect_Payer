@@ -1,5 +1,5 @@
 import ApiService from "@/service/ApiService";
-import { getQueryFormObject } from "@/utils/utils.ts";
+import { getQueryFormObject } from "@/utils/utils.js";
 
 // Create a new API service instance with the specific base URL
 const api = new ApiService(import.meta.env.v_API_URI);
@@ -7,24 +7,26 @@ const path = "/users";
 
 export function CreateUser(data) {
   console.log("Creating user with data:", data);
-  
+
   // Ensure gender is properly formatted (lowercase)
   const formattedData = {
     ...data,
-    gender: data.gender?.toLowerCase()
+    gender: data.gender?.toLowerCase(),
   };
-  
+
   console.log("Sending formatted data:", formattedData);
   console.log("API endpoint:", `${path}/signup`);
-  
+
   // Add authentication header for the signup request
-  return api.addAuthenticationHeader().post(`${path}/signup`, formattedData)
-    .catch(error => {
+  return api
+    .addAuthenticationHeader()
+    .post(`${path}/signup`, formattedData)
+    .catch((error) => {
       console.error("Error creating user:", error);
       return {
         success: false,
         error: error.message || "Failed to create user. Server error.",
-        data: null
+        data: null,
       };
     });
 }
@@ -49,7 +51,9 @@ export function fetchUserFiles() {
   return api.addAuthenticationHeader().get(`${path}`);
 }
 export function changeUserStatus(providerId, status) {
-  return api.addAuthenticationHeader().put(`${path}/${providerId}/status`, null, {
-    params: { status }
-  });
+  return api
+    .addAuthenticationHeader()
+    .put(`${path}/${providerId}/status`, null, {
+      params: { status },
+    });
 }

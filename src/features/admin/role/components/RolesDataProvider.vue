@@ -3,7 +3,7 @@ import { usePagination } from "@/composables/usePaginationcontent";
 import { getAllRoles } from "../api/rolesApi";
 import { useRoles } from "../store/rolesStore";
 import { watch } from "vue";
-import { removeUndefined } from "@/utils/utils.ts";
+import { removeUndefined } from "@/utils/utils.js";
 
 const props = defineProps({
   search: String,
@@ -31,5 +31,9 @@ watch(
 </script>
 <template>
   {{ console.log(roles) }}
-  <slot :roles="roles.roles" :pending="pagination.pending.value" :error="pagination.error.value" />
+  <slot
+    :roles="roles.roles"
+    :pending="pagination.pending.value"
+    :error="pagination.error.value"
+  />
 </template>

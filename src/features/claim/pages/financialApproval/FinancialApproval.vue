@@ -3,7 +3,6 @@ import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
-import GroupInsuredDataProvider from "../components/GroupComponents/GroupInsuredDataProvider.vue";
 </script>
 
 <template>
@@ -36,14 +35,9 @@ import GroupInsuredDataProvider from "../components/GroupComponents/GroupInsured
           :pending="pending"
           :headers="{
             head: ['Full Name', 'ID Number', 'Phone', 'Position', 'Status'],
-            row: ['fullName', 'idNumber', 'phone', 'position', 'status'],
+            row: ['fullName', 'id', 'telephone', 'Position', 'status'],
           }"
-          :rows="insured || []"
-          :cells="{
-            fullName: (_, row) => {
-              return row?.firstName + ' ' + row?.fatherName;
-            },
-          }"
+          :rows="insured?.insuredResponses || []"
         >
         </Table>
       </GroupInsuredDataProvider>

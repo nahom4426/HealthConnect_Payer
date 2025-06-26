@@ -1,5 +1,5 @@
 import ApiService from "@/service/ApiService";
-import { getQueryFormObject } from "@/utils/utils.ts";
+import { getQueryFormObject } from "@/utils/utils.js";
 
 const api = new ApiService();
 const path = "/users";
@@ -9,9 +9,7 @@ export function getAllPrivilege(query = {}) {
   return api.addAuthenticationHeader().get(`${path}/privilege/all${qr}`);
 }
 export function createPrivilege(data) {
-  return api
-    .addAuthenticationHeader()
-    .post(`${path}/privilege`, data);
+  return api.addAuthenticationHeader().post(`${path}/privilege`, data);
 }
 
 export function deletePrivilege(id) {
@@ -25,7 +23,9 @@ export function updatePrivilege(id, data) {
 }
 
 export function changePrivilegeStatus(privilegeId, status) {
-  return api.addAuthenticationHeader().put(`${path}/${privilegeId}/status`, null, {
-    params: { status }
-  });
+  return api
+    .addAuthenticationHeader()
+    .put(`${path}/${privilegeId}/status`, null, {
+      params: { status },
+    });
 }
