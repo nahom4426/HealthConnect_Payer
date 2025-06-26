@@ -6,6 +6,10 @@ import { ref, watch } from "vue";
 const props = defineProps({
   modelValue: String,
   placeholder: String,
+  first: {
+    type: Boolean,
+    default: true,
+  },
 });
 const emit = defineEmits(["update:modelValue"]);
 
@@ -23,6 +27,7 @@ watch(search, () => {
     >
       <!-- Search Bar -->
       <div
+        v-if="props.first"
         tabindex="0"
         class="w-full md:max-w-[28rem] bg-base-clr3 h-[3.5rem] focus-within:border-primary flex items-center rounded-lg overflow-hidden"
       >
@@ -36,6 +41,7 @@ watch(search, () => {
           class="flex-1 bg-transparent px-4 py-2 h-full outline-none"
         />
       </div>
+      <slot v-else name="first"> </slot>
 
       <div class="flex items-center gap-5 w-full md:w-auto">
         <slot name="filter"> </slot>

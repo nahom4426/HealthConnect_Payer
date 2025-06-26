@@ -3,19 +3,15 @@ import { useBreadcrumb, type BreadcrumbRoutes } from "@/stores/breadCrumbsStore"
 import { createRouter, createWebHistory } from "vue-router";
 import Login from "@/pages/Login.vue";
 import { useAuthStore } from "@/stores/auth";
-import creditInvoicesRoutes from "./creditInvoices.routes";
 import priceRoutes from "./service.routes";
 import Dashboard from "@/features/Dashboard/pages/Dashboard.vue";
-import eligibility_checkRoutes from "./eligibility_check.routes";
 import claimRoutes from "./claim.routes";
 // import institutionRoutes from "./institution.routes";
 import adminRoutes from "./admin.routes";
 import instutionSetingRoutes from "./institution_settings.routes";
 import insuredPersonRoutes from "./insured_persons.routes";
-import product_settingRoutes from "./product_settings.routes";
 import Provider_contractsRoutes from "./provider_contracts.routes";
 import providerRoutes from "./providers.routes"
-import finance from "./finance.routes.ts"
 import payerContractRoutes from "./payerContract.routes";
 import creditServicesRoutes from "./credit_services.routes";
 import submitClaimsRoutes from "./submit_claims.routes";
@@ -46,18 +42,14 @@ const router = createRouter({
           component: Profile,
         },
         
-        ...creditInvoicesRoutes,
         ...priceRoutes,
-        ...eligibility_checkRoutes,
         ...claimRoutes,
         ...adminRoutes,
         // ...institutionRoutes,
         ...instutionSetingRoutes,
         ...insuredPersonRoutes,
-        ...product_settingRoutes,
         ...Provider_contractsRoutes,
         ...providerRoutes,
-        ...finance,
         ...payerContractRoutes,
         ...creditServicesRoutes,
         ...submitClaimsRoutes,

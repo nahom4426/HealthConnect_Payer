@@ -64,10 +64,12 @@ export function usePagination(options = {}) {
     req.send(
       () => paginationOptions.value.cb(getPaginationData(next, current)),
       (res) => {
-        console.log(res);
+        console.log(res?.data);
 
         if (paginationOptions.value.store && res?.success) {
-          paginationOptions.value.store.set(res?.data?.content || []);
+          paginationOptions.value.store.set(
+            res?.data?.content || res?.data || []
+          );
         }
 
         pagination.totalPages.value = res?.data?.totalPages || 1;
@@ -109,7 +111,9 @@ export function usePagination(options = {}) {
           }),
         (res) => {
           if (paginationOptions.value.store && res.success) {
-            paginationOptions.value.store.set(res.data?.content || []);
+            paginationOptions.value.store.set(
+              res.data?.content || res?.data || []
+            );
           }
           searchPagination.totalPages.value = res.data?.[0]?.totalPages || 1;
           if (

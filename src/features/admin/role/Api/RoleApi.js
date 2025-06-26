@@ -1,5 +1,5 @@
 import ApiService from "@/service/ApiService";
-import { getQueryFormObject } from "@/utils/utils.ts";
+import { getQueryFormObject } from "@/utils/utils.js";
 
 const api = new ApiService();
 const path = "/users/role";
@@ -22,6 +22,6 @@ export function removeRoleById(id) {
 }
 export function changeRoleStatus(roleId, status) {
   return api.addAuthenticationHeader().put(`${path}/${roleId}/status`, null, {
-    params: { status }
+    params: { status },
   });
 }

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import ProviderForm from "./PayerContractForm.vue";
@@ -14,56 +14,60 @@ const props = defineProps({
   data: {
     type: Object,
     required: true,
-    default: () => ({})
-  }
+    default: () => ({}),
+  },
 });
 
 // Initialize the providers store
 const payerContractStore = usePayerContracts();
 
-const error = ref('');
+const error = ref("");
 const pending = ref(false);
 const providerData = ref({});
-const providerUuid = ref('');
+const providerUuid = ref("");
 
 // Log props for debugging
 onMounted(() => {
-  console.log('EditProvider modal mounted with data prop:', props.data);
-  
+  console.log("EditProvider modal mounted with data prop:", props.data);
+
   // Extract the actual props from the data object
   if (props.data) {
-    providerUuid.value = props.data.providerUuid || '';
+    providerUuid.value = props.data.providerUuid || "";
     providerData.value = props.data.provider || {};
-    
-    console.log('Extracted provider UUID:', providerUuid.value);
-    console.log('Extracted provider data:', providerData.value);
+
+    console.log("Extracted provider UUID:", providerUuid.value);
+    console.log("Extracted provider data:", providerData.value);
   }
 });
 
 // Watch for changes in props.data
-watch(() => props.data, (newData) => {
-  if (newData) {
-    console.log('Data prop updated:', newData);
-    providerUuid.value = newData.providerUuid || '';
-    providerData.value = newData.provider || {};
-  }
-}, { deep: true });
+watch(
+  () => props.data,
+  (newData) => {
+    if (newData) {
+      console.log("Data prop updated:", newData);
+      providerUuid.value = newData.providerUuid || "";
+      providerData.value = newData.provider || {};
+    }
+  },
+  { deep: true }
+);
 
 // Handle form submission
-async function handleSubmit(formValues: any) {
+async function handleSubmit(formValues) {
   try {
     pending.value = true;
-    error.value = '';
+    error.value = "";
 
     if (!providerUuid.value) {
-      throw new Error('Provider UUID is missing');
+      throw new Error("Provider UUID is missing");
     }
 
     const formData = new FormData();
 
     // Append the logo file if exists
     if (formValues.providerLogo) {
-      formData.append('logo', formValues.providerLogo);
+      formData.append("logo", formValues.providerLogo);
     }
 
     const providerPayload = {
@@ -81,7 +85,7 @@ async function handleSubmit(formValues: any) {
       longitude: formValues.longitude || 0,
       tinNumber: formValues.tinNumber,
       status: formValues.status || "ACTIVE",
-      providerUuid: providerUuid.value
+      providerUuid: providerUuid.value,
     };
 
     // If we have existing logo data and no new logo file, include it in the payload
@@ -93,18 +97,20 @@ async function handleSubmit(formValues: any) {
       }
     }
 
-    formData.append('provider', JSON.stringify(providerPayload));
+    formData.append("provider", JSON.stringify(providerPayload));
 
     const result = await updatePayerContract(providerUuid.value, formData);
 
     // ✅ Normalize success check
-    const isSuccess = result && (result.success || result.status === 200 || result.status === 'success');
+    const isSuccess =
+      result &&
+      (result.success || result.status === 200 || result.status === "success");
 
     if (isSuccess) {
       const updatedProvider = {
         ...providerData.value,
         ...formValues,
-        providerUuid: providerUuid.value
+        providerUuid: providerUuid.value,
       };
 
       // Preserve logo information if not changed
@@ -121,9 +127,9 @@ async function handleSubmit(formValues: any) {
       }
 
       payerContractStore.update(providerUuid.value, updatedProvider);
-      toasted(true, 'Provider updated successfully');
+      toasted(true, "Provider updated successfully");
 
-      if (props.data.onUpdated && typeof props.data.onUpdated === 'function') {
+      if (props.data.onUpdated && typeof props.data.onUpdated === "function") {
         props.data.onUpdated(updatedProvider);
       }
 
@@ -132,34 +138,38 @@ async function handleSubmit(formValues: any) {
       // throw new Error(result?.error || 'Update failed');
     }
   } catch (err) {
-    console.error('Update error:', err);
-    error.value = err.message || 'An error occurred while updating provider';
-    toasted(false, 'Failed to update provider', error.value);
+    console.error("Update error:", err);
+    error.value = err.message || "An error occurred while updating provider";
+    toasted(false, "Failed to update provider", error.value);
   } finally {
     pending.value = false;
   }
 }
-
-
 </script>
 
 <template>
   <ModalParent>
-    <NewFormParent 
-      class="" 
-      size="lg" 
-      title="Edit Provider" 
+    <NewFormParent
+      class=""
+      size="lg"
+      title="Edit Provider"
       subtitle="Update the provider information in the fields below."
     >
       <div class="bg-white rounded-lg">
-        <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        <div
+          v-if="error"
+          class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg"
+        >
           {{ error }}
         </div>
-        
-        <div v-if="!providerUuid || Object.keys(providerData).length === 0" class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
+
+        <div
+          v-if="!providerUuid || Object.keys(providerData).length === 0"
+          class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg"
+        >
           Loading provider data...
         </div>
-        
+
         <ProviderForm
           v-else
           :initial-data="providerData"

@@ -1,15 +1,14 @@
-<script setup lang="ts">
+<script setup>
 import { usePagination } from "@/composables/usePagination";
 import { getProviders } from "../api/payerContractApi";
 import { usePayerContracts } from "../store/payerContractStore";
 import { watch, computed } from "vue";
-import { Status } from "@/types/interface";
 
 const props = defineProps({
   search: {
     type: String,
-    default: ""
-  }
+    default: "",
+  },
 });
 
 const store = usePayerContracts();
@@ -18,11 +17,12 @@ const pagination = usePagination({
   store: store,
   auto: true,
   reset: true,
-  cb: (data) => getProviders({
-    ...data,
-    status: Status.SUSPENDED,
-    search: props.search || undefined
-  })
+  cb: (data) =>
+    getProviders({
+      ...data,
+      status: "SUSPENDED",
+      search: props.search || undefined,
+    }),
 });
 
 // Watch for search changes
@@ -41,11 +41,11 @@ const itemsPerPage = computed(() => pagination.limit.value);
 const totalPages = computed(() => pagination.totalPages.value);
 
 // Methods for pagination control
-function setPage(page: number) {
+function setPage(page) {
   pagination.page.value = page;
 }
 
-function setLimit(limit: number) {
+function setLimit(limit) {
   pagination.limit.value = limit;
 }
 
@@ -57,15 +57,15 @@ function refresh() {
 defineExpose({
   setPage,
   setLimit,
-  refresh
+  refresh,
 });
 </script>
 
 <template>
   <div>
-    <slot 
-      :providers="providers" 
-      :pending="pagination.pending.value" 
+    <slot
+      :providers="providers"
+      :pending="pagination.pending.value"
       :currentPage="currentPage"
       :itemsPerPage="itemsPerPage"
       :totalPages="totalPages"

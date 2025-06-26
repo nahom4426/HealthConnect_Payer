@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { defineProps, onMounted, onUnmounted, ref } from "vue";
+<script setup >
+import { defineProps, onMounted, onUnmounted, ref, toRefs } from "vue";
 import Button from "@/components/Button.vue";
 import { openModal } from "@customizer/modal-x";
 import { authorizationStore } from "../store/authorizationStore";
@@ -23,9 +23,9 @@ const props = defineProps({
 
 const { addToast } = useToast();
 const authorization = authorizationStore();
-const payerNames = ref<Record<string, string>>({});
+const payerNames = toRefs({});
 
-async function fetchPayerName(payerUuid: string) {
+async function fetchPayerName(payerUuid) {
   if (!payerUuid) return "Unknown Payer";
   if (payerNames.value[payerUuid]) return payerNames.value[payerUuid];
 
@@ -146,7 +146,7 @@ async function handleDeactivateWithClose(insuredId) {
   }
 }
 const useSelectedClaims = useSelectedClaimsStore();
-function selectedClaims(id: any) {
+function selectedClaims(id) {
   const idx = useSelectedClaims.selectedValues.findIndex((el) => el == id);
   if (idx > -1) {
     useSelectedClaims.removeValue(id);

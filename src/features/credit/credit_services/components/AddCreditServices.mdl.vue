@@ -2,19 +2,22 @@
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import CreditServicesForm from "../form/creditServicesForm.vue";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 import { closeModal } from "@customizer/modal-x";
-import { toasted } from "@/utils/utils";
 import { ref } from "vue";
 import creditServicesFormDataProvider from "../form/creditServicesFormDataProvider.vue";
-import { createCreditService, createCreditDrug } from "../api/creditServicesApi";
+import {
+  createCreditService,
+  createCreditDrug,
+} from "../api/creditServicesApi";
 import { useAuthStore } from "@/stores/auth";
 import { claimServices } from "../store/creditClaimsStore";
+import { toasted } from "@/utils/utils";
 
 const claimServicesStore = claimServices();
 const auth = useAuthStore();
 
-const formPending = ref(false); 
+const formPending = ref(false);
 const router = useRouter();
 const formDataProvider = ref();
 async function handleSubmit(formValues: any) {
@@ -28,7 +31,7 @@ async function handleSubmit(formValues: any) {
 
     // Common payload for both services and drugs
     const commonPayload = {
-      providerUuid: auth.auth?.user?.providerUuid || '',
+      providerUuid: auth.auth?.user?.providerUuid || "",
       payerUuid: formValues.payerUuid,
       payerName: formValues.payerName, 
       insuredUuid: formValues.insuredUuid,
@@ -160,7 +163,7 @@ async function handleSubmit(formValues: any) {
       
       // Add to store
       claimServicesStore.add(storeData);
-      
+
       closeModal();
       router.push('/credit_services');
     } else {

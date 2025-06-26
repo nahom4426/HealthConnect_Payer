@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import InsuredForm from "../form/InsuredMemberForm.vue";
@@ -15,7 +15,7 @@ const router = useRouter();
 const formDataProvider = ref();
 const insuredStore = insuredMembers();
 
-async function handleSubmit(formValues: any) {
+async function handleSubmit(formValues) {
   try {
     pending.value = true;
 
@@ -117,13 +117,10 @@ async function handleSubmit(formValues: any) {
     >
       <div class="bg-white rounded-lg">
         <InsuredPersonFormDataProvider ref="formDataProvider">
-          <template #default="{ pending: insuredPending }">
-            <InsuredForm
-              :pending="pending"
-              :onSubmit="handleSubmit"
-              :onCancel="() => closeModal()"
-            />
-          </template>
+          <InsuredForm
+            :onSubmit="handleSubmit"
+            :onCancel="() => closeModal()"
+          />
         </InsuredPersonFormDataProvider>
       </div>
     </NewFormParent>

@@ -1,8 +1,6 @@
 <script setup>
-import { searchInsuredByInstitution } from "../api/insuredPersonsApi";
 import { usePagination } from "@/composables/usePagination";
-import { insuredMembers } from "../store/insuredPersonsStore";
-import { ref, watch } from "vue";
+import { watch } from "vue";
 import { removeUndefined } from "@/utils/utils";
 import { useFamily } from "../store/FamilyStore";
 import { getGroup } from "../api/groupServiceApi";
@@ -24,15 +22,15 @@ const familyStore = useFamily();
 
 const pagination = usePagination({
   store: familyStore,
-  cb: (data) => {
+  cb: (data) =>
     getGroup(
       authStore.auth?.user?.payerUuid,
+
       removeUndefined({
         ...data,
         search: props.search,
       })
-    );
-  },
+    ),
 });
 
 watch(

@@ -1,18 +1,16 @@
 <script setup>
 import { ref } from "vue";
 import Table from "@/components/Table.vue";
-import InsuredPersonsDataProvider from "../components/InsuredPersonsDataProvider.vue";
-import StatusRow from "../components/InsuredPersonStatusRow.vue";
 import { useAuthStore } from "@/stores/auth";
 import FamilyDataProvider from "../components/FamilyDataProvider.vue";
 import Dropdown from "@/components/Dropdown.vue";
 import icons from "@/utils/icons";
 import { openModal } from "@customizer/modal-x";
+
 const props = defineProps({
   search: String,
 });
 
-const dataProvider = ref();
 const auth = useAuthStore();
 const institutionId = ref(auth.auth?.user?.payerUuid || "");
 </script>
@@ -24,6 +22,7 @@ const institutionId = ref(auth.auth?.user?.payerUuid || "");
     v-slot="{ group, pending }"
   >
     <Table
+      :show-pagination="false"
       :pending="pending"
       :headers="{
         head: [
@@ -32,7 +31,7 @@ const institutionId = ref(auth.auth?.user?.payerUuid || "");
           'Number of Employees',
           'Actions',
         ],
-        row: ['groupName', 'groupDescription', 'phone'],
+        row: ['groupName', 'groupDescription', 'estimatedMembers'],
       }"
       :rows="group"
     >
@@ -51,21 +50,30 @@ const institutionId = ref(auth.auth?.user?.payerUuid || "");
             :ref="setRef"
           >
             <button
-              @click="openModal('EditGroup', row?.groupId)"
+              @click="openModal('EditGroup', row)"
               class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
             >
               <i v-html="icons.edits" />
               <span>Edit</span>
             </button>
+            <!-- <button
+              @click=""
+              class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+            >
+              <i v-html="icons.edits" />
+              <span>View</span>
+            </button> -->
             <button
-              @click="openModal('ServiceManagement', row?.groupId)"
+              @click="
+                $router.push(`/insured_list/group-insured/${row?.groupUuid}`)
+              "
               class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
             >
               <i v-html="icons.details" />
               <span>Detail</span>
             </button>
             <button
-              @click="remove(row?.groupId)"
+              @click="remove(row?.groupUuid)"
               class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
             >
               <i v-html="icons.deactivate" />

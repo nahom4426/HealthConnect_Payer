@@ -1,22 +1,22 @@
-<script setup lang="ts">
-  import { ref, defineEmits } from "vue";
-  import { useRouter } from "vue-router";
-  import Table from "@/components/Table.vue";
-  import DefaultPage from "@/components/DefaultPage.vue";
-  import ActiveProvidersDataProvider from "../components/ActiveProvidersDataProvider.vue";
-  import Button from "@/components/Button.vue";
-  import { Status } from "@/types/interface";
+<script setup>
+import { ref, defineEmits } from "vue";
+import { useRouter } from "vue-router";
+import Table from "@/components/Table.vue";
+import DefaultPage from "@/components/DefaultPage.vue";
+import ActiveProvidersDataProvider from "../components/ActiveProvidersDataProvider.vue";
+import Button from "@/components/Button.vue";
+import { Status } from "@/types/interface";
 
-  import { changeProviderStatus, deleteProvider } from "../api/providerApi";
-  import { addToast } from "@/toast";
+import { changeProviderStatus, deleteProvider } from "../api/providerApi";
+import { addToast } from "@/toast";
 
-  import { useApiRequest } from "@/composables/useApiRequest";
-  import StatusRow from "@/components/StatusRow.vue";
-  import { openModal } from "@customizer/modal-x";
-  import { useProviders } from "../store/providersStore";
-  import icons from "@/utils/icons";
-  // Define emits to handle the navigate event
-  const emit = defineEmits(["navigate"]);
+import { useApiRequest } from "@/composables/useApiRequest";
+import StatusRow from "@/components/StatusRow.vue";
+import { openModal } from "@customizer/modal-x";
+import { useProviders } from "../store/providersStore";
+import icons from "@/utils/icons";
+// Define emits to handle the navigate event
+const emit = defineEmits(["navigate"]);
 
 const router = useRouter();
 const dataProvider = ref();
@@ -31,23 +31,23 @@ function refreshData() {
   }
 }
 
-function handlePageChange(page: number) {
+function handlePageChange(page) {
   if (dataProvider.value) {
     dataProvider.value.setPage(page);
   }
 }
 
-function handleLimitChange(limit: number) {
+function handleLimitChange(limit) {
   if (dataProvider.value) {
     dataProvider.value.setLimit(limit);
   }
 }
 
-function viewDetails(id: string) {
+function viewDetails(id) {
   router.push(`/providers/${id}`);
 }
 
-function openEditModal(provider: any) {
+function openEditModal(provider) {
   console.log("Opening edit modal for provider:", provider);
 
   // Make sure we have a valid provider object
@@ -64,7 +64,7 @@ function openEditModal(provider: any) {
   });
 }
 
-function handleProviderUpdated(updatedProvider: any) {
+function handleProviderUpdated(updatedProvider) {
   console.log("Provider updated:", updatedProvider);
   // Update the provider in the store
   if (updatedProvider && updatedProvider.providerUuid) {
@@ -80,7 +80,7 @@ function handleProviderUpdated(updatedProvider: any) {
   }
 }
 
-function handleStatusChange(id: string, newStatus: Status) {
+function handleStatusChange(id, newStatus) {
   statusReq.send(
     () => changeProviderStatus(id, newStatus),
     (res) => {
@@ -105,7 +105,7 @@ function handleStatusChange(id: string, newStatus: Status) {
   );
 }
 
-function handleDelete(id: string) {
+function handleDelete(id) {
   if (
     confirm(
       "Are you sure you want to delete this provider? This action cannot be undone."
@@ -136,18 +136,18 @@ function handleDelete(id: string) {
   }
 }
 
-function handleActivate(id: string) {
+function handleActivate(id) {
   handleStatusChange(id, Status.ACTIVE);
 }
 
-function handleDeactivate(id: string) {
+function handleDeactivate(id) {
   handleStatusChange(id, Status.INACTIVE);
 }
 
 function handleAddProvider() {
   // Open the add provider modal
   openModal("AddProvider", {
-    onAdded: (newProvider: any) => {
+    onAdded: (newProvider) => {
       // Add the new provider to the store
       providersStore.add(newProvider);
       // Refresh the data
@@ -187,7 +187,7 @@ function handleAddProvider() {
       <ActiveProvidersDataProvider
         ref="dataProvider"
         :search="search"
-        v-slot="{ providers, pending, currentPage, itemsPerPage, totalPages }"
+        v-slot="{ providers, pending }"
       >
         <Table
           :pending="pending"

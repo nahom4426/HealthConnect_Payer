@@ -1,6 +1,6 @@
-<script setup lang="ts">
+<script setup>
 import { ref } from "vue";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import InactiveProvidersDataProvider from "../components/InactiveProvidersDataProvider.vue";
@@ -14,41 +14,41 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import StatusRow from "@/components/StatusRow.vue";
 
 // Define emits to handle the navigate event
-const emit = defineEmits(['navigate']);
+const emit = defineEmits(["navigate"]);
 
 const router = useRouter();
 const dataProvider = ref();
 const store = useProviders();
 const showEditModal = ref(false);
-const selectedProviderUuid = ref('');
+const selectedProviderUuid = ref("");
 const selectedProvider = ref(null);
 const statusReq = useApiRequest();
 const deleteReq = useApiRequest();
 
 function refreshData() {
-  console.log('Refreshing provider data');
+  console.log("Refreshing provider data");
   if (dataProvider.value) {
     dataProvider.value.refresh();
   }
 }
 
-function handlePageChange(page: number) {
+function handlePageChange(page) {
   if (dataProvider.value) {
     dataProvider.value.setPage(page);
   }
 }
 
-function handleLimitChange(limit: number) {
+function handleLimitChange(limit) {
   if (dataProvider.value) {
     dataProvider.value.setLimit(limit);
   }
 }
 
-function viewDetails(id: string) {
+function viewDetails(id) {
   router.push(`/providers/${id}`);
 }
 
-function openEditModal(provider: any) {
+function openEditModal(provider) {
   selectedProvider.value = provider;
   selectedProviderUuid.value = provider.providerUuid;
   showEditModal.value = true;
@@ -56,46 +56,45 @@ function openEditModal(provider: any) {
 
 function closeEditModal() {
   showEditModal.value = false;
-  selectedProviderUuid.value = '';
+  selectedProviderUuid.value = "";
   selectedProvider.value = null;
 }
 
-function handleProviderUpdated(updatedProvider: any) {
+function handleProviderUpdated(updatedProvider) {
   // Update the provider in the store
   store.update(updatedProvider.providerUuid, updatedProvider);
   refreshData();
 }
 
-function handleStatusChange(id: string, newStatus: Status) {
+function handleStatusChange(id, newStatus) {
   statusReq.send(
     () => changePayerContractStatus(id, newStatus),
     (res) => {
       if (res.success) {
         addToast({
-          type: 'success',
-          title: 'Status Updated',
-          message: `Provider status has been updated to ${newStatus}`
+          type: "success",
+          title: "Status Updated",
+          message: `Provider status has been updated to ${newStatus}`,
         });
         refreshData();
       } else {
         addToast({
-          type: 'error',
-          title: 'Update Failed',
-          message: res.error || 'Failed to update provider status'
+          type: "error",
+          title: "Update Failed",
+          message: res.error || "Failed to update provider status",
         });
       }
     }
   );
 }
 
-function handleActivate(id: string) {
-  handleStatusChange(id, 'ACTIVE');
+function handleActivate(id) {
+  handleStatusChange(id, "ACTIVE");
 }
 
-function handleDeactivate(id: string) {
-  handleStatusChange(id, 'INACTIVE');
+function handleDeactivate(id) {
+  handleStatusChange(id, "INACTIVE");
 }
-
 </script>
 
 <template>
@@ -106,18 +105,33 @@ function handleDeactivate(id: string) {
         <Button @click="refreshData">Refresh</Button>
       </div>
     </template>
-    
+
     <template #default="{ search }">
-      <InactiveProvidersDataProvider 
+      <InactiveProvidersDataProvider
         ref="dataProvider"
-        :search="search" 
+        :search="search"
         v-slot="{ providers, pending, currentPage, itemsPerPage, totalPages }"
       >
         <Table
           :pending="pending"
           :headers="{
-            head: ['Provider Name', 'Email', 'Telephone', 'Category', 'Level', 'Status', 'Actions'],
-            row: ['providerName', 'email', 'telephone', 'category', 'level', 'status']
+            head: [
+              'Provider Name',
+              'Email',
+              'Telephone',
+              'Category',
+              'Level',
+              'Status',
+              'Actions',
+            ],
+            row: [
+              'providerName',
+              'email',
+              'telephone',
+              'category',
+              'level',
+              'status',
+            ],
           }"
           :rows="providers"
           :rowCom="StatusRow"
@@ -126,15 +140,30 @@ function handleDeactivate(id: string) {
             itemsPerPage,
             totalPages,
             onPageChange: handlePageChange,
-            onLimitChange: handleLimitChange
+            onLimitChange: handleLimitChange,
           }"
         >
           <!-- Pass the handler functions to the StatusRow component via props -->
           <template #row>
-            <StatusRow 
-              :rowData="providers" 
-              :rowKeys="['providerName', 'email', 'telephone', 'category', 'level', 'status']" 
-              :headKeys="['Provider Name', 'Email', 'Telephone', 'Category', 'Level', 'Status', 'Actions']"
+            <StatusRow
+              :rowData="providers"
+              :rowKeys="[
+                'providerName',
+                'email',
+                'telephone',
+                'category',
+                'level',
+                'status',
+              ]"
+              :headKeys="[
+                'Provider Name',
+                'Email',
+                'Telephone',
+                'Category',
+                'Level',
+                'Status',
+                'Actions',
+              ]"
               :onView="viewDetails"
               :onEdit="openEditModal"
               :onActivate="handleActivate"
@@ -146,12 +175,12 @@ function handleDeactivate(id: string) {
       </InactiveProvidersDataProvider>
     </template>
   </DefaultPage>
-  
-  <EditProviderModal 
-    v-if="showEditModal" 
-    :provider="selectedProvider" 
-    :provider-uuid="selectedProviderUuid" 
-    @close="closeEditModal" 
+
+  <EditProviderModal
+    v-if="showEditModal"
+    :provider="selectedProvider"
+    :provider-uuid="selectedProviderUuid"
+    @close="closeEditModal"
     @updated="handleProviderUpdated"
   />
 </template>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, computed } from "vue";
 import { useForm } from "@/components/new_form_builder/useForm";
 import Form from "@/components/new_form_builder/Form.vue";
@@ -12,7 +12,7 @@ import { useAuthStore } from "@/stores/auth";
 const auth = useAuthStore();
 const props = defineProps({
   initialData: {
-    type: Object as PropType<any>,
+    type: Object,
     default: () => ({}),
   },
   isEdit: {
@@ -28,17 +28,17 @@ const props = defineProps({
     default: false,
   },
   onSubmit: {
-    type: Function as PropType<(values: any) => void>,
+    type: Function,
     required: true,
   },
   onCancel: {
-    type: Function as PropType<() => void>,
+    type: Function,
     required: true,
   },
 });
 
 // Form data
-const employeePhoto = ref<File | null>(null);
+const employeePhoto = (ref < File) | (null > null);
 const firstName = ref("");
 const fatherName = ref("");
 const institutionId = ref(auth.auth?.user?.payerUuid || "");
@@ -96,23 +96,21 @@ onMounted(() => {
 });
 
 // File upload handling
-function handleFileUpload(event: Event) {
-  const target = event.target as HTMLInputElement;
+function handleFileUpload(event) {
+  const target = event.target;
   const file = target.files?.[0];
   if (file) {
     employeePhoto.value = file;
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.value = e.target?.result as string;
+      previewImage.value = e.target?.result;
     };
     reader.readAsDataURL(file);
   }
 }
 
 function browseFiles() {
-  const fileInput = document.getElementById(
-    "employee-photo-upload"
-  ) as HTMLInputElement;
+  const fileInput = document.getElementById("employee-photo-upload");
   fileInput.click();
 }
 
