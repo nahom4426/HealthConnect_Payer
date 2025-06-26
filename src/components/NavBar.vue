@@ -22,6 +22,26 @@ const authStore = useAuthStore();
 const props = defineProps({
   breadcrumbs: Object,
 });
+function getUserType(user) {
+  const hasPayer = !!user.payerUuid;
+  const hasProvider = !!user.providerUuid;
+
+  if (hasPayer && !hasProvider) return 'Payer';
+  if (!hasPayer && hasProvider) return 'Provider';
+  if (!hasPayer && !hasProvider) return 'Admin';
+  if (hasPayer && hasProvider) return 'Payer and Provider';
+}
+
+function getTypeStyle(type) {
+  switch (type) {
+    case 'Payer': return 'bg-blue-100 text-blue-800';
+    case 'Provider': return 'bg-green-100 text-green-800';
+    case 'Admin': return 'bg-yellow-100 text-yellow-800';
+    case 'Payer and Provider': return 'bg-purple-100 text-purple-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
 </script>
 <template>
   <div
@@ -38,6 +58,7 @@ const props = defineProps({
     </div>
 
     <div class="flex items-center gap-5">
+      
       <button class="px-5 py-3 rounded-md bg-base-clr3">
         <i
           v-html="
@@ -72,9 +93,18 @@ const props = defineProps({
   </div>
           <div class="flex flex-col">
             <span class="text-sm font-normal">{{
-              authStore.user?.firstName || "Birhane Araya"
+              authStore.auth.user?.firstName + " " + authStore.auth.user?.fatherName || "Birhane Araya"
             }}</span>
-            <span class="text-xs">{{ authStore.user?.role || "Admin" }}</span>
+          <span
+  v-if="authStore.auth.user"
+  class="text-xs px-2.5 py-1 rounded-full font-medium"
+  
+>
+  {{ getUserType(authStore.auth.user) }}
+</span>
+<span v-else class="text-xs bg-gray-100 text-gray-800 px-2.5 py-1 rounded-full font-medium">N/A</span>
+
+
           </div>
           <button>
             <i v-html="icons.chevron_down"></i>
@@ -84,6 +114,10 @@ const props = defineProps({
           class="flex shadow-lg border p-2 mt-2 rounded flex-col gap-2 w-60 bg-[#F6F7FA]"
           :ref="setRef"
         >
+         <button @click="$router.push('/profile')" class="p-2 flex items-center gap-2 rounded-lg hover:bg-gray-100">
+            <i v-html="icons.profile" />
+            <span>Profile</span>
+          </button>
           <button
             @click="logout()"
             class="p-2 flex items-center gap-2 rounded-lg hover:bg-gray-100"
@@ -91,6 +125,7 @@ const props = defineProps({
             <i v-html="icons.logout" />
             <span>Logout</span>
           </button>
+         
         </div>
       </Dropdown>
     </div>

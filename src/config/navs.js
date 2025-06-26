@@ -6,10 +6,9 @@ export default [
   path: "/dashboard",
   name: "Dashboard",
   icon: icons.dashboard,
-  privilege: ['CREATE_USER'], 
-},
 
-  {
+},
+ {
     path: "/payer_list",
     name: "Payer List",
     icon: icons.payerList,
@@ -33,12 +32,13 @@ export default [
     path: "/services",
     name: "Services",
     icon: icons.Services,
+     privilege: ['Create Services'], 
   },
 
-  {
+    {
     name: "Credits",
     icon: icons.Credits,
-    //  privilege: ['Read-Privileges'],
+    privilege: ['Create Services'], 
     //  category: "Payers",
     navs: [
       {
@@ -46,93 +46,94 @@ export default [
         name: "Create Claims",
         icon: icons.creditservices,
         // category: "main",
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Services'], 
       },
       {
         path: "/submit_claims",
         name: "Submit Claims",
         icon: icons.approveClaims,
         category: "Pages",
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Services'], 
       },
       {
-        path: "/claim-approval",
-        name: "Claim Approval",
+        path: "/authorization",
+        name: "Authorization",
         icon: icons.Authorization,
         category: "Pages",
-        // privilege: ['Read-Privileges'],
+       privilege: ['Create Services'], 
       },
       {
         path: "/track_claims",
         name: "Track Claims",
         icon: icons.completedClaims,
         category: "service",
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Services'],
       },
+    
     ],
   },
-  {
-    path: "/insured_list",
-    name: "Employees list",
-    icon: icons.active_insured_persons,
-    // privilege: ['Read-Privileges'],
-  },
+   {
+        path: "/insured_list",
+        name: "Employees list",
+        icon: icons.active_insured_persons,
+        privilege: ['Create Employees'],
+      },
   {
     name: "Claims",
     icon: icons.claimManagement,
-    //  privilege: ['Read-Privileges'],
-    //  category: "Payers",
+     privilege: ['Create Employees'],
+     category: "Payers",
     navs: [
       {
         path: "/cash_claims",
         name: "Cash Claims",
         icon: icons.cashClaims,
         // category: "main",
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Employees'],
       },
       {
         path: "/credit_claims",
         name: "Credit Claims",
         icon: icons.creditClaims,
         category: "Pages",
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Employees'],
       },
       {
         path: "/process_claims",
         name: "Process Claims",
         icon: icons.processClaims,
         category: "Pages",
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Employees'],
       },
       {
         path: "/verify_claims",
         name: "Verify Claims",
         icon: icons.verifyClaims,
         category: "service",
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Employees'],
       },
       {
         path: "/approve_claims",
         name: "Approve Claims",
         icon: icons.approveClaims,
         category: "main",
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Employees'],
       },
       {
         path: "/authorize_claims",
         name: "Authorize Claims",
         icon: icons.authorizeClaims,
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Employees'],
       },
       {
         path: "/completed_claims",
         name: "Completed Claims",
         icon: icons.completedClaims,
-        // privilege: ['Read-Privileges'],
+        privilege: ['Create Employees'],
       },
     ],
   },
-
+ 
   {
     path: "/users",
     name: "Users",

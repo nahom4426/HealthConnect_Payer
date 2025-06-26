@@ -23,7 +23,7 @@ async function handleSubmit(formValues: any) {
       "payerUuid",
       "firstName",
       "fatherName",
-      "grandFatherName",
+    
       "gender",
       "position",
       "birthDate",
@@ -81,7 +81,7 @@ async function handleSubmit(formValues: any) {
       insuredStore.add(newInsured);
 
       // Show success message
-      toasted(true, "Success", "Employee added successfully");
+      // toasted(true, "Success", "Employee added successfully");
 
       // Call the onAdded callback if it exists
       if (
@@ -96,11 +96,11 @@ async function handleSubmit(formValues: any) {
       closeModal();
       router.push("/insured_list");
     } else {
-      throw new Error(result.error || "Registration failed");
+      // throw new Error(result.error || "Registration failed");
     }
   } catch (error) {
     console.error("Submission error:", error);
-    toasted(false, "Failed to submit form", error.message);
+    // toasted(false, "Failed to submit form", error.message);
   } finally {
     pending.value = false;
   }

@@ -97,7 +97,7 @@ async function handleDeactivateWithClose(insuredId) {
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <div v-if="key === 'totalAmount'" class="truncate">  
         <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#DFF1F1] text-[#02676B]">
-          ETB {{ row.totalAmount.toFixed(2) }}
+          ETB {{ row.totalAmount }}
         </span>
       </div>
       

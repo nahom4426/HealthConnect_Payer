@@ -34,7 +34,7 @@ function register(formData: FormData) {
       'payerUuid',
       'firstName',
       'fatherName',
-      'grandFatherName',
+  
       'gender',
       'position',
       'birthDate',
@@ -50,14 +50,14 @@ function register(formData: FormData) {
     if (missingFields.length > 0) {
       const errorMsg = `Missing required Insured fields: ${missingFields.join(', ')}`;
       console.error('Validation failed:', errorMsg);
-      toasted(false, errorMsg);
+      // toasted(false, errorMsg);
       return Promise.reject(new Error(errorMsg));
     }
 
     return sendRegistrationRequest(formData);
   } catch (error) {
     console.error('Error parsing insured data:', error);
-    toasted(false, 'Invalid insured data format');
+    // toasted(false, 'Invalid insured data format');
     return Promise.reject(error);
   }
 }

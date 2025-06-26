@@ -34,7 +34,7 @@ console.log("Initial selected privileges:", props.selectPrivilege);
 
 <template>
     <Form class="grid grid-cols-3 gap-4 p-6" :inner="false" id="roleForm">
-        <Input name="roleName" validation="required|alpha" label="Role Name" :value="roles?.roleName || ''" :attributes="{
+        <Input name="roleName" validation="required" label="Role Name" :value="roles?.roleName || ''" :attributes="{
             placeholder: 'Enter Role Name',
         }" />
         <Textarea validation="required" name="roleDescription" :value="roles?.roleDescription || ''"

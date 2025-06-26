@@ -18,7 +18,7 @@ const role = ref(roleStore.roles.find((el) => el.roleUuid == roleUuid) || {});
 const req = useApiRequest()
 const updateReq = useApiRequest()
 const { submit } = useForm('roleForm')
-
+const router = useRouter();
 if (!Object.keys(role.value).length) {
     req.send(
         () => getRoleById(roleUuid),
@@ -41,10 +41,11 @@ function update({ values }) {
                 roleStore.update(roleUuid, { ...role, ...values });
             }
             toasted(res.success, 'Successfully Updated', res.error);
+            router.push('/roles');
         }
     );
 }
-const router = useRouter();
+
 const goBack = () => {
     router.go(-1);
 }

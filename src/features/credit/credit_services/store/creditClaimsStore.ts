@@ -31,6 +31,7 @@ export interface ClaimService {
   patientName: string;
   employeeId?: string;
   phone?: string;
+  insuredUuid?: string;
   insuranceId: string | null;
   dispensingDate: string;
   prescriptionNumber: string;
@@ -82,11 +83,12 @@ function add(formValues: any, apiResponse: any = {}): void {
     patientName: formValues.patientName || apiResponse.patientName, // Use provided patientName
     employeeId: formValues.employeeId,
     phone: formValues.phone,
+    insuredUuid: formValues.insuredUuid || apiResponse.insuredUuid || null,
     insuranceId: apiResponse.insuranceId || null,
     dispensingDate: formValues.dispensingDate || apiResponse.recordedAt || new Date().toISOString(),
     prescriptionNumber: formValues.prescriptionNumber || '',
     pharmacyTransactionId: formValues.pharmacyTransactionId || '',
-    totalAmount: apiResponse.totalAmount ?? calculateTotal(formValues),
+    totalAmount: apiResponse.totalAmount ,
     patientResponsibility: apiResponse.patientResponsibility ?? 0,
     insuranceCoverage: apiResponse.insuranceCoverage ?? (calculateTotal(formValues) - (apiResponse.patientResponsibility ?? 0)),
     branchName: apiResponse.branchName || null,

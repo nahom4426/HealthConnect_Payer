@@ -121,7 +121,7 @@ async function handleSubmit(formValues: any) {
 
       closeModal();
     } else {
-      throw new Error(result?.error || 'Update failed');
+      // throw new Error(result?.error || 'Update failed');
     }
   } catch (err) {
     console.error('Update error:', err);

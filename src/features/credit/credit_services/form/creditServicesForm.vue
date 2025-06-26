@@ -16,11 +16,23 @@ import { getAllServices } from '@/features/service/api/serviceApi';
 import { getAllDrugs } from '@/features/service/api/drugApi';
 import selectServices from '../components/selectServices.vue';
 import EmployeeDetails from '../components/EmployeeDetails.vue';
+
 interface Payer {
   payerUuid: string;
   payerName: string;
   email: string;
   telephone?: string;
+}
+
+interface Dependant {
+  dependantUuid: string;
+  dependantFirstName: string;
+  dependantFatherName: string;
+  dependantGrandFatherName: string;
+  dependantGender: string;
+  dependantStatus: string;
+  relationship: string;
+  dependantBirthDate: string;
 }
 
 interface Employee {
@@ -37,6 +49,7 @@ interface Employee {
   gender?: string;
   address?: string;
   email?: string;
+  dependants?: Dependant[]; // Add this line
 }
 
 interface Service {
@@ -48,7 +61,10 @@ interface Service {
   primaryDiagnosis?: string;
   secondaryDiagnosis?: string;
   status: string;
+  remark?: string;
+  quantity?: number;
 }
+
 interface Drug {
   id: string;
   drugUuid: string;
@@ -63,23 +79,6 @@ interface Drug {
   duration?: string;
 }
 
-interface CreditServiceFormData {
-  payerUuid: string;
-  payerName: string;
-  insuredUuid: string;
-  phone: string;
-  dispensingDate: string;
-  prescriptionNumber?: string;
-  pharmacyTransactionId?: string;
-  medicationItems: {
-    serviceUuid: string;
-    quantity: number;
-    paymentAmount: number;
-  }[];
-}
-
-
-
 const props = defineProps({
   initialData: {
     type: Object as PropType<any>,
@@ -89,7 +88,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
- pending: {
+  pending: {
     type: Boolean,
     default: false
   },
@@ -102,6 +101,7 @@ const props = defineProps({
     required: true
   }
 });
+
 // Reactive state
 const payers = ref<Payer[]>([]);
 const employees = ref<Employee[]>([]);
@@ -109,25 +109,25 @@ const selectedPayer = ref<string | null>(null);
 const selectedEmployee = ref<Employee | null>(null);
 const searchEmployeeQuery = ref('');
 const searchServiceQuery = ref('');
-const searchDrugQuery  = ref('');
+const searchDrugQuery = ref('');
 const fetchPending = ref(false);
 const error = ref<string | null>(null);
 const currentStep = ref<'selectEmployee' | 'selectServices'>('selectEmployee');
-const services = ref<Service[]>([]);
+const activeTab = ref<'services' | 'drugs'>('services');
+const availableServices = ref<Service[]>([]);
+const availableDrugs = ref<Drug[]>([]);
 const addedServices = ref<Service[]>([]);
-const filteredServices = ref<Service[]>([]);
+const addedDrugs = ref<Drug[]>([]);
+const primaryDiagnosis = ref('');
+const secondaryDiagnosis = ref('');
 const auth = useAuthStore();
 const providerUuid = ref(auth.auth?.user?.providerUuid || '');
-const filteredDrugs = ref<Drug[]>([]); 
-// Form fields
 const prescriptionNumber = ref('');
 const pharmacyTransactionId = ref('');
 const dispensingDate = ref(new Date().toISOString().split('T')[0]);
 
-// Computed properties
 const employeeDetails = computed(() => {
   if (!selectedEmployee.value) return null;
-
   return {
     fullName: selectedEmployee.value.fullName,
     employeeId: selectedEmployee.value.idNumber,
@@ -144,14 +144,17 @@ const employeeDetails = computed(() => {
   };
 });
 
+const payerOptions = computed(() => {
+  return payers.value.map(payer => ({
+    label: `${payer.payerName} (${payer.telephone || payer.email || 'N/A'})`,
+    value: payer.payerUuid,
+  }));
+});
 
-
-// Methods
 async function fetchPayers() {
   try {
     fetchPending.value = true;
     error.value = null;
-    
     const response = await getActiveInstitutions({ page: 1, limit: 100 });
     
     if (!response?.data?.content || !Array.isArray(response.data.content)) {
@@ -182,7 +185,6 @@ async function fetchEmployees() {
   try {
     fetchPending.value = true;
     error.value = null;
-    
     const response = await searchInsuredByInstitution(selectedPayer.value, {
       search: searchEmployeeQuery.value
     });
@@ -195,20 +197,44 @@ async function fetchEmployees() {
       throw new Error('Invalid employee data format');
     }
 
-    employees.value = employeesData.map(emp => ({
-      insuredUuid: emp.insuredUuid,
-      fullName: `${emp.firstName || ''} ${emp.fatherName || ''} ${emp.grandFatherName || ''}`.trim(),
-      phone: emp.phone,
-      email: emp.email || 'N/A',
-      gender: emp.gender || 'Unknown',
-      address: emp.address || 'Unknown',
-      eligible: emp.status === 'ACTIVE',
-      position: emp.position || 'Unknown position',
-      idNumber: emp.idNumber || 'N/A',
-      birthDate: emp.birthDate || 'Unknown',
-      profilePictureBase64: emp.profilePictureBase64 || null,
-      status: emp.status || 'UNKNOWN'
-    }));
+    employees.value = employeesData.flatMap(emp => {
+      // Create main employee record
+      const employeeRecord = {
+        insuredUuid: emp.insuredUuid,
+        fullName: `${emp.firstName || ''} ${emp.fatherName || ''} ${emp.grandFatherName || ''}`.trim(),
+        phone: emp.phone,
+        email: emp.email || 'N/A',
+        gender: emp.gender || 'Unknown',
+        address: emp.address || 'Unknown',
+        eligible: emp.status === 'ACTIVE',
+        position: emp.position || 'Unknown position',
+        idNumber: emp.idNumber || 'N/A',
+        birthDate: emp.birthDate || 'Unknown',
+        profilePictureBase64: emp.profilePictureBase64 || null,
+        status: emp.status || 'UNKNOWN',
+        dependants: emp.dependants || []
+      };
+      
+      // Create records for dependants if they exist
+      const dependantRecords = emp.dependants?.map(dependant => ({
+        insuredUuid: dependant.dependantUuid,
+        fullName: `${dependant.dependantFirstName || ''} ${dependant.dependantFatherName || ''} ${dependant.dependantGrandFatherName || ''}`.trim(),
+        phone: emp.phone, // Using employee's phone for dependant
+        email: emp.email || 'N/A', // Using employee's email for dependant
+        gender: dependant.dependantGender || 'Unknown',
+        address: emp.address || 'Unknown', // Using employee's address for dependant
+        eligible: dependant.dependantStatus === 'ACTIVE',
+        position: `Dependant (${dependant.relationship})`,
+        idNumber: 'N/A', // Dependant might not have ID number
+        birthDate: dependant.dependantBirthDate || 'Unknown',
+        profilePictureBase64: null, // Dependant might not have profile picture
+        status: dependant.dependantStatus || 'UNKNOWN',
+        isDependant: true,
+        employeeId: emp.idNumber // Store the employee's ID for reference
+      })) || [];
+      
+      return [employeeRecord, ...dependantRecords];
+    });
 
     if (employees.value.length === 0) {
       error.value = 'No employees found for this payer';
@@ -221,8 +247,6 @@ async function fetchEmployees() {
   }
 }
 
-
-
 function selectEmployee(employee: Employee) {
   if (!employee.eligible) return;
   selectedEmployee.value = employee;
@@ -231,88 +255,11 @@ function selectEmployee(employee: Employee) {
 async function continueToServices() {
   if (selectedEmployee.value) {
     currentStep.value = 'selectServices';
-    // Don't fetch services yet - wait for user to search
     services.value = [];
     filteredServices.value = [];
   }
 }
 
-function backToEmployeeSelection() {
-  currentStep.value = 'selectEmployee';
-}
-
-function addService(service: Service) {
-  if (service.status !== 'ACTIVE' || isServiceAdded(service.id)) return;
-  
-  // Ensure the service object contains serviceUuid
-  addedServices.value.push({ 
-    ...service,
-    quantity: 1,
-    serviceUuid: service.serviceUuid // Explicitly include if needed
-  });
-  
-  searchServiceQuery.value = '';
-}
-
-function removeService(index: number) {
-  addedServices.value.splice(index, 1);
-}
-
-function updateQuantity(payload: {index: number, value: number}) {
-  const { index, value } = payload;
-  if (value < 1) {
-    addedServices.value[index].quantity = 1;
-    return;
-  }
-  addedServices.value[index].quantity = value;
-}
-
-function validateForm(): boolean {
-  // Common validation
- if (!selectedPayer.value || !selectedEmployee.value || 
-      // !prescriptionNumber.value || !pharmacyTransactionId.value || 
-      !dispensingDate.value) {
-    error.value = 'Please fill all required fields';
-    return false;
-  } 
-
-  // Tab-specific validation
-  if (activeTab.value === 'services') {
-    if (addedServices.value.length === 0) {
-      error.value = 'Please add at least one service';
-      return false;
-    }
-    // Add diagnosis validation
-    // const invalidService = addedServices.value.find(item => 
-    //   !item.primaryDiagnosis || !item.secondaryDiagnosis
-    // );
-    // if (invalidService) {
-    //   error.value = 'Please fill both diagnosis fields for all services';
-    //   return false;
-    // }
-  } else {
-    if (addedDrugs.value.length === 0) {
-      error.value = 'Please add at least one drug';
-      return false;
-    }
-    const invalidDrug = addedDrugs.value.find(item => 
-      !item.route || !item.frequency || !item.dose || !item.duration
-    );
-    if (invalidDrug) {
-      error.value = 'Please fill all drug administration details';
-      return false;
-    }
-  }
-  
-  return true;
-}
-const activeTab = ref<'services' | 'drugs'>('services');
-const availableServices = ref<Service[]>([]);
-const availableDrugs = ref<Drug[]>([]);
-const addedDrugs = ref<Drug[]>([]);
-
-// Update your fetchServices function
-// In parent component
 async function fetchServices(query: string) {
   try {
     fetchPending.value = true;
@@ -338,7 +285,7 @@ async function fetchServices(query: string) {
     fetchPending.value = false;
   }
 }
-// Add fetchDrugs function
+
 async function fetchDrugs(query: string) {
   try {
     fetchPending.value = true;
@@ -348,78 +295,27 @@ async function fetchDrugs(query: string) {
       limit: 25
     });
     
-    // Properly map the API response to our Drug interface
     availableDrugs.value = response.data.content.map((drug: any) => ({
-      id: drug.drugUuid || `temp-${Math.random().toString(36).substr(2, 9)}`, // Handle null drugUuid
+      id: drug.drugUuid || `temp-${Math.random().toString(36).substr(2, 9)}`,
       drugUuid: drug.drugUuid,
       drugCode: drug.drugCode,
       drugName: drug.drugName,
       price: drug.price || 0,
       status: drug.status || 'UNKNOWN',
       quantity: 1,
-      route: 'oral', // Default value
-      frequency: 'daily', // Default value
-      dose: drug.dosage || '1', // Use dosage from API or default
-      duration: '7 days' // Default value
+      route: 'oral',
+      frequency: 'daily',
+      dose: drug.dosage || '1',
+      duration: '7 days'
     }));
-    
-    filteredDrugs.value = [...availableDrugs.value];
   } catch (error) {
     console.error('Error fetching drugs:', error);
     availableDrugs.value = [];
-    filteredDrugs.value = [];
   } finally {
     fetchPending.value = false;
   }
 }
-const isServiceAdded = (serviceId: string) => {
-  return addedServices.value.some(service => service.id === serviceId);
-};
 
-const payerOptions = computed(() => {
-  if (!payers.value || !Array.isArray(payers.value)) return [];
-  return payers.value.map(payer => ({
-    label: `${payer.payerName} (${payer.telephone || payer.email || 'N/A'})`,
-    value: payer.payerUuid,
-  }));
-});
-
-// Lifecycle hooks
-onMounted(async () => {
-  await fetchPayers();
-});
-
-// Watchers
-watch(selectedPayer, async (newPayerId) => {
-  if (!newPayerId) return;
-  await fetchEmployees();
-});
-
-let searchTimeout: number;
-watch(searchEmployeeQuery, async (newQuery) => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(async () => {
-    if (selectedPayer.value) {
-      await fetchEmployees();
-    }
-  }, 300);
-});
-
-let drugSearchTimeout: number;
-
-// Watch for changes in the drug search query
-watch(searchDrugQuery, async (newQuery) => {
-  clearTimeout(drugSearchTimeout);
-  drugSearchTimeout = setTimeout(async () => {
-    if (newQuery.trim().length > 0) {
-      await fetchDrugs(newQuery);
-    } else {
-      filteredDrugs.value = [];
-    }
-  }, 500);
-});
-
-// Modified handleSearchItems to include drug search
 function handleSearchItems({ type, query }: { type: string, query: string }) {
   if (type === 'services') {
     fetchServices(query);
@@ -427,10 +323,16 @@ function handleSearchItems({ type, query }: { type: string, query: string }) {
     fetchDrugs(query);
   }
 }
+const remarks = ref<Record<string, string>>({});
+
+function handleUpdateRemarks(newRemarks: Record<string, string>) {
+  remarks.value = newRemarks;
+}
 function changeTab(tab: 'services' | 'drugs') {
   activeTab.value = tab;
   error.value = null;
 }
+
 function handleAddItem(item: any) {
   if (activeTab.value === 'services') {
     addedServices.value.push(item);
@@ -454,21 +356,59 @@ function handleUpdateQuantity({ index, value }: { index: number, value: number }
     addedDrugs.value[index].quantity = value;
   }
 }
-// In selectServices component
-function handleUpdateDiagnosis(payload: { index: number, primaryDiagnosis?: string, secondaryDiagnosis?: string }) {
-  const { index, primaryDiagnosis, secondaryDiagnosis } = payload;
-  if (primaryDiagnosis !== undefined) {
-    addedServices.value[index].primaryDiagnosis = primaryDiagnosis;
+
+function handleUpdateDiagnosis({ index, primaryDiagnosis: primary, secondaryDiagnosis: secondary }: 
+  { index: number, primaryDiagnosis?: string, secondaryDiagnosis?: string }) {
+  if (primary !== undefined) {
+    addedServices.value[index].primaryDiagnosis = primary;
   }
-  if (secondaryDiagnosis !== undefined) {
-    addedServices.value[index].secondaryDiagnosis = secondaryDiagnosis;
+  if (secondary !== undefined) {
+    addedServices.value[index].secondaryDiagnosis = secondary;
   }
 }
+
 function handleUpdateItem({ index, item }: { index: number, item: any }) {
   if (activeTab.value === 'drugs') {
     addedDrugs.value[index] = { ...addedDrugs.value[index], ...item };
   }
 }
+
+function handleClearItems(tab: 'services' | 'drugs') {
+  if (tab === 'services') {
+    addedDrugs.value = [];
+  } else {
+    addedServices.value = [];
+  }
+}
+
+function validateForm(): boolean {
+  if (!selectedPayer.value || !selectedEmployee.value || !dispensingDate.value) {
+    error.value = 'Please fill all required fields';
+    return false;
+  } 
+
+  if (activeTab.value === 'services') {
+    if (addedServices.value.length === 0) {
+      error.value = 'Please add at least one service';
+      return false;
+    }
+  } else {
+    if (addedDrugs.value.length === 0) {
+      error.value = 'Please add at least one drug';
+      return false;
+    }
+    const invalidDrug = addedDrugs.value.find(item => 
+      !item.route || !item.frequency || !item.dose || !item.duration
+    );
+    if (invalidDrug) {
+      error.value = 'Please fill all drug administration details';
+      return false;
+    }
+  }
+  
+  return true;
+}
+
 function handleSubmit() {
   if (!validateForm()) return;
 
@@ -483,15 +423,18 @@ function handleSubmit() {
       payerName: getPayerLabel(selectedPayer.value!),
       phone: selectedEmployee.value!.phone,
       employeeId: selectedEmployee.value!.idNumber,
-      patientName: selectedEmployee.value!.fullName, // Add this
+      insuredUuid: selectedEmployee.value!.insuredUuid,
+      patientName: selectedEmployee.value!.fullName,
       dispensingDate: dispensingDate.value,
       prescriptionNumber: prescriptionNumber.value,
       pharmacyTransactionId: pharmacyTransactionId.value,
+      primaryDiagnosis: primaryDiagnosis.value,
+      secondaryDiagnosis: secondaryDiagnosis.value,
       medicationItems: addedServices.value.map(item => ({
         serviceUuid: item.serviceUuid,
-        primaryDiagnosis: item.primaryDiagnosis || '',
-        secondaryDiagnosis: item.secondaryDiagnosis || '',
-        totalPrice: parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
+        remark: item.remark || '',
+        quantity: item.quantity || 1,
+        paymentAmount: parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
       }))
     };
     props.onSubmit(formData);
@@ -499,10 +442,10 @@ function handleSubmit() {
     const formData = {
       providerUuid: providerUuid.value,
       payerUuid: selectedPayer.value!,
-      payerName: getPayerLabel(selectedPayer.value!), // Add this
+      payerName: getPayerLabel(selectedPayer.value!),
       phone: selectedEmployee.value!.phone,
       insuredUuid: selectedEmployee.value!.insuredUuid,
-      patientName: selectedEmployee.value!.fullName, // Add this
+      patientName: selectedEmployee.value!.fullName,
       employeeId: selectedEmployee.value!.idNumber,
       dispensingDate: dispensingDate.value,
       prescriptionNumber: prescriptionNumber.value,
@@ -520,20 +463,42 @@ function handleSubmit() {
     props.onSubmit(formData);
   }
 }
-function handleClearItems(tab: 'services' | 'drugs') {
-  if (tab === 'services') {
-    addedDrugs.value = []; // Clear drugs when switching to services
-  } else {
-    addedServices.value = []; // Clear services when switching to drugs
-  }
-}
+
+onMounted(async () => {
+  await fetchPayers();
+});
+
+let searchTimeout: number;
+watch(searchEmployeeQuery, async (newQuery) => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(async () => {
+    if (selectedPayer.value) {
+      await fetchEmployees();
+    }
+  }, 300);
+});
+
+watch(selectedPayer, async (newPayerId) => {
+  if (!newPayerId) return;
+  await fetchEmployees();
+});
+
+let drugSearchTimeout: number;
+watch(searchDrugQuery, async (newQuery) => {
+  clearTimeout(drugSearchTimeout);
+  drugSearchTimeout = setTimeout(async () => {
+    if (newQuery.trim().length > 0) {
+      await fetchDrugs(newQuery);
+    }
+  }, 500);
+});
 </script>
 
 <template>
   <Form
-     ref="formEl"
+    ref="formEl"
     :inner="false"
-      v-slot="{}"
+    v-slot="{}"
     id="credit-service-form"
     class="bg-white rounded-lg shadow-sm"
     @submit.prevent="handleSubmit"
@@ -581,64 +546,128 @@ function handleClearItems(tab: 'services' | 'drugs') {
         </template>
         <template v-else>
           <div class="border rounded-lg">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="border-b">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eligibility</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr 
-                  v-for="(employee, index) in employees" 
-                  :key="employee.insuredUuid"
-                  :class="{
-                    'bg-[#DFF1F1]': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid
-                  }"
-                >
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {{ employee.idNumber }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ employee.fullName }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ employee.phone }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ employee.position }}
-                  </td>
-                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
-  <span :class="employee.eligible ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-[#DB2E48] bg-[#DB2E481A] p-1'">
-    {{ employee.eligible ? 'Eligible' : 'Not Eligible' }}
-  </span>
-</td>
-<td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-  <button
-    type="button"
-    @click="selectEmployee(employee)"
-    :class="{
-      'text-white bg-[#02676B] px-4 py-2 hover:bg-teal-900': 
-        !(selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid) && employee.eligible,
-      'text-white bg-[#02676B] px-4 py-2 rounded': 
-        selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid && employee.eligible,
-      'bg-[#02676B1A] text-white px-4 py-2 cursor-not-allowed': 
-        !employee.eligible
-    }"
-    :disabled="!employee.eligible"
-  >
-    {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Selected' : 'Select' }}
-  </button>
-</td>
-                </tr>
-              </tbody>
-            </table>
+           <table class="min-w-full divide-y divide-gray-200">
+  <thead class="border-b">
+    <tr>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eligibility</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    <template v-for="(employee, index) in employees" :key="employee.insuredUuid">
+      <!-- Main employee row -->
+      <tr 
+        :class="{
+          'bg-[#DFF1F1]': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid,
+          'border-b-2 border-blue-200': employee.dependants && employee.dependants.length > 0
+        }"
+      >
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          {{ employee.idNumber }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          {{ employee.fullName }}
+          <span v-if="employee.isDependant" class="text-xs text-blue-600 ml-1">(Dependant)</span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          {{ employee.phone }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          {{ employee.position }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
+          <span :class="employee.eligible ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-[#DB2E48] bg-[#DB2E481A] p-1'">
+            {{ employee.eligible ? 'Eligible' : 'Not Eligible' }}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+          <button
+            type="button"
+            @click="selectEmployee(employee)"
+            :class="{
+              'text-white bg-[#02676B] px-4 py-2 hover:bg-teal-900': 
+                !(selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid) && employee.eligible,
+              'text-white bg-[#02676B] px-4 py-2 rounded': 
+                selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid && employee.eligible,
+              'bg-[#02676B1A] text-white px-4 py-2 cursor-not-allowed': 
+                !employee.eligible
+            }"
+            :disabled="!employee.eligible"
+          >
+            {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Selected' : 'Select' }}
+          </button>
+        </td>
+      </tr>
+      
+      <!-- Dependant rows (if any) -->
+      <tr 
+        v-for="dependant in employee.dependants" 
+        :key="dependant.dependantUuid"
+        class="bg-blue-50"
+        :class="{
+          'bg-blue-100': selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid
+        }"
+      >
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 pl-10">
+          <span class="text-blue-600">↳</span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          {{ employee.idNumber }} <span class="text-xs text-gray-400">(Employee ID)</span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 pl-2">
+          {{ `${dependant.dependantFirstName} ${dependant.dependantFatherName} ${dependant.dependantGrandFatherName}`.trim() }}
+          <span class="text-xs text-blue-600 ml-1">(Dependant - {{ dependant.relationship }})</span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          {{ employee.phone }}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          Dependant ({{ dependant.relationship }})
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
+          <span :class="dependant.dependantStatus === 'ACTIVE' ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-[#DB2E48] bg-[#DB2E481A] p-1'">
+            {{ dependant.dependantStatus === 'ACTIVE' ? 'Eligible' : 'Not Eligible' }}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+          <button
+            type="button"
+            @click="selectEmployee({
+              insuredUuid: dependant.dependantUuid,
+              fullName: `${dependant.dependantFirstName} ${dependant.dependantFatherName} ${dependant.dependantGrandFatherName}`.trim(),
+              phone: employee.phone,
+              idNumber: employee.idNumber,
+              position: `Dependant (${dependant.relationship})`,
+              birthDate: dependant.dependantBirthDate,
+              eligible: dependant.dependantStatus === 'ACTIVE',
+              status: dependant.dependantStatus,
+              gender: dependant.dependantGender,
+              email: employee.email,
+              address: employee.address
+            })"
+            :class="{
+              'text-white bg-[#02676B] px-4 py-2 hover:bg-teal-900': 
+                !(selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid) && dependant.dependantStatus === 'ACTIVE',
+              'text-white bg-[#02676B] px-4 py-2 rounded': 
+                selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid && dependant.dependantStatus === 'ACTIVE',
+              'bg-[#02676B1A] text-white px-4 py-2 cursor-not-allowed': 
+                dependant.dependantStatus !== 'ACTIVE'
+            }"
+            :disabled="dependant.dependantStatus !== 'ACTIVE'"
+          >
+            {{ selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid ? 'Selected' : 'Select' }}
+          </button>
+        </td>
+      </tr>
+    </template>
+  </tbody>
+</table>
           </div>
         </template>
       </div>
@@ -670,7 +699,7 @@ function handleClearItems(tab: 'services' | 'drugs') {
       </div>
 
       <!-- Employee Details -->
-    <EmployeeDetails :employee="employeeDetails" />
+      <EmployeeDetails :employee="employeeDetails" />
 
       <!-- Credit Service Details -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
@@ -682,7 +711,6 @@ function handleClearItems(tab: 'services' | 'drugs') {
             validation="required"
             :attributes="{
               placeholder: 'Enter prescription number',
-             
             }"
           />
         </div>
@@ -694,7 +722,6 @@ function handleClearItems(tab: 'services' | 'drugs') {
             validation="required"
             :attributes="{
               placeholder: 'Enter pharmacy transaction ID',
-             
             }"
           />
         </div> 
@@ -714,49 +741,53 @@ function handleClearItems(tab: 'services' | 'drugs') {
       </div>
 
       <!-- Services Section -->
-     <!-- In your parent component -->
-  <selectServices
-    v-model:activeTab="activeTab"
-    :search-query="activeTab === 'services' ? searchServiceQuery : searchDrugQuery"
-    :pending="fetchPending"
-    :available-items="activeTab === 'services' ? availableServices : availableDrugs"
-    :added-items="activeTab === 'services' ? addedServices : addedDrugs"
-    @update:search-query="activeTab === 'services' ? searchServiceQuery = $event : searchDrugQuery = $event"
-    @add-item="activeTab === 'services' ? addedServices.push($event) : addedDrugs.push($event)"
-    @remove-item="activeTab === 'services' ? addedServices.splice($event, 1) : addedDrugs.splice($event, 1)"
-    @update-quantity="({index, value}) => {
-      if (activeTab === 'services') {
-        addedServices[index].quantity = value;
-      } else {
-        addedDrugs[index].quantity = value;
-      }
-    }"
-   @update-diagnosis="handleUpdateDiagnosis"
-    @update-item="({index, item}) => {
-      if (activeTab === 'drugs') {
-        addedDrugs[index] = { ...addedDrugs[index], ...item };
-      }
-    }"
-    @search-items="handleSearchItems"
-  />
+      <selectServices
+        v-model:activeTab="activeTab"
+        :search-query="activeTab === 'services' ? searchServiceQuery : searchDrugQuery"
+        :pending="fetchPending"
+        :available-items="activeTab === 'services' ? availableServices : availableDrugs"
+        :added-items="activeTab === 'services' ? addedServices : addedDrugs"
+        :remarks="remarks"
+    @update:remarks="handleUpdateRemarks"
+        :primary-diagnosis="primaryDiagnosis"
+        :secondary-diagnosis="secondaryDiagnosis"
+        @update:search-query="activeTab === 'services' ? searchServiceQuery = $event : searchDrugQuery = $event"
+        @add-item="handleAddItem"
+        @remove-item="handleRemoveItem"
+        @update-quantity="handleUpdateQuantity"
+        @update-diagnosis="handleUpdateDiagnosis"
+        @update-item="handleUpdateItem"
+        @search-items="handleSearchItems"
+        @clear-items="handleClearItems"
+        @update:primary-diagnosis="primaryDiagnosis = $event"
+        @update:secondary-diagnosis="secondaryDiagnosis = $event"
+      />
 
       <!-- Form Actions -->
-     <div class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
-  <Button
-    type="button"
-    @click="onCancel"
-    class="text-[#75778B] px-6 py-4 border-[1px] border-[#75778B] rounded-lg hover:bg-gray-50"
-    :disabled="pending"
-  >
-    Back
-  </Button>
-  <ModalFormSubmitButton
-    :pending="pending"
-    btn-text="Add Service to Credit"
-    class="bg-primary hover:bg-teal-700 text-white px-6 py-2"
-    :disabled="pending"
-  />
-</div>
+      <div class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
+        <Button
+          type="button"
+          @click="onCancel"
+          class="text-[#75778B] px-6 py-4 border-[1px] border-[#75778B] rounded-lg hover:bg-gray-50"
+          :disabled="pending"
+        >
+          Back
+        </Button>
+        <ModalFormSubmitButton
+          v-if="activeTab === 'services'"
+          :pending="pending"
+          btn-text="Add Service to Credit"
+          class="bg-primary hover:bg-teal-700 text-white px-6 py-2"
+          :disabled="pending"
+        />
+        <ModalFormSubmitButton
+          v-else-if="activeTab === 'drugs'"
+          :pending="pending"
+          btn-text="Add Drug to Credit"
+          class="bg-primary hover:bg-teal-700 text-white px-6 py-2"
+          :disabled="pending"
+        />
+      </div>
     </div>
   </Form>
 </template>
