@@ -1,28 +1,28 @@
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import Table from "@/components/Table.vue";
 import Button from "@/components/Button.vue";
 import icons from "@/utils/icons";
 import DefaultPage from "@/components/DefaultPage.vue";
 import AuthorizationBatchDataProvider from "../components/AuthorizationBatchDataProvider.vue";
 import Dropdown from "@/components/Dropdown.vue";
-import { formatDateToYYMMDD } from "@/utils/utils";
+import { formatCurrency, formatDateToYYMMDD } from "@/utils/utils";
 import { useRoute } from "vue-router";
 import { usePagination } from "@/composables/usePagination";
 import AboutPayerForm from "../form/AboutPayerForm.vue";
 import ClaimSummaryForm from "../form/ClaimSummaryForm.vue";
 import { getAuthorizationDetail } from "../api/authorizationApi";
 import DynamicForm from "../form/DynamicForm.vue";
+import { openModal } from "@customizer/modal-x";
 const route = useRoute();
 const id = ref(route.params?.id);
-console.log(route.params?.id);
 
 const pagination = usePagination({
   cb: (data) => getAuthorizationDetail(route.params?.id),
 });
-const aboutPayer = ref([
-  { title: "Payer Name", value: "John Doe" },
-  { title: "Category", value: "Health Insurance" },
+const aboutPayer = computed(() => [
+  { title: "Payer Name", value: pagination.data?.value?.payerName || "N/A" },
+  { title: "Category", value: pagination.data?.value?.providerName || "N/A" },
   { title: "Contact", value: "123-456-7890" },
 ]);
 </script>
@@ -46,7 +46,7 @@ const aboutPayer = ref([
     </template>
     <div class="bg-base-clr3 rounded-md p-4">
       <Table
-        :pending="pending"
+        :pending="pagination.pending.value"
         :rows="pagination.data?.value"
         :headers="{
           head: [
@@ -61,9 +61,9 @@ const aboutPayer = ref([
           row: [
             'batchCode',
             'insuredName',
-            'requestedOn',
-            'claimDatingFrom',
-            'claimDatingTo',
+            'recordedAt',
+            'branchName',
+            'totalAmount',
             'status',
           ],
         }"
@@ -75,14 +75,20 @@ const aboutPayer = ref([
               return formatDateToYYMMDD(date);
             }
           },
+          totalAmount: (totalAmount) => {
+            return formatCurrency(totalAmount);
+          },
         }"
       >
         <template #actions="{ row }">
           <div class="flex gap-2">
-            <Button type="link" size="xs">
-              <RouterLink :to="`authorization/detail/${row.batchCode}`">
-                View
-              </RouterLink>
+            <Button
+              @click.prevent="openModal('BatchDetail', row)"
+              class="!text-white"
+              type="primary"
+              size="xs"
+            >
+              View
             </Button>
           </div>
         </template>

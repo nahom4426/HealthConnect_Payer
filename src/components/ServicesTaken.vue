@@ -5,15 +5,15 @@ import { formatCurrency } from "@/utils/utils";
 
 const props = defineProps({
   search: String,
-  data: Array,
+  data: Object,
 });
 
 const filteredData = computed(() => {
   if (!props.search) {
-    return props.data;
+    return props.data?.medicationItems;
   }
   const searchTerm = props.search.toLowerCase();
-  return props.data.filter((item) => {
+  return props.data?.medicationItems.filter((item) => {
     return (
       item.providerName.toLowerCase().includes(searchTerm) ||
       item.serviceName.toLowerCase().includes(searchTerm) ||
@@ -34,7 +34,7 @@ const filteredData = computed(() => {
         :rows="filteredData"
         :headers="{
           head: ['Service ID', 'Provider', 'Services', 'Price'],
-          row: ['serviceCode', 'providerName', 'serviceName', 'price'],
+          row: ['medicationCode', 'providerName', 'medicationName', 'price'],
         }"
         :cells="{
           price: (price) => {

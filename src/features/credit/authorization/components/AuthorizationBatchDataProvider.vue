@@ -12,7 +12,7 @@ const bacthStore = useBatchAuthorizationStore();
 const pagination = usePagination({
   store: bacthStore,
   cb: (data) =>
-    getAuthorizationBatch(removeUndefined({ ...data, search: props.search })),
+    getAuthorizationBatch(removeUndefined({ search: props.search, ...data })),
 });
 
 watch(

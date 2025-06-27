@@ -2,13 +2,12 @@ import icons from "@/utils/icons";
 
 // icon set called streamline
 export default [
- {
-  path: "/dashboard",
-  name: "Dashboard",
-  icon: icons.dashboard,
-
-},
- {
+  {
+    path: "/dashboard",
+    name: "Dashboard",
+    icon: icons.dashboard,
+  },
+  {
     path: "/payer_list",
     name: "Payer List",
     icon: icons.payerList,
@@ -32,13 +31,13 @@ export default [
     path: "/services",
     name: "Services",
     icon: icons.Services,
-     privilege: ['Create Services'], 
+    privilege: ["Create Services"],
   },
 
-    {
+  {
     name: "Credits",
     icon: icons.Credits,
-    privilege: ['Create Services'], 
+    privilege: ["Create Services"],
     //  category: "Payers",
     navs: [
       {
@@ -46,90 +45,70 @@ export default [
         name: "Create Claims",
         icon: icons.creditservices,
         // category: "main",
-        privilege: ['Create Services'], 
+        privilege: ["Create Services"],
       },
       {
         path: "/submit_claims",
         name: "Submit Claims",
         icon: icons.approveClaims,
         category: "Pages",
-        privilege: ['Create Services'], 
+        privilege: ["Create Services"],
       },
       {
-        path: "/authorization",
-        name: "Authorization",
+        path: "/claim-approval",
+        name: "Claim Approval",
         icon: icons.Authorization,
         category: "Pages",
-       privilege: ['Create Services'], 
+        privilege: ["Create Services"],
       },
       {
         path: "/track_claims",
         name: "Track Claims",
         icon: icons.completedClaims,
         category: "service",
-        privilege: ['Create Services'],
+        privilege: ["Create Services"],
       },
-    
     ],
   },
-   {
-        path: "/insured_list",
-        name: "Employees list",
-        icon: icons.active_insured_persons,
-        privilege: ['Create Employees'],
-      },
+  {
+    path: "/insured_list",
+    name: "Employees list",
+    icon: icons.active_insured_persons,
+    privilege: ["Create Employees"],
+  },
   {
     name: "Claims",
     icon: icons.claimManagement,
-     privilege: ['Create Employees'],
-     category: "Payers",
+    privilege: ["Create Employees"],
+    category: "Payers",
     navs: [
       {
         path: "/submitted_claims",
         name: "Submitted Claims",
-        // category: "main",
-        privilege: ['Create Employees'],
+        category: "pages",
+        privilege: ["Create Employees"],
       },
       {
         path: "/clinical_approval",
         name: "Clinical Approval",
         category: "Pages",
-        privilege: ['Create Employees'],
+        privilege: ["Create Employees"],
       },
       {
         path: "/financial_approval",
         name: "Financial Approval",
         category: "Pages",
-        privilege: ['Create Employees'],
+        privilege: ["Create Employees"],
       },
       {
         path: "/Payment",
         name: "Payment",
         category: "service",
-        privilege: ['Create Employees'],
-      },
-      {
-        path: "/approve_claims",
-        name: "Approve Claims",
-        icon: icons.approveClaims,
-        category: "main",
-        privilege: ['Create Employees'],
-      },
-      {
-        path: "/authorize_claims",
-        name: "Authorize Claims",
-        icon: icons.authorizeClaims,
-        privilege: ['Create Employees'],
-      },
-      {
-        path: "/completed_claims",
-        name: "Completed Claims",
-        icon: icons.completedClaims,
-        privilege: ['Create Employees'],
+        privilege: ["Create Employees"],
       },
     ],
   },
- 
+
   {
     path: "/users",
     name: "Users",
