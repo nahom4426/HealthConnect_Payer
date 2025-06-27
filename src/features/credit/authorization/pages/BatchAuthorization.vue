@@ -2,12 +2,34 @@
 import { ref } from "vue";
 import Table from "@/components/Table.vue";
 import Button from "@/components/Button.vue";
-import { Status } from "@/types/interface";
 import icons from "@/utils/icons";
 import DefaultPage from "@/components/DefaultPage.vue";
 import AuthorizationBatchDataProvider from "../components/AuthorizationBatchDataProvider.vue";
 import Dropdown from "@/components/Dropdown.vue";
-import { formatDateToYYMMDD } from "@/utils/utils";
+import { formatDateToYYMMDD, toasted } from "@/utils/utils";
+import { openModal } from "@customizer/modal-x";
+function remove(id) {
+  openModal(
+    "Confirmation",
+    {
+      title: "Claim rejection",
+      message: "Are you sure you want to remove this  claim?",
+    },
+    (res) => {
+      if (res) {
+        api.send(
+          () => removeService(id),
+          (res) => {
+            if (res.success) {
+              serviceListStore.remove(id);
+            }
+            toasted(res.success, "Service Removed Successfully", res.error);
+          }
+        );
+      }
+    }
+  );
+}
 </script>
 
 <template>
@@ -96,19 +118,15 @@ import { formatDateToYYMMDD } from "@/utils/utils";
                 </button>
 
                 <button
-                  @click="
-                    $router.push(
-                      `/insured_list/group-insured/${row?.groupUuid}`
-                    )
-                  "
+                  @click="openModal('ClaimApproval', row?.batchCode)"
                   class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
                 >
                   <i v-html="icons.details" />
                   <span>Approve</span>
                 </button>
                 <button
-                  @click="remove(row?.groupUuid)"
-                  class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
+                  @click="remove(row?.batchCode)"
+                  class="p-2 flex items-center text-red-500 bg-[#FFE8E8] gap-2 rounded-lg hover:bg-gray-100"
                 >
                   <i v-html="icons.deactivate" />
                   <span>Reject</span>

@@ -35,7 +35,7 @@ const hasPrivilege = (requiredPrivileges) => {
   if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
   const userPrivileges = userData.value.authorities || [];
   console.log("User Privileges:", userPrivileges);
- 
+
   const userRole = userData.value.roleName;
   return (
     userRole === "Super Admin" ||
@@ -106,7 +106,7 @@ const toggleMenu = (name) => {
           <template v-if="item.navs && item.navs.length">
             <button
               @click="toggleMenu(item.name)"
-              class="flex justify-between w-full items-center h-12 rounded-lg hover:bg-primary hover:text-white transition-all duration-200"
+              class="flex justify-between w-full items-center h-12 rounded-lg transition-all duration-200"
               :class="{
                 'bg-[#DFF1F1]':
                   expandedMenus.includes(item.name) && !isCollapsed,
@@ -140,7 +140,7 @@ const toggleMenu = (name) => {
                 v-for="child in item.navs"
                 :key="child.path"
                 :to="child.path"
-                class="flex h-12 pl-3 rounded-lg hover:bg-primary hover:text-white"
+                class="flex h-12 pl-3 rounded-lg hover:bg-secondary"
               >
                 <span class="flex items-center gap-3">
                   <i v-html="child.icon" />
@@ -153,7 +153,7 @@ const toggleMenu = (name) => {
             <RouterLink
               :to="item.path"
               @click="handleSingleItemClick"
-              class="flex h-12 rounded-lg hover:bg-primary hover:text-white transition-all duration-200"
+              class="flex h-12 rounded-lg hover:bg-secondary transition-all duration-200"
               :class="[isCollapsed ? 'justify-center' : ' pl-3']"
             >
               <span class="flex items-center gap-3">

@@ -5,11 +5,12 @@ const api = new ApiService();
 const path = "/dependant";
 const path1 = "groups";
 
-export function addServiceToGroup(id, query = {}) {
-  return api.addAuthenticationHeader().get(`${path}/list/${id}`, {
-    params: query,
-  });
+export function addServiceToGroup(id, data) {
+  return api
+    .addAuthenticationHeader()
+    .put(`${path1}/addServicesToGroup/${id}`, data);
 }
+
 export function getGroup(id, query = {}) {
   return api.addAuthenticationHeader().get(`${path1}/payerGroups/${id}`, {
     params: query,

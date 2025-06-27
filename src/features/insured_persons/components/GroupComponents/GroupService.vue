@@ -8,12 +8,15 @@ import ServiceListDataProvider from "@/features/service/components/ServiceListDa
 import { computed, ref } from "vue";
 import { formatCurrency } from "@/utils/utils";
 import { useSelectedServicesStore } from "../../store/selectedServicesStore";
+import Button from "@/components/Button.vue";
+import { closeModal } from "@customizer/modal-x";
 const api = useApiRequest();
 const authStore = useAuthStore();
 const serviceListStore = useServiceListStore();
 const props = defineProps({
   search: String,
   id: String,
+  groupId: String,
 });
 
 const search = ref("");
@@ -100,8 +103,16 @@ function selectService(id, data = []) {
                 />
               </Button>
             </template>
-            selectService
           </Table>
+        </div>
+        <div class="flex justify-end gap-4">
+          <Button @click.prevent="closeModal()" class="border border-base-clr">
+            Cancel
+          </Button>
+
+          <Button size="md" class="!text-white" type="primary">
+            Add Service
+          </Button>
         </div>
       </div>
     </ServiceListDataProvider>

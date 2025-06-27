@@ -19,7 +19,7 @@ import GroupInsuredDataProvider from "../components/GroupComponents/GroupInsured
 
     <template #add-action>
       <button
-        @click.prevent="openModal('AddServicesToGroup')"
+        @click.prevent="openModal('AddServicesToGroup', $route.params?.id)"
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
       >
         <i v-html="icons.plus_circle"></i>
