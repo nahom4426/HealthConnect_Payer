@@ -14,7 +14,7 @@ import Button from "@/components/Button.vue";
 import { useSelectedServicesStore } from "../store/selectedServicesStore";
 import { toasted } from "@/utils/utils";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { addServiceToGroup, createNewGroup } from "../api/groupServiceApi";
+import { addServiceToGroup, createGroup } from "../api/groupServiceApi";
 const active = ref(0);
 
 const setActive = (item) => {
@@ -34,7 +34,7 @@ const useSelectedServices = useSelectedServicesStore();
 
 const selectedProvider = ref("");
 const serviceApi = useApiRequest();
-function createGroup() {
+function createGroups() {
   if (useSelectedServices.selectedValues.length === 0) {
     return toasted(false, "", "Please select a service");
   } else {
@@ -117,7 +117,7 @@ function createGroup() {
               size="md"
               class="!text-white"
               type="primary"
-              @click.prevent="createGroup"
+              @click.prevent="createGroups"
             >
               Create Group
             </Button>

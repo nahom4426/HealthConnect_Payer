@@ -207,7 +207,7 @@ async function handleDeactivateWithClose(insuredId) {
         </div>
       </div>
        <div>
-         {{ row.firstName }} {{ row.fatherName }} {{ row.grandFatherName }}
+         {{ row.firstName }} {{ row.fatherName }} {{ row.grandfatherName }}
       </div>
       </div>
 

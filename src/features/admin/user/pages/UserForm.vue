@@ -114,7 +114,7 @@ onMounted(async () => {
 function handleSubmit() {
   const formData = {
     email: email.value,
-    password: password.value,
+  
     title: title.value,
     firstName: firstName.value,
     fatherName: fatherName.value,
@@ -154,7 +154,7 @@ function handleSubmit() {
       </div>
 
       <!-- Password -->
-      <div class="space-y-2">
+      <!-- <div class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
           Password <span v-if="!isEdit" class="text-red-500">*</span>
         </label>
@@ -168,7 +168,7 @@ function handleSubmit() {
             autocomplete: 'new-password'
           }"
         />
-      </div>
+      </div> -->
 
       <!-- Title -->
       <div class="space-y-2">

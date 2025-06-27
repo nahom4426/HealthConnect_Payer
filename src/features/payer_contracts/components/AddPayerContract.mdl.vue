@@ -8,12 +8,12 @@ import { useRouter } from "vue-router";
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref } from "vue";
-import { usePayerContracts } from "../store/payerContractStore";
+import { payerContracts } from "../store/payerContractStore";
 const pending = ref(false);
 
 const router = useRouter();
 const formDataProvider = ref();
-const payerContractStore = usePayerContracts();
+const payerContractStore = payerContracts();
 
 async function handleSubmit(formValues) {
   try {

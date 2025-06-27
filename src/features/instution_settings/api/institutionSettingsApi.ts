@@ -29,7 +29,7 @@ export function registerInstitution(formData: FormData): Promise<AsyncResponse<A
 
 export async function updateInstitution(uuid: string, formData: FormData) {
   try {
-    const response = await api.put(`${basePath}/${uuid}`, formData, {
+    const response = await api.addAuthenticationHeader().put(`${basePath}/${uuid}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

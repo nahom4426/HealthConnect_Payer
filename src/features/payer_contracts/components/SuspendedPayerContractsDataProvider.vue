@@ -1,7 +1,7 @@
 <script setup>
 import { usePagination } from "@/composables/usePagination";
 import { getProviders } from "../api/payerContractApi";
-import { usePayerContracts } from "../store/payerContractStore";
+import { payerContracts } from "../store/payerContractStore";
 import { watch, computed } from "vue";
 
 const props = defineProps({
@@ -11,7 +11,7 @@ const props = defineProps({
   },
 });
 
-const store = usePayerContracts();
+const store = payerContracts();
 
 const pagination = usePagination({
   store: store,

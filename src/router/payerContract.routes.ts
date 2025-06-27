@@ -32,7 +32,7 @@ export default [
         component: PayerContracts,
       },
       {
-        path: 'detail/:contractUuid',
+        path: 'detail/:contractHeaderUuid',
         name: 'Payer Contract Details',
         component: PayerContractDetails,
         props: true,

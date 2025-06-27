@@ -19,7 +19,7 @@ const props = defineProps({
   },
   status: {
     type: String as PropType<Status>,
-    default: Status.ACTIVE
+    default: Status.DRAFT
   },
   search: {
     type: String,
@@ -39,7 +39,7 @@ const pagination = usePagination({
   cb: async (data: any) => {
     const response = await getCreditClaimsbyProviderUuid(props.providerUuid, {
       ...data,
-      // status: props.status
+      status: "DRAFT",
     });
 
     const paginated = response?.data || response;
