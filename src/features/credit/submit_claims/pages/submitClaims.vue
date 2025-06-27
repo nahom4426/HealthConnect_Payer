@@ -115,7 +115,7 @@ const submitClaims = async () => {
       batchProvider.value?.refresh();
       isClaimCreationMode.value = false;
       selectedClaims.value = [];
-      router.push("/authorization");
+      router.push("/claim-approval");
     }
   } catch (error) {
     addToast({

@@ -28,11 +28,24 @@ function handleImageError(event) {
 }
 
 function handleEdit(row) {
-  if (row.insuredUuid) {
-    openModal('EditInsured', { 
-      insuredUuid: row.insuredUuid, 
-      insured: row,
-      onUpdated: updated => insuredStore.update(updated.insuredUuid, updated)
+  console.log('EditCreditServices modal opened with row:', row)
+  if (row.dispensingUuid) {
+    openModal('EditCreditServices', {
+      
+      
+      dispensingUuid: row.dispensingUuid,
+      claim: row, // Pass the row data for immediate display while loading
+      onUpdated: (updatedClaim) => {
+        claimServicesStore.update(updatedClaim.dispensingUuid, updatedClaim);
+        addToast({
+          type: 'success',
+          title: 'Updated',
+          message: 'Claim updated successfully'
+        });
+      },
+      onCancel: () => {
+        // Handle cancel if needed
+      }
     });
   } else if (typeof props.onEdit === 'function') {
     props.onEdit(row);
@@ -111,7 +124,7 @@ async function handleDeactivateWithClose(insuredId) {
     <td class="p-3">
       <div class="dropdown-container relative">
         <button 
-          @click.stop="toggleDropdown($event, row.insuredUuid || row.id)"
+          @click.stop="toggleDropdown($event, row.dispensingUuid || row.id)"
           class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
           type="button"
         >
@@ -121,7 +134,7 @@ async function handleDeactivateWithClose(insuredId) {
         </button>
 
         <div 
-          :id="`dropdown-${row.insuredUuid || row.id}`"
+          :id="`dropdown-${row.dispensingUuid || row.id}`"
           class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         >
           <div class="py-1">
@@ -135,7 +148,7 @@ async function handleDeactivateWithClose(insuredId) {
               </div>
             </button>
             <button 
-              @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
+              @click.prevent="$router.push(`/insured_list/detail/${row.dispensingUuid}`)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               <div class="flex items-center justify-start pl-4 gap-4">
@@ -147,7 +160,7 @@ async function handleDeactivateWithClose(insuredId) {
             <template v-if="row.status">
               <button 
                 v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
-                @click.stop="handleActivateWithClose(row.insuredUuid || row.id)"
+                @click.stop="handleActivateWithClose(row.dispensingUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
@@ -158,7 +171,7 @@ async function handleDeactivateWithClose(insuredId) {
              
               <button 
                 v-if="row.status === 'ACTIVE' || row.status === 'Active'"
-                @click.stop="handleDeactivateWithClose(row.insuredUuid || row.id)"
+                @click.stop="handleDeactivateWithClose(row.dispensingUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">

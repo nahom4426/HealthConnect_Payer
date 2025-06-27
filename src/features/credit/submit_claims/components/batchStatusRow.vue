@@ -142,15 +142,15 @@ async function handleDeactivateWithClose(insuredId) {
                 Edit
               </div>
             </button>
-            <button 
-              @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <div class="flex items-center justify-start pl-4 gap-4">
-                <i v-html="icons.details" />
-                Details
-              </div>
-            </button>
+            <button
+                  @click="
+                    $router.push(`claim-approval/detail/${row.batchCode}`)
+                  "
+                  class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+                >
+                  <i v-html="icons.edits" />
+                  <span>Detail</span>
+                </button>
        
             <template v-if="row.status">
               <button 

@@ -71,16 +71,18 @@ export const claimServices = defineStore("claimServicesStore", () => {
     });
   }
 
-// In your store file
 function add(formValues: any, apiResponse: any = {}): void {
   const isDrugClaim = formValues.drugItems !== undefined;
+  
+  // Calculate total amount from form values
+  const calculatedTotal = calculateTotal(formValues);
   
   const newClaim: ClaimService = {
     invoiceNumber: apiResponse.invoiceNumber || formValues.invoiceNumber || `INV-${Date.now()}`,
     dispensingUuid: apiResponse.dispensingUuid || formValues.dispensingUuid || generateUUID(),
     payerUuid: formValues.payerUuid || apiResponse.payerUuid,
-    payerName: formValues.payerName || apiResponse.payerName, // Use provided payerName
-    patientName: formValues.patientName || apiResponse.patientName, // Use provided patientName
+    payerName: formValues.payerName || apiResponse.payerName,
+    patientName: formValues.patientName || apiResponse.patientName,
     employeeId: formValues.employeeId,
     phone: formValues.phone,
     insuredUuid: formValues.insuredUuid || apiResponse.insuredUuid || null,
@@ -88,9 +90,9 @@ function add(formValues: any, apiResponse: any = {}): void {
     dispensingDate: formValues.dispensingDate || apiResponse.recordedAt || new Date().toISOString(),
     prescriptionNumber: formValues.prescriptionNumber || '',
     pharmacyTransactionId: formValues.pharmacyTransactionId || '',
-    totalAmount: apiResponse.totalAmount ,
+    totalAmount: apiResponse.totalAmount ?? calculatedTotal, // Use API response or calculated
     patientResponsibility: apiResponse.patientResponsibility ?? 0,
-    insuranceCoverage: apiResponse.insuranceCoverage ?? (calculateTotal(formValues) - (apiResponse.patientResponsibility ?? 0)),
+    insuranceCoverage: apiResponse.insuranceCoverage ?? (calculatedTotal - (apiResponse.patientResponsibility ?? 0)),
     branchName: apiResponse.branchName || null,
     createdAt: apiResponse.createdAt || new Date().toISOString(),
     type: isDrugClaim ? 'drug' : 'service'
@@ -115,28 +117,44 @@ function add(formValues: any, apiResponse: any = {}): void {
       medicationName: item.serviceName || 'Unknown Service',
       primaryDiagnosis: item.primaryDiagnosis || '',
       secondaryDiagnosis: item.secondaryDiagnosis || '',
-      totalPrice: item.totalPrice || 0,
+      totalPrice: (parseFloat(item.paymentAmount?.replace('ETB ', '')) || 0) * (Number(item.quantity) || 1),
       itemType: 'SERVICE'
     })) || [];
   }
 
   claimServices.value = [newClaim, ...claimServices.value];
 }
-  function update(id: string, data: Partial<ClaimService>): void {
-    const idx = claimServices.value.findIndex((el) => el.dispensingUuid === id);
-    if (idx === -1) {
-      if (data.dispensingUuid) {
-        add(data as ClaimService);
-      }
-      return;
+function update(id: string, data: Partial<ClaimService>): void {
+  console.log("update", data)
+  const idx = claimServices.value.findIndex((el) => el.dispensingUuid === id);
+  if (idx === -1) {
+    if (data.dispensingUuid) {
+      add(data as ClaimService);
     }
-
-    claimServices.value.splice(idx, 1, {
-      ...claimServices.value[idx],
-      ...data,
-      type: data.type || claimServices.value[idx].type
-    });
+    return;
   }
+
+  const existing = claimServices.value[idx];
+
+  // Merge old and new data
+  const merged: ClaimService = {
+    ...existing,
+    ...data,
+    drugItems: data.drugItems ?? existing.drugItems,
+    medicationItems: data.medicationItems ?? existing.medicationItems,
+    type: data.type || existing.type,
+  };
+
+  // Recalculate total only if items changed or total was not provided
+  const needsRecalc = !!data.drugItems || !!data.medicationItems || data.totalAmount === undefined;
+  if (needsRecalc) {
+    merged.totalAmount = calculateTotal(merged);
+    merged.insuranceCoverage = merged.totalAmount - (merged.patientResponsibility || 0);
+  }
+
+  claimServices.value.splice(idx, 1, merged);
+}
+
 
   function remove(id: string): void {
     claimServices.value = claimServices.value.filter((el) => el.dispensingUuid !== id);
@@ -150,25 +168,33 @@ function add(formValues: any, apiResponse: any = {}): void {
     });
   }
 
-  function calculateTotal(formValues: any): number {
-    let total = 0;
+function calculateTotal(formValues: any): number {
+  let total = 0;
 
-    if (Array.isArray(formValues.drugItems)) {
-      total += formValues.drugItems.reduce(
-        (sum: number, item: any) => sum + (item.totalPrice || (item.price || 0) * (Number(item.quantity) || 1)),
-        0
-      );
-    }
-
-    if (Array.isArray(formValues.medicationItems)) {
-      total += formValues.medicationItems.reduce(
-        (sum: number, item: any) => sum + (parseFloat(item.paymentAmount?.replace('ETB ', '')) || 0) * (Number(item.quantity) || 1),
-        0
-      );
-    }
-
-    return total;
+  if (Array.isArray(formValues.drugItems)) {
+    total += formValues.drugItems.reduce((sum: number, item: any) => {
+      const price = Number(item.price ?? item.unitPrice ?? 0);
+      const quantity = Number(item.quantity ?? 1);
+      return sum + (price * quantity);
+    }, 0);
   }
+
+  if (Array.isArray(formValues.medicationItems)) {
+    total += formValues.medicationItems.reduce((sum: number, item: any) => {
+      let price = 0;
+      if (typeof item.paymentAmount === 'string') {
+        price = parseFloat(item.paymentAmount.replace('ETB ', '')) || 0;
+      } else {
+        price = Number(item.unitPrice ?? item.price ?? 0);
+      }
+      const quantity = Number(item.quantity ?? 1);
+      return sum + (price * quantity);
+    }, 0);
+  }
+
+  return total;
+}
+
 
   function transformLegacyClaim(legacyClaim: any): ClaimService {
     const isDrug = legacyClaim.medicationItems[0]?.drugUuid !== undefined;

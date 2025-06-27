@@ -40,12 +40,6 @@ export default [
     ],
   },
  {
-  {
-    path: "/dashboard",
-    name: "Dashboard",
-    icon: icons.dashboard,
-  },
-  {
     path: "/payer_list",
     name: "Payer List",
     icon: icons.payerList,
@@ -109,12 +103,6 @@ export default [
         privilege: ['Create Employees'],
       },
      
-  {
-    path: "/insured_list",
-    name: "Employees list",
-    icon: icons.active_insured_persons,
-    privilege: ["Create Employees"],
-  },
   {
     name: "Claims",
     icon: icons.claimManagement,

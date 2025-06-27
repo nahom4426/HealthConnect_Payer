@@ -2,16 +2,6 @@
 import ModalParent from "@/components/ModalParent.vue";
 import GroupService from "../components/GroupComponents/GroupService.vue";
 import GroupDrug from "../components/GroupComponents/GroupDrug.vue";
-<<<<<<< HEAD
-import ActiveProvidersDataProvider from "@/features/providers/components/ActiveProvidersDataProvider.vue";
-import Form from "@/components/new_form_builder/Form.vue";
-import Input from "@/components/new_form_elements/Input.vue";
-import Button from "@/components/Button.vue";
-import { useSelectedServicesStore } from "../store/selectedServicesStore";
-import { toasted } from "@/utils/utils";
-import { useApiRequest } from "@/composables/useApiRequest";
-import { addServiceToGroup, createGroup } from "../api/groupServiceApi";
-=======
 import { ref } from "vue";
 
 import NewFormParent from "@/components/NewFormParent.vue";
@@ -21,7 +11,6 @@ const props = defineProps({
   data: String,
 });
 
->>>>>>> 392339354cac70008eaf9cd1f4c8a5112d73a98c
 const active = ref(0);
 
 const setActive = (item) => {
@@ -39,24 +28,6 @@ const components = [
 ];
 
 const selectedProvider = ref("");
-<<<<<<< HEAD
-const serviceApi = useApiRequest();
-function createGroups() {
-  if (useSelectedServices.selectedValues.length === 0) {
-    return toasted(false, "", "Please select a service");
-  } else {
-    serviceApi.send(
-      () => addServiceToGroup(),
-      (res) => {
-        if (res?.success) {
-        }
-        toasted(res.success, "Group created successfully", res.error);
-      }
-    );
-  }
-}
-=======
->>>>>>> 392339354cac70008eaf9cd1f4c8a5112d73a98c
 </script>
 
 <template>
