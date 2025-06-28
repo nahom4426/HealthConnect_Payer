@@ -10,6 +10,11 @@ export function getProviders(query = {}) {
     params: query
   });
 }
+export function getAllProviders(query = {}) {
+  return api.addAuthenticationHeader().get<Provider[]>(`${basePath}/list/withOutLogo`, {
+    params: query
+  });
+}
 export function getContaractedProviders(id:any,query = {}) {
   return api.addAuthenticationHeader().get(`payer/${id}/providers-with-contract`, {
     params: query
