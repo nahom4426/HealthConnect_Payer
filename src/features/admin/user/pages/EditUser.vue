@@ -32,22 +32,15 @@ userReq.send(
       roles: getAllRole({ page: 1, limit: 500 }),
     }),
   (response) => {
-    console.log("API Response:", response);
 
-    // Check if the response has the expected structure
     if (response && response.data) {
-      // Extract user data
       if (response.data.user) {
         userData.value = response.data.user;
-        console.log("User data set:", userData.value);
       }
 
-      // Extract roles data
       if (response.data.roles && Array.isArray(response.data.roles)) {
-        // Process roles data to ensure it has the required properties
         rolesData.value = response.data.roles
           .map((role) => {
-            // Ensure each role has roleUuid and roleName properties
             return {
               ...role,
               roleUuid: role.roleUuid || role.id || "",
@@ -56,40 +49,33 @@ userReq.send(
           })
           .filter((role) => role.roleUuid && role.roleName); // Filter out invalid roles
 
-        console.log("Roles data processed:", rolesData.value);
       }
     }
   }
 );
 
 function update({ values }) {
-  console.log("Form values:", values);
 
-  // Format the data for the API
   const formattedData = {
     email: values.email,
     title: values.title,
     firstName: values.firstName,
     fatherName: values.fatherName,
     grandFatherName: values.grandFatherName,
-    gender: values.gender.toLowerCase(), // Ensure gender is lowercase
+    gender: values.gender.toLowerCase(), 
     mobilePhone: values.mobilePhone,
     roleUuid: values.roleUuid,
   };
 
-  console.log("Formatted data for API:", formattedData);
 
   updateReq.send(
     () => updateUserById(userUuid, formattedData),
     (res) => {
-      console.log("API response:", res);
       toasted(res.success, "Successfully Updated", res.error);
       if (res.success) {
-        // Update the store with the updated user data
         const updatedUser = {
           ...user.value,
           ...formattedData,
-          // If the API response includes the updated user data, use that instead
           ...(res.data || {}),
         };
         userStore.update(userUuid, updatedUser);

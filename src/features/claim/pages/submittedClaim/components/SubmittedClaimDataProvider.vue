@@ -4,13 +4,14 @@ import { watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { removeUndefined } from "@/utils/utils";
 import { useSubmittedClaimStore } from "@/features/claim/store/submittedClaimStore";
-import { getSubmittedClaims } from "@/features/claim/api/submittedClaimApi";
+import { getClaimByStatus } from "@/features/credit/track_claim/api/trackClaimApi";
 
 const props = defineProps({
   auto: {
     type: Boolean,
-    default: true,
+    default: false,
   },
+  status: { String },
 
   search: {
     type: String,
@@ -25,11 +26,15 @@ const submittedClaimStore = useSubmittedClaimStore();
 
 const pagination = usePagination({
   store: submittedClaimStore,
-  auto: false,
+  auto: props.auto,
   cb: (data) =>
-    getSubmittedClaims(
-      props.id,
-      removeUndefined({ searchKey: props.search, ...data })
+    getClaimByStatus(
+      removeUndefined({
+        ClaimStatus: props.status,
+
+        searchKey: props.search,
+        ...data,
+      })
     ),
 });
 watch(

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
@@ -26,25 +26,24 @@ function refreshData() {
   }
 }
 
-function handlePageChange(page: number) {
+function handlePageChange(page) {
   if (dataProvider.value) {
     dataProvider.value.setPage(page);
   }
 }
 
-function handleLimitChange(limit: number) {
+function handleLimitChange(limit) {
   if (dataProvider.value) {
     dataProvider.value.setLimit(limit);
   }
 }
 
-function viewDetails(id: string) {
+function viewDetails(id) {
   router.push(`/privileges/${id}`);
 }
 
-function openEditModal(privilege: any) {
+function openEditModal(privilege) {
   if (!privilege || !privilege.privilegeUuid) {
-    console.error("Invalid privilege data:", privilege);
     return;
   }
 
@@ -55,7 +54,7 @@ function openEditModal(privilege: any) {
   });
 }
 
-function handlePrivilegeUpdated(updatedPrivilege: any) {
+function handlePrivilegeUpdated(updatedPrivilege) {
   if (updatedPrivilege && updatedPrivilege.privilegeUuid) {
     privilegeStore.update(updatedPrivilege.privilegeUuid, updatedPrivilege);
     refreshData();
@@ -67,7 +66,7 @@ function handlePrivilegeUpdated(updatedPrivilege: any) {
   }
 }
 
-function handleStatusChange(id: string, newStatus: Status) {
+function handleStatusChange(id, newStatus) {
   statusReq.send(
     () => changePrivilegeStatus(id, newStatus),
     (res) => {
@@ -90,48 +89,53 @@ function handleStatusChange(id: string, newStatus: Status) {
   );
 }
 
-function handleDelete(id: string) {
-  openModal('Confirmation', {
-    title: 'Delete Privilege',
-    message: 'Are you sure you want to delete this privilege? This action cannot be undone.'
-  }, (confirmed) => {
-    if (confirmed) {
-      deleteReq.send(
-        () => deletePrivilege(id),
-        (res) => {
-          if (res.success) {
-            privilegeStore.remove(id);
-            addToast({
-              type: "success",
-              title: "Privilege Deleted",
-              message: "Privilege has been successfully deleted",
-            });
-            refreshData();
-          } else {
-            addToast({
-              type: "error",
-              title: "Delete Failed",
-              message: res.error || "Failed to delete privilege",
-            });
+function handleDelete(id) {
+  openModal(
+    "Confirmation",
+    {
+      title: "Delete Privilege",
+      message:
+        "Are you sure you want to delete this privilege? This action cannot be undone.",
+    },
+    (confirmed) => {
+      if (confirmed) {
+        deleteReq.send(
+          () => deletePrivilege(id),
+          (res) => {
+            if (res.success) {
+              privilegeStore.remove(id);
+              addToast({
+                type: "success",
+                title: "Privilege Deleted",
+                message: "Privilege has been successfully deleted",
+              });
+              refreshData();
+            } else {
+              addToast({
+                type: "error",
+                title: "Delete Failed",
+                message: res.error || "Failed to delete privilege",
+              });
+            }
           }
-        }
-      );
+        );
+      }
     }
-  });
+  );
 }
 
-function handleActivate(id: string) {
-  handleStatusChange(id, Status.ACTIVE);
+function handleActivate(id) {
+  handleStatusChange(id, "ACTIVE");
 }
 
-function handleDeactivate(id: string) {
-  handleStatusChange(id, Status.INACTIVE);
+function handleDeactivate(id) {
+  handleStatusChange(id, "INACTIVE");
 }
 
 function handleAddPrivilege() {
- const openAddRoleModal = () => {
-  router.push('/create-role');
-};
+  const openAddRoleModal = () => {
+    router.push("/create-role");
+  };
 }
 </script>
 
@@ -147,10 +151,13 @@ function handleAddPrivilege() {
     </template>
 
     <template #add-action>
-      <button class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white" @click="$router.push('/add_privilege')">
-       <i v-html="icons.plus_circle"></i> <p class="text-base">Add Privilege</p>
+      <button
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
+        @click="$router.push('/add_privilege')"
+      >
+        <i v-html="icons.plus_circle"></i>
+        <p class="text-base">Add Privilege</p>
       </button>
-    
     </template>
 
     <template #default="{ search }">
@@ -162,19 +169,8 @@ function handleAddPrivilege() {
         <Table
           :pending="pending"
           :headers="{
-            head: [
-              'Privilege Name',
-              'Description',
-              'Category',
-              
-              'Actions',
-            ],
-            row: [
-              'privilegeName',
-              'privilegeDescription',
-              'privilegeCategory',
-              
-            ],
+            head: ['Privilege Name', 'Description', 'Category', 'Actions'],
+            row: ['privilegeName', 'privilegeDescription', 'privilegeCategory'],
           }"
           :rows="privileges"
           :rowCom="StatusRow"
@@ -193,13 +189,12 @@ function handleAddPrivilege() {
                 'privilegeName',
                 'privilegeDescription',
                 'privilegeCategory',
-                
               ]"
               :headKeys="[
                 'Privilege Name',
                 'Description',
                 'Category',
-              
+
                 'Actions',
               ]"
               :onView="viewDetails"

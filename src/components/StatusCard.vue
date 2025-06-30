@@ -28,14 +28,14 @@ const copyToClipboard = async () => {
     :class="[props.customClass]"
     class="flex flex-col gap-2 p-2 rounded-md w-full h-fit"
   >
-    <div class="bg-secondary p-2 rounded-md flex gap-4 items-center">
+    <div class="bg-secondary w-fit p-2 rounded-md flex gap-4 items-center">
       <div
         class="bg-primary text-white px-3 py-2 gap-2 rounded flex items-center"
       >
         <i v-html="icons.right"></i>
         <p>{{ props.status }}</p>
       </div>
-      <div class="flex gap-1 p-1">
+      <div v-if="props.id" class="flex gap-1 p-1">
         <p class="text-primary">{{ props.id }}</p>
         <div
           class="cursor-pointer"
@@ -45,7 +45,7 @@ const copyToClipboard = async () => {
         </div>
       </div>
     </div>
-    <div class="bg-secondary text-primary px-6 py-3 rounded">
+    <div class="bg-secondary w-fit text-primary px-6 py-3 rounded">
       {{ props.level }}
     </div>
   </div>

@@ -1,15 +1,15 @@
 <script setup>
-import { usePagination } from '@/composables/usePagination';
-import { watch } from 'vue';
-import { getAllPrograms } from '../api/ProgramApi';
-import { usePrograms } from '../store/programsStore';
+import { usePagination } from "@/composables/usePagination";
+import { watch } from "vue";
+import { getAllPrograms } from "../api/ProgramApi";
+import { usePrograms } from "../store/programsStore";
 
 const props = defineProps({
   prePage: {
     type: Number,
-    default: 25
-  }
-})
+    default: 25,
+  },
+});
 const programsStore = usePrograms();
 
 const pagination = usePagination({
@@ -21,8 +21,6 @@ const pagination = usePagination({
 if (programsStore.programs.length == 0) {
   pagination.send();
 }
-
-watch(pagination.data, console.log, {immediate: true})
 </script>
 <template>
   <slot

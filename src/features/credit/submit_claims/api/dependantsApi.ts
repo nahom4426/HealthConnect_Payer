@@ -18,8 +18,6 @@ export function searchInsuredByInstitution(id: string, query = {}, config = {}) 
 		params: query,
 		...config
 	}).then(response => {
-		console.log("API raw response:", response);
-		// Return the response data directly, the component will handle pagination
 		return response.data;
 	}).catch(error => {
 		console.error("API error:", error);

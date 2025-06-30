@@ -27,8 +27,7 @@ watch(
 </script>
 
 <template>
-  {{ console.log(bacthStore.batch) }}
-  {{ console.log(pagination) }}
+ 
 
   <slot
     :data="bacthStore.batch"

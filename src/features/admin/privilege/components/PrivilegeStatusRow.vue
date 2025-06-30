@@ -76,7 +76,6 @@ function handleEdit(privilege) {
   } else if (typeof props.onEdit === 'function') {
     props.onEdit(privilege);
   } else {
-    console.error("No valid privilege UUID or edit handler provided.");
   }
 }
 

@@ -35,7 +35,6 @@ const group = computed(() => {
 watch(
   () => props.selectedPrivilege,
   (newPrivileges) => {
-    console.log("Selected privileges changed:", newPrivileges);
     
     if (!Array.isArray(newPrivileges)) {
       selected.value = [];
@@ -56,7 +55,6 @@ watch(
       }
     });
     
-    console.log("Updated selected privileges:", selected.value);
   },
   { immediate: true }
 );
@@ -67,7 +65,6 @@ function toggle(id) {
     const idx = selected.value.findIndex((el) => el == id);
     idx > -1 && selected.value.splice(idx, 1);
   }
-  console.log("Toggled privilege, selected:", selected.value);
 }
 
 const isChecked = computed(() => {
@@ -89,7 +86,6 @@ function selectAll(checked, category) {
   if (checked) {
     selected.value = [...selected.value, ...ids];
   }
-  console.log("After selectAll, selected:", selected.value);
 }
 </script>
 <template>

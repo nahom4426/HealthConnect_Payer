@@ -29,7 +29,6 @@ onMounted(async () => {
     person.value = response.data;
     editedPerson.value = JSON.parse(JSON.stringify(person.value));
   } catch (err) {
-    console.error('Failed to fetch insured person:', err);
     error.value = 'Failed to load insured person data';
   } finally {
     loading.value = false;
@@ -68,12 +67,7 @@ async function saveChanges() {
     // Update the person ref with the new data
     person.value = { ...person.value, ...editedPerson.value };
     isEditing.value = false;
-    // Show success message (you can implement this using a toast notification or other method)
-    console.log('Insured person updated successfully');
   } catch (err) {
-    console.error('Failed to update insured person:', err);
-    // Show error message (you can implement this using a toast notification or other method)
-    console.error('Failed to update insured person');
   } finally {
     loading.value = false;
   }

@@ -22,7 +22,6 @@ const props = defineProps({
 // Create a computed property to format roles for the dropdown
 const roleOptions = computed(() => {
     if (!props.roles || !Array.isArray(props.roles) || props.roles.length === 0) {
-        console.warn('Roles is empty or not an array:', props.roles);
         return [];
     }
     
@@ -43,31 +42,22 @@ const userRoleUuid = computed(() => {
         );
         
         if (matchingRole) {
-            console.log('Found matching role:', matchingRole);
             return matchingRole.roleUuid;
         } else {
-            console.warn('No matching role found for:', props.user.roleName);
             return '';
         }
     }
     return '';
 });
 
-// Format the user's gender to match the options in the dropdown
 const formattedGender = computed(() => {
     if (props.user && props.user.gender) {
-        // Capitalize the first letter
         return props.user.gender.charAt(0).toUpperCase() + props.user.gender.slice(1).toLowerCase();
     }
     return '';
 });
 
-// Debug logs
-console.log('User data:', props.user);
-console.log('Roles data:', props.roles);
-console.log('Role options:', roleOptions.value);
-console.log('User role UUID:', userRoleUuid.value);
-console.log('Formatted gender:', formattedGender.value);
+
 </script>
 <template>
     <Form class="grid grid-cols-3 gap-5 mt-3 p-6" id="userform" :inner="false">

@@ -5,12 +5,9 @@ export const useBatchAuthorizationStore = defineStore(
   () => {
     const batch = ref([]);
     function set(data) {
-      console.log(data);
       batch.value = data;
     }
     function getAll() {
-      console.log(batch.value);
-
       return batch.value;
     }
     function remove(id) {

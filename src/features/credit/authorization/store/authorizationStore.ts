@@ -36,7 +36,6 @@ export const authorizationStore = defineStore("authorizationStore", () => {
   }
 
   function set(data: ClaimService[]): void {
-    console.log("Setting claim services in store:", data);
     
     if (!Array.isArray(data)) {
       console.error("Invalid data format for claim services:", data);
@@ -58,18 +57,15 @@ export const authorizationStore = defineStore("authorizationStore", () => {
   }
 
   function add(data: ClaimService): void {
-    console.log("Adding claim service to store:", data);
     authorizationStore.value.unshift(data);
   }
 
   function update(id: string, data: Partial<ClaimService>): void {
-    console.log(`Updating claim service with UUID: ${id}`, data);
     
     const idx = authorization.value.findIndex((el) => el.dispensingUuid === id);
     if (idx === -1) {
       console.warn(`[Claim Services Store] No claim service found with UUID: ${id}`);
       if (data.dispensingUuid) {
-        console.log("Claim service not found for update, adding instead:", data);
         add(data as ClaimService);
       }
       return;

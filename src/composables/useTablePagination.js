@@ -28,7 +28,6 @@ export function useTablePagination(responseLimit = 25) {
   }
 
   function setPage(num) {
-    console.log(num);
     page.value = num;
   }
 

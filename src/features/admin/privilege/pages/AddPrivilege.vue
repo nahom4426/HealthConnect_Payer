@@ -21,19 +21,13 @@ const formData = ref({
   privilegeCategory: "",
 });
 
-// Get the submit function from useForm
 const { submit } = useForm("privilegeForm");
 
-// Handle form submission
 function create({ values, reset }) {
-  console.log("Form values collected:", values);
 
-  // If values is empty, use the formData ref instead
   const payload = Object.keys(values).length === 0 ? formData.value : values;
 
-  console.log("Payload being sent to API:", payload);
 
-  // Check if any required fields are missing
   if (
     !payload.privilegeName ||
     !payload.privilegeDescription ||
@@ -45,7 +39,6 @@ function create({ values, reset }) {
 
   req.send(
     () => {
-      console.log("PrivilegeApi.createPrivilege called with data:", payload);
       return createPrivilege(payload);
     },
     (res) => {
@@ -67,7 +60,6 @@ function create({ values, reset }) {
   );
 }
 
-// Handle form input changes
 function updateFormData(field, value) {
   formData.value[field] = value;
 }

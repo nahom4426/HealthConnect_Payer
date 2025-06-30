@@ -3,27 +3,13 @@ import navs from "@/config/navs";
 import icons from "@/utils/icons";
 import { useAuthStore } from "@/stores/auth";
 import { useColorStore } from "@/stores/colorStore";
-import {
-  ref,
-  computed,
-  onMounted,
-  onUnmounted,
-  defineProps,
-  defineEmits,
-} from "vue";
+import { ref, computed, defineProps, defineEmits } from "vue";
 import { useRouter, useRoute } from "vue-router";
 
 const auth = useAuthStore();
-const colorStore = useColorStore();
-const route = useRoute();
-const router = useRouter();
 
-const isDarkMode = ref(false);
-const isMobile = ref(false);
 const expandedMenus = ref([]);
-function handleSingleItemClick() {
-  // Your logic for handling the item click
-}
+function handleSingleItemClick() {}
 const props = defineProps({
   isCollapsed: Boolean,
   toggleSidebar: Function,
@@ -34,7 +20,6 @@ const userData = computed(() => auth.auth?.user || {});
 const hasPrivilege = (requiredPrivileges) => {
   if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
   const userPrivileges = userData.value.authorities || [];
-  console.log("User Privileges:", userPrivileges);
 
   const userRole = userData.value.roleName;
   return (
@@ -99,7 +84,7 @@ const toggleMenu = (name) => {
     </div>
     <div
       :class="[props.isCollapsed ? 'items-center' : 'px-4']"
-      class="pb-4 overflow-scroll scrollbar-hide h-full text-base-clr"
+      class="overflow-scroll scrollbar-hide h-full text-base-clr"
     >
       <div class="flex flex-col justify-center overflow-x-hidden gap-2">
         <template v-for="item in filteredNavs" :key="item.name || item.path">
@@ -132,7 +117,7 @@ const toggleMenu = (name) => {
             <div
               name="child-items"
               tag="div"
-              class="pl-1 mt-2 space-y-2 border-l"
+              class="pl-1 mt- space-y-2 border-l"
               :class="[isCollapsed ? '' : 'ml-6']"
             >
               <RouterLink
@@ -144,7 +129,7 @@ const toggleMenu = (name) => {
               >
                 <span class="flex items-center gap-3">
                   <i v-html="child.icon" />
-                  <span v-if="!isCollapsed" class="wh">{{ child.name }}</span>
+                  <span v-if="!isCollapsed" class="">{{ child.name }}</span>
                 </span>
               </RouterLink>
             </div>

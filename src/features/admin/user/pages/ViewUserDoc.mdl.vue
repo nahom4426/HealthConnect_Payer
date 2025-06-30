@@ -17,7 +17,6 @@ const viewreq = useApiRequest();
 req.send(
     () => fetchUserFiles(props.data.userUuid),
     (res) => {
-        console.log(res);
 
     }
 )

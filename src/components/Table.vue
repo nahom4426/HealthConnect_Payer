@@ -97,7 +97,6 @@ const totalPages = inject("totalPages", 1);
 const perPage = inject("perPage", 25);
 const totalElements = inject("totalElements");
 const pageChanger = inject("pageChanger", () => {});
-console.log(totalElements);
 
 const selectedValue = ref(25);
 const active = ref(1);

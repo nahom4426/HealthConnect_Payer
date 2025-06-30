@@ -61,17 +61,19 @@
 }
 
 .loading-text {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 1.2rem; /* Slightly larger font size */
   font-weight: 600; /* Bolder font weight */
   color: #1f2937; /* Darker color for better contrast */
   letter-spacing: 0.1em; /* Increased letter spacing */
   text-shadow: 0 0 5px rgba(75, 85, 99, 0.5); /* Subtle text shadow */
-  animation: pulse 1.5s ease-in-out infinite, glow 1.5s ease-in-out infinite alternate; /* Added glow animation */
+  animation: pulse 1.5s ease-in-out infinite,
+    glow 1.5s ease-in-out infinite alternate; /* Added glow animation */
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.7; /* Faded at start and end */
   }
   50% {

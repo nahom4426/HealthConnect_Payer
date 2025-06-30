@@ -532,15 +532,12 @@ async function fetchInsuredData() {
   
   try {
     const response = await getInsuredById(insuredPersonUuid);
-    console.log("API Response:", response);
     
     if (response) {
       insuredData.value = response;
       
-      // Process dependants to have a consistent format
       if (insuredData.value.dependants && Array.isArray(insuredData.value.dependants)) {
         insuredData.value.dependants = insuredData.value.dependants.map(dep => {
-          // Calculate age from birth date if available
           let age = null;
           if (dep.dependantBirthDate) {
             const birthDate = new Date(dep.dependantBirthDate);
@@ -575,7 +572,6 @@ async function fetchInsuredData() {
       error.value = 'Failed to load insured person data';
     }
   } catch (err) {
-    console.error('Failed to fetch insured person:', err);
     error.value = 'Failed to load insured person data';
   } finally {
     loading.value = false;
@@ -651,18 +647,14 @@ function saveDependent() {
   // Create FormData
   const formData = new FormData();
   
-  // Append the dependant data as JSON string
   formData.append('dependant', JSON.stringify(dependantData));
   
-  // Handle photo upload - use the actual file from the input element
   const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
   if (fileInput && fileInput.files && fileInput.files.length > 0) {
     const photoFile = fileInput.files[0];
-    console.log("Using actual file from input:", photoFile);
     formData.append('photo', photoFile);
   }
   
-  // Call API with explicit content type
   apiRequest.send(
     () => createdependant(formData),
     handleDependantResponse
@@ -671,15 +663,12 @@ function saveDependent() {
 
 function handleDependantResponse(response: any) {
   savingDependent.value = false;
-  console.log("API Response:", response);
   
   if (response.success) {
     toasted(true, 'Dependant added successfully', '');
     
-    // Refresh the data to show the new dependant
     fetchInsuredData();
     
-    // Hide the form
     showNewDependentForm.value = false;
   } else {
     toasted(false, '', response.error || 'Failed to add dependant');

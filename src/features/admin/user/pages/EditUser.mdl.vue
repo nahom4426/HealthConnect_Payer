@@ -26,30 +26,23 @@ const pending = ref(false);
 const userData = ref({});
 const userUuid = ref('');
 
-// Log props for debugging
 onMounted(() => {
-  console.log('EditUser modal mounted with data prop:', props.data);
   
-  // Extract the actual props from the data object
   if (props.data) {
     userUuid.value = props.data.userUuid || '';
     userData.value = props.data.user || {};
     
-    console.log('Extracted user UUID:', userUuid.value);
-    console.log('Extracted user data:', userData.value);
+ 
   }
 });
 
-// Watch for changes in props.data
 watch(() => props.data, (newData) => {
   if (newData) {
-    console.log('Data prop updated:', newData);
     userUuid.value = newData.userUuid || '';
     userData.value = newData.user || {};
   }
 }, { deep: true });
 
-// Handle form submission
 async function handleSubmit(formValues: any) {
   try {
     pending.value = true;
@@ -61,7 +54,6 @@ async function handleSubmit(formValues: any) {
 
     const userPayload = {
       email: formValues.email,
-      // Only update password if it was changed (not empty)
       password: formValues.password || undefined,
       title: formValues.title,
       firstName: formValues.firstName,
@@ -75,7 +67,6 @@ async function handleSubmit(formValues: any) {
 
     const result = await updateUserById(userUuid.value, userPayload);
 
-    // Check for success
     const isSuccess = result && (result.success || result.status === 200 || result.status === 'success');
 
     if (isSuccess) {
@@ -99,7 +90,6 @@ async function handleSubmit(formValues: any) {
       throw new Error(result?.error || 'Failed to update user');
     }
   } catch (err) {
-    console.error('Update error:', err);
     error.value = err.message || 'An error occurred while updating user';
     toasted(false, 'Failed to update user', error.value);
   } finally {

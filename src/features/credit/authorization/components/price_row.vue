@@ -29,9 +29,14 @@ const emit = defineEmits(["row"]);
   >
     <td class="p-3">{{ idx + 1 }}</td>
     <td class="p-3" :key="key" v-for="key in rowKeys">
-      <div class="truncate flex gap-4" v-if="key == 'tripStatus'">
-        <p v-if="row?.price" class="bg-secondary text-white px-2 py-1 rounded">
-          {{ formatCurrency(row?.price) }}
+      <div class="truncate flex gap-4" v-if="key == 'unitPrice'">
+        <p class="bg-secondary text-primary px-2 py-1 rounded">
+          {{ formatCurrency(row?.unitPrice) }}
+        </p>
+      </div>
+      <div class="truncate flex gap-4" v-else-if="key == 'totalPrice'">
+        <p class="bg-secondary text-primary px-2 py-1 rounded">
+          {{ formatCurrency(row?.totalPrice) }}
         </p>
       </div>
       <span v-else>

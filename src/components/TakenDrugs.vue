@@ -11,14 +11,16 @@ const props = defineProps({
 
 const filteredData = computed(() => {
   if (!props.search) {
-    return props.data;
+    return props.data?.medicationItems?.filter((el) => {
+      return el.itemType === "DRUG";
+    });
   }
   const searchTerm = props.search.toLowerCase();
-  return props.data.filter((item) => {
+  return props.data?.medicationItems.filter((item) => {
     return (
-      item.providerName.toLowerCase().includes(searchTerm) ||
-      item.serviceName.toLowerCase().includes(searchTerm) ||
-      item.serviceCode.toString().includes(searchTerm)
+      (item.medicationName.toLowerCase().includes(searchTerm) ||
+        item.medicationCode.toString().includes(searchTerm)) &&
+      item.itemType.toLowerCase() === "drug"
     );
   });
 });

@@ -29,7 +29,6 @@ watch(() => props.selectPrivilege, (newVal) => {
     }
 }, { immediate: true });
 
-console.log("Initial selected privileges:", props.selectPrivilege);
 </script>
 
 <template>

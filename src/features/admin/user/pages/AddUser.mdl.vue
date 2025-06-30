@@ -40,7 +40,6 @@ async function handleSubmit(formValues: any) {
       throw new Error(result.error || 'Failed to create user');
     }
   } catch (error: any) {
-    console.error('User creation error:', error);
     toasted(false, 'Error', error.message || 'Failed to create user');
   } finally {
     formPending.value = false;

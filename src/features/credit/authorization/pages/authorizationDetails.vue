@@ -10,7 +10,6 @@ import { formatCurrency, formatDateToYYMMDD } from "@/utils/utils";
 import { useRoute } from "vue-router";
 import { usePagination } from "@/composables/usePagination";
 import AboutPayerForm from "../form/AboutPayerForm.vue";
-import ClaimSummaryForm from "../form/ClaimSummaryForm.vue";
 import { getAuthorizationDetail } from "../api/authorizationApi";
 import DynamicForm from "../form/DynamicForm.vue";
 import { openModal } from "@customizer/modal-x";
@@ -41,7 +40,7 @@ const aboutPayer = computed(() => [
           </div>
           <DynamicForm :aboutPayer="aboutPayer" />
         </div>
-        <ClaimSummaryForm />
+        <!-- <ClaimSummaryForm /> -->
       </div>
     </template>
     <div class="bg-base-clr3 rounded-md p-4">

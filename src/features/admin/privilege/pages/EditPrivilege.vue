@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { useRoute, useRouter } from 'vue-router';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { getPrivilegeById, updatePrivilege } from '../Api/PrivilegeApi';
@@ -42,7 +42,6 @@ if (!Object.keys(privilege.value).length) {
                     privilegeDescription: res.data.privilegeDescription || '',
                     privilegeCategory: res.data.privilegeCategory || ''
                 };
-                console.log('Privilege data loaded from API:', formData.value);
             }
         }
     );
@@ -53,28 +52,23 @@ if (!Object.keys(privilege.value).length) {
         privilegeDescription: privilege.value.privilegeDescription || '',
         privilegeCategory: privilege.value.privilegeCategory || ''
     };
-    console.log('Privilege data loaded from store:', formData.value);
 }
 
-// Validate form data
 function validateFormData(data) {
     const errors = [];
     
-    // Check privilegeName (3-50 characters)
     if (!data.privilegeName) {
         errors.push('Privilege Name is required');
     } else if (data.privilegeName.length < 3 || data.privilegeName.length > 50) {
         errors.push('Privilege Name must be between 3 and 50 characters');
     }
     
-    // Check privilegeDescription (3-255 characters)
     if (!data.privilegeDescription) {
         errors.push('Privilege Description is required');
     } else if (data.privilegeDescription.length < 3) {
         errors.push('Privilege Description must be at least 3 characters');
     }
     
-    // Check privilegeCategory (3-50 characters)
     if (!data.privilegeCategory) {
         errors.push('Privilege Category is required');
     } else if (data.privilegeCategory.length < 3 || data.privilegeCategory.length > 50) {
@@ -87,17 +81,13 @@ function validateFormData(data) {
 // Handle form input changes
 function updateFormData(field, value) {
     formData.value[field] = value;
-    console.log(`Updated ${field} to:`, value);
-    console.log('Current formData:', formData.value);
+
 }
 
 function update({ values }) {
-    console.log('Form values from submit:', values);
     
-    // Use the values from the form submission instead of formData
     const payload = values;
     
-    console.log('Payload being sent to API:', payload);
     
     // Validate the payload
     const validationErrors = validateFormData(payload);
@@ -128,7 +118,6 @@ watch(() => privilege.value, (newValue) => {
             privilegeDescription: newValue.privilegeDescription || '',
             privilegeCategory: newValue.privilegeCategory || ''
         };
-        console.log('Privilege data updated from watch:', formData.value);
     }
 }, { deep: true });
 

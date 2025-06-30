@@ -65,7 +65,7 @@ export default [
         path: "/track_claims",
         name: "Track Claims",
         icon: icons.completedClaims,
-        category: "service",
+        category: "pages",
         privilege: ["Create Services"],
       },
     ],
@@ -84,7 +84,7 @@ export default [
     navs: [
       {
         path: "/submitted_claims",
-        name: "Submitted Claims",
+        name: "New Claims",
         category: "pages",
         privilege: ["Create Employees"],
       },

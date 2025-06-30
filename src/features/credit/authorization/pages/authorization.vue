@@ -62,13 +62,11 @@ const selected = ref([]);
 const useSelectedClaims = useSelectedClaimsStore();
 
 const isSelected = computed(() => {
-  console.log(useSelectedClaims.isAllSelected);
 
   return useSelectedClaims.isAllSelected;
 });
 
 function handleSelectAll(checked, data) {
-  console.log(checked);
 
   useSelectedClaims.SelectAll(checked, data);
 }
