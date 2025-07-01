@@ -13,7 +13,7 @@ export const useSubmittedClaimStore = defineStore("submittedClaimStore", () => {
   }
 
   function remove(id) {
-    const idx = submittedClaims.value.findIndex((el) => el.serviceUuid == id);
+    const idx = submittedClaims.value.findIndex((el) => el.claimUuid == id);
     if (idx > -1) {
       submittedClaims.value.splice(idx, 1);
     }
@@ -24,7 +24,7 @@ export const useSubmittedClaimStore = defineStore("submittedClaimStore", () => {
   }
 
   function update(id, data) {
-    const idx = submittedClaims.value.findIndex((el) => el.serviceUuid == id);
+    const idx = submittedClaims.value.findIndex((el) => el.claimUuid == id);
     if (idx > -1) {
       submittedClaims.value.splice(idx, 1, data);
     }

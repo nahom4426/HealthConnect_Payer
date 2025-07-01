@@ -9,41 +9,49 @@ import DynamicForm from "@/features/credit/authorization/form/DynamicForm.vue";
 import { getClaimByID } from "@/features/credit/track_claim/api/trackClaimApi";
 import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAndStatusRow.vue";
 import {
+  convertBase64Image,
   formatCurrency,
   formatDateToYYMMDD,
   getAgeFormDate,
 } from "@/utils/utils";
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import Clinical_Row from "./components/Clinical_Row.vue";
+import { useClinical } from "../../store/clinicalStore";
 
 const route = useRoute();
 
 const profilePicture = ref("");
 const providerInfo = ref([]);
 const claimSummary = ref([]);
+const clinicalStore = useClinical();
 const api = useApiRequest();
-const fetchClaim = () => {
-  api.send(
-    () => getClaimByID(route.params?.id),
-    (res) => {
-      if (res.success) {
-        profilePicture.value = res.data?.profilePictureBase64;
+api.send(
+  () => getClaimByID(route.params?.id),
+  (res) => {
+    if (res.success) {
+      profilePicture.value = res.data?.providerLogo;
 
-        providerInfo.value = [
-          { title: "Provider Name", value: res.data?.providerName || "N/A" },
-          { title: "Category", value: res.data?.position || "N/A" },
-          { title: "Phone", value: res.data?.phone || "N/A" },
-          { title: "Email", value: res.data?.email || "N/A" },
-        ];
-        claimSummary.value = [
-          { title: "Claim Amount", value: res.data?.employeeId || "N/A" },
-          { title: "Number of claims", value: res.data?.address || "N/A" },
-          { title: "Time Range", value: res.data?.gender || "N/A" },
-        ];
-      }
+      providerInfo.value = [
+        { title: "Provider Name", value: res.data?.providerName || "N/A" },
+        { title: "Category", value: res.data?.providerCategory || "N/A" },
+        { title: "Phone", value: res.data?.providerPhone || "N/A" },
+        { title: "Email", value: res.data?.providerEmail || "N/A" },
+      ];
+      claimSummary.value = [
+        { title: "Claim Amount", value: res.data?.totalAmount || "N/A" },
+        { title: "Number of claims", value: res.data?.totalClaims || "N/A" },
+        {
+          title: "Time Range",
+          value:
+            `${res.data?.claimFromDate}   To  ${res.data?.claimToDate}` ||
+            "N/A",
+        },
+      ];
+      clinicalStore.set(res.data?.services);
     }
-  );
-};
+  }
+);
 
 async function processProfilePicture() {
   if (!profilePicture.value) {
@@ -51,24 +59,16 @@ async function processProfilePicture() {
   }
 
   try {
-    if (profilePicture.value.startsWith("data:image/jpeg")) {
-      return;
+    if (!profilePicture.value.startsWith("data:image/")) {
+      profilePicture.value = `data:image/png;base64,${profilePicture.value}`;
     }
 
-    profilePicture.value = await convertBase64Image(
-      profilePicture.value,
-      "image/jpeg",
-      0.85
-    );
+    profilePicture.value = await convertBase64Image(profilePicture.value);
   } catch (error) {}
 }
 
 watch(profilePicture, () => {
   processProfilePicture();
-});
-
-onMounted(() => {
-  fetchClaim();
 });
 </script>
 
@@ -103,7 +103,7 @@ onMounted(() => {
     <div class="bg-base-clr3 rounded-md p-4">
       <Table
         :pending="api.pending.value"
-        :rows="api.response.value?.services"
+        :rows="clinicalStore.clinicalClaim || []"
         :headers="{
           head: [
             'Invoice ID',
@@ -115,29 +115,17 @@ onMounted(() => {
             'Actions',
           ],
           row: [
-            'batchCode',
+            'invoiceNumber',
             'insuredPersonName',
-            'recordedAt',
+            'encounterDate',
             'branchName',
             'totalAmount',
             'claimStatus',
           ],
         }"
         ,
-        :row-com="PriceAndStatusRow"
+        :row-com="Clinical_Row"
       >
-        <template #actions="{ row }">
-          <div class="flex gap-2">
-            <Button
-              @click.prevent="openModal('BatchDetail', row)"
-              class="!text-white"
-              type="primary"
-              size="xs"
-            >
-              View
-            </Button>
-          </div>
-        </template>
       </Table>
     </div>
   </DefaultPage>

@@ -87,10 +87,6 @@ const emit = defineEmits(["row"]);
         {{ getColumnValue(key, row) }}
       </span>
     </td>
-    <td
-      class="p-3 flex gap-3"
-      v-if="headKeys.find((head) => head.toLowerCase() == 'actions')"
-    ></td>
 
     <td
       class="p-3"

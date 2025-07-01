@@ -1,10 +1,10 @@
 <script setup>
-import { usePagination } from "@/composables/usePagination";
 import { watch } from "vue";
-import { useAuthStore } from "@/stores/auth";
 import { removeUndefined } from "@/utils/utils";
 import { useSubmittedClaimStore } from "@/features/claim/store/submittedClaimStore";
 import { getClaimByStatus } from "@/features/credit/track_claim/api/trackClaimApi";
+import { useApiRequest } from "@/composables/useApiRequest";
+import { useFinancialStore } from "@/features/claim/store/financialStore";
 
 const props = defineProps({
   auto: {
@@ -21,37 +21,49 @@ const props = defineProps({
     type: String,
   },
 });
-
+const api = useApiRequest();
+const financialStore = useFinancialStore();
 const submittedClaimStore = useSubmittedClaimStore();
 
-const pagination = usePagination({
-  store: submittedClaimStore,
-  auto: props.auto,
-  cb: (data) =>
-    getClaimByStatus(
-      removeUndefined({
-        ClaimStatus: props.status,
+function fetchData() {
+  api.send(
+    (data) =>
+      getClaimByStatus(
+        removeUndefined({
+          ClaimStatus: props.status,
 
-        searchKey: props.search,
-        ...data,
-      })
-    ),
-});
+          searchKey: props.search,
+          ...data,
+        })
+      ),
+    (res) => {
+      if (res.success) {
+        if (props.status === "DRAFT") {
+          submittedClaimStore.set(res.data?.content);
+        } else {
+          financialStore.set(res.data?.content);
+        }
+      }
+    }
+  );
+}
+fetchData();
+
 watch(
   () => props.search,
   () => {
-    pagination.send();
+    fetchData();
   }
 );
-
-if (submittedClaimStore.submittedClaims.length == 0) {
-  pagination.send();
-}
 </script>
 <template>
   <slot
-    :pending="pagination.pending.value"
-    :error="pagination.error.value"
-    :submittedClaims="submittedClaimStore.submittedClaims"
+    :pending="api.pending.value"
+    :error="api.error.value"
+    :claims="
+      props.status === 'DRAFT'
+        ? submittedClaimStore.submittedClaims
+        : financialStore.financialData
+    "
   />
 </template>

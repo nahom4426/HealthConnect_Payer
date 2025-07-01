@@ -3,8 +3,8 @@ import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
-import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAndStatusRow.vue";
 import SubmittedClaimDataProvider from "../submittedClaim/components/SubmittedClaimDataProvider.vue";
+import Financial_row from "./components/Financial_row.vue";
 </script>
 
 <template>
@@ -35,10 +35,10 @@ import SubmittedClaimDataProvider from "../submittedClaim/components/SubmittedCl
       </div>
     </template>
     <SubmittedClaimDataProvider
-      status="DRAFT"
+      status="SUBMITTED"
       :id="$route.params.id"
       :search="search"
-      v-slot="{ submittedClaims, pending }"
+      v-slot="{ claims, pending }"
     >
       <Table
         :pending="pending"
@@ -50,7 +50,6 @@ import SubmittedClaimDataProvider from "../submittedClaim/components/SubmittedCl
             'Claim dating from',
             'Claim dating to',
             'Claim Amount',
-            'NO of Claims',
             'Actions',
           ],
           row: [
@@ -62,8 +61,8 @@ import SubmittedClaimDataProvider from "../submittedClaim/components/SubmittedCl
             'totalAmount',
           ],
         }"
-        :row-com="PriceAndStatusRow"
-        :rows="submittedClaims"
+        :row-com="Financial_row"
+        :rows="claims"
       >
       </Table>
     </SubmittedClaimDataProvider>
