@@ -1,20 +1,11 @@
 <script setup>
-import Button from "@/components/Button.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { usePagination } from "@/composables/usePagination";
-import { getAuthorizationDetail } from "@/features/credit/authorization/api/authorizationApi";
 import DynamicForm from "@/features/credit/authorization/form/DynamicForm.vue";
 import { getClaimByID } from "@/features/credit/track_claim/api/trackClaimApi";
-import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAndStatusRow.vue";
-import {
-  convertBase64Image,
-  formatCurrency,
-  formatDateToYYMMDD,
-  getAgeFormDate,
-} from "@/utils/utils";
-import { computed, onMounted, ref, watch } from "vue";
+import { convertBase64Image } from "@/utils/utils";
+import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import Clinical_Row from "./components/Clinical_Row.vue";
 import { useClinical } from "../../store/clinicalStore";

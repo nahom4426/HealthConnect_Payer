@@ -42,7 +42,7 @@ const fromDate = ref(previousMonthDate.toISOString().split("T")[0]);
 const toDate = ref(new Date().toISOString().split("T")[0]);
 
 // Selected claims that can be removed
-const selectedClaims = ref < Array < any >> [];
+const selectedClaims = ref([]);
 
 // Payer selection
 const selectedPayerUuid = ref("");
@@ -93,7 +93,7 @@ const generateClaims = async () => {
 };
 
 // Remove a claim from selected claims
-const removeClaim = (claimUuid: string) => {
+const removeClaim = (claimUuid) => {
   selectedClaims.value = selectedClaims.value.filter(
     (claim) => claim.dispensingUuid !== claimUuid
   );
@@ -138,7 +138,7 @@ const submitClaims = async () => {
 };
 
 // Refresh data with current filters
-const refreshDataWithDates = async (startDate: string, endDate: string) => {
+const refreshDataWithDates = async (startDate, endDate) => {
   if (!dataProvider.value) return;
 
   try {
@@ -174,7 +174,7 @@ watch(selectedPayerUuid, (newPayerUuid) => {
 });
 
 // Pagination handlers
-function handlePageChange(page: number) {
+function handlePageChange(page) {
   if (isClaimCreationMode.value) {
     dataProvider.value?.setPage(page);
   } else {
@@ -182,7 +182,7 @@ function handlePageChange(page: number) {
   }
 }
 
-function handleLimitChange(limit: number) {
+function handleLimitChange(limit) {
   if (isClaimCreationMode.value) {
     dataProvider.value?.setLimit(limit);
   } else {

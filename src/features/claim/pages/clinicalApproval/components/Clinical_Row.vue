@@ -40,11 +40,13 @@ const api = useApiRequest();
 const emit = defineEmits(["row"]);
 const clinicalStore = useClinical();
 const title = ref(isOnDetailPage ? "Approve Claim" : "Approve Batch Claim");
+
 const message = ref(
   isOnDetailPage
     ? "Are you sure you want to approve this claim?"
-    : "Are you sure you want to approve this batch claim?"
+    : "Are you sure you want to approve this batch?"
 );
+
 const submittedClaimStore = useSubmittedClaimStore();
 
 function handleApproval(id, main) {
@@ -78,28 +80,6 @@ function handleApproval(id, main) {
             }
           );
         }
-      }
-    }
-  );
-}
-function handleDelete(id) {
-  openModal(
-    "Confirmation",
-    {
-      title: "Reject Claim",
-      message: "Are you sure you want to reject this claim?",
-    },
-    (confirmed) => {
-      if (confirmed) {
-        api.send(
-          () => approveClaim(id, { newStatus: "REJECTED" }),
-          (res) => {
-            if (res.success) {
-              clinicalStore.remove(id);
-            }
-            toasted(res.success, "Claim Rejected Successfully", res.error);
-          }
-        );
       }
     }
   );
@@ -175,7 +155,7 @@ function handleDelete(id) {
           </button>
         </div>
         <div
-          class="flex shadow-lg text-base p-2 mt-2 rounded-lg flex-col gap-2 w-60 bg-white"
+          class="flex shadow-lg text-base p-2 mt-2 rounded-lg flex-col gap-2 bg-white"
           :ref="setRef"
         >
           <button
@@ -204,8 +184,8 @@ function handleDelete(id) {
           <button
             @click="
               isOnDetailPage
-                ? openModal('ClinicalRejection', row?.claimUuid)
-                : openModal('ClinicalRejection', row?.dispensingUuid)
+                ? openModal('ClinicalRejection', row)
+                : openModal('ClinicalRejection', row)
             "
             class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
           >
@@ -214,6 +194,17 @@ function handleDelete(id) {
           </button>
         </div>
       </Dropdown>
+    </td>
+  </tr>
+  <tr v-if="!rowData?.length">
+    <td :colspan="headKeys.length + 1">
+      <slot name="placeholder">
+        <div class="flex-1 w-full flex justify-center py-5 *:h-56">
+          <div class="text-xl">
+            {{ "No Data Found" }}
+          </div>
+        </div>
+      </slot>
     </td>
   </tr>
 </template>

@@ -6,7 +6,10 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import PayerContractsDataProvider from "../components/PayerContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
-import { changePayerContractStatus, deletePayerContract } from "../api/payerContractApi";
+import {
+  changePayerContractStatus,
+  deletePayerContract,
+} from "../api/payerContractApi";
 import { addToast } from "@/toast";
 import { useApiRequest } from "@/composables/useApiRequest";
 import StatusRow from "../components/contractStatusRow.vue";
@@ -64,7 +67,10 @@ function openEditModal(contract) {
 function handleContractUpdated(updatedContract) {
   console.log("Contract updated:", updatedContract);
   if (updatedContract?.contractHeaderUuid) {
-    payerContractsStore.update(updatedContract.contractHeaderUuid, updatedContract);
+    payerContractsStore.update(
+      updatedContract.contractHeaderUuid,
+      updatedContract
+    );
     refreshData();
     addToast({
       type: "success",
@@ -98,7 +104,11 @@ function handleStatusChange(id, newStatus) {
 }
 
 function handleDelete(id) {
-  if (confirm("Are you sure you want to delete this contract? This action cannot be undone.")) {
+  if (
+    confirm(
+      "Are you sure you want to delete this contract? This action cannot be undone."
+    )
+  ) {
     deleteReq.send(
       () => deletePayerContract(id),
       (res) => {
@@ -187,7 +197,7 @@ function handleAddContract() {
               'Start Date',
               'End Date',
               'Status',
-              'Actions'
+              'Actions',
             ],
             row: [
               'contractName',
@@ -196,8 +206,8 @@ function handleAddContract() {
               'providerName',
               'startDate',
               'endDate',
-              'status'
-            ]
+              'status',
+            ],
           }"
           :rows="contracts"
           :rowCom="StatusRow"
@@ -206,7 +216,7 @@ function handleAddContract() {
             itemsPerPage,
             totalPages,
             onPageChange: handlePageChange,
-            onLimitChange: handleLimitChange
+            onLimitChange: handleLimitChange,
           }"
         >
           <template #row>
@@ -219,7 +229,7 @@ function handleAddContract() {
                 'providerName',
                 'startDate',
                 'endDate',
-                'status'
+                'status',
               ]"
               :headKeys="[
                 'Contract Name',
@@ -229,7 +239,7 @@ function handleAddContract() {
                 'Start Date',
                 'End Date',
                 'Status',
-                'Actions'
+                'Actions',
               ]"
               :onView="viewDetails"
               :onEdit="openEditModal"

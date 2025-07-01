@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
-import { getAllServices } from '@/features/service/api/serviceApi';
-import { getAllDrugs } from '@/features/service/api/drugApi';
-import { getAllProviders } from '@/features/providers/api/providerApi';
-import Select from '@/components/new_form_elements/Select.vue';
+import { ref, onMounted, watch, computed } from "vue";
+import { getAllServices } from "@/features/service/api/serviceApi";
+import { getAllDrugs } from "@/features/service/api/drugApi";
+import { getAllProviders } from "@/features/providers/api/providerApi";
+import Select from "@/components/new_form_elements/Select.vue";
 
 interface Provider {
   providerUuid: string;
@@ -33,23 +33,23 @@ interface Drug {
 
 const providers = ref<Provider[]>([]);
 const selectedProvider = ref<string | null>(null);
-const startDate = ref<string>('');
-const endDate = ref<string>('');
+const startDate = ref<string>("");
+const endDate = ref<string>("");
 
-const activeTab = ref<'services' | 'drugs'>('services');
-const selectedTab = ref<'services' | 'drugs'>('services');
+const activeTab = ref<"services" | "drugs">("services");
+const selectedTab = ref<"services" | "drugs">("services");
 const services = ref<Service[]>([]);
 const drugs = ref<Drug[]>([]);
 const selectedItems = ref<Array<Service | Drug>>([]);
 
-const searchQuery = ref<string>('');
+const searchQuery = ref<string>("");
 const rowsPerPage = ref<number>(5);
 const currentPage = ref<number>(1);
 const fetchPending = ref(false);
 const error = ref<string | null>(null);
 
 const providerOptions = computed(() => {
-  return providers.value.map(provider => ({
+  return providers.value.map((provider) => ({
     label: `${provider.providerName} (${provider.threeDigitAcronym})`,
     value: provider.providerUuid,
   }));
@@ -62,23 +62,23 @@ async function fetchProviders() {
     const response = await getAllProviders({ page: 1, limit: 100 });
 
     if (!response?.data?.content || !Array.isArray(response.data.content)) {
-      throw new Error('Invalid data format: missing content array');
+      throw new Error("Invalid data format: missing content array");
     }
 
-    providers.value = response.data.content.map(item => ({
+    providers.value = response.data.content.map((item) => ({
       providerUuid: item.providerUuid,
       providerName: item.providerName,
       threeDigitAcronym: item.threeDigitAcronym,
       email: item.email,
-      telephone: item.telephone
+      telephone: item.telephone,
     }));
 
     if (providers.value.length === 0) {
-      error.value = 'No providers available';
+      error.value = "No providers available";
     }
   } catch (err) {
-    console.error('Error fetching providers:', err);
-    error.value = 'Failed to load providers. Please try again.';
+    console.error("Error fetching providers:", err);
+    error.value = "Failed to load providers. Please try again.";
   } finally {
     fetchPending.value = false;
   }
@@ -86,13 +86,13 @@ async function fetchProviders() {
 
 async function fetchServices() {
   if (!selectedProvider.value) return;
-  
+
   try {
     fetchPending.value = true;
     const response = await getAllServices(selectedProvider.value);
-    
-    console.log('Raw services response:', response); // Debug log
-    
+
+    console.log("Raw services response:", response); // Debug log
+
     // Handle different possible response structures
     let servicesData = [];
     if (Array.isArray(response)) {
@@ -105,24 +105,24 @@ async function fetchServices() {
       // Response has content structure
       servicesData = response.content;
     } else {
-      throw new Error('Unexpected services response format');
+      throw new Error("Unexpected services response format");
     }
 
     services.value = servicesData.map((service: any) => ({
       id: service.serviceUuid,
       serviceUuid: service.serviceUuid,
       name: service.serviceName,
-      description: service.serviceCategory || service.description || 'No description',
+      description:
+        service.serviceCategory || service.description || "No description",
       providerPrice: service.price || 0,
-      userPrice: service.price || 0
+      userPrice: service.price || 0,
     }));
-    
-    console.log('Mapped services:', services.value); // Debug log
-    
+
+    console.log("Mapped services:", services.value); // Debug log
   } catch (err) {
-    console.error('Error fetching services:', err);
+    console.error("Error fetching services:", err);
     services.value = [];
-    error.value = 'Failed to load services. Please try again.';
+    error.value = "Failed to load services. Please try again.";
   } finally {
     fetchPending.value = false;
   }
@@ -130,13 +130,13 @@ async function fetchServices() {
 
 async function fetchDrugs() {
   if (!selectedProvider.value) return;
-  
+
   try {
     fetchPending.value = true;
     const response = await getAllDrugs(selectedProvider.value);
-    
-    console.log('Raw drugs response:', response); // Debug log
-    
+
+    console.log("Raw drugs response:", response); // Debug log
+
     // Handle different possible response structures
     let drugsData = [];
     if (Array.isArray(response)) {
@@ -146,24 +146,23 @@ async function fetchDrugs() {
     } else if (response?.content) {
       drugsData = response.content;
     } else {
-      throw new Error('Unexpected drugs response format');
+      throw new Error("Unexpected drugs response format");
     }
 
     drugs.value = drugsData.map((drug: any) => ({
       id: drug.drugUuid,
       drugUuid: drug.drugUuid,
       name: drug.drugName,
-      description: drug.category || drug.description || 'No description',
+      description: drug.category || drug.description || "No description",
       providerPrice: drug.price || 0,
-      userPrice: drug.price || 0
+      userPrice: drug.price || 0,
     }));
-    
-    console.log('Mapped drugs:', drugs.value); // Debug log
-    
+
+    console.log("Mapped drugs:", drugs.value); // Debug log
   } catch (err) {
-    console.error('Error fetching drugs:', err);
+    console.error("Error fetching drugs:", err);
     drugs.value = [];
-    error.value = 'Failed to load drugs. Please try again.';
+    error.value = "Failed to load drugs. Please try again.";
   } finally {
     fetchPending.value = false;
   }
@@ -194,26 +193,27 @@ watch(searchQuery, (newQuery) => {
   }, 300);
 });
 
-const items = computed(() => 
-  activeTab.value === 'services' ? services.value : drugs.value
+const items = computed(() =>
+  activeTab.value === "services" ? services.value : drugs.value
 );
 
 const filteredItems = computed(() => {
-  const filtered = items.value.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchQuery.value.toLowerCase())
+  const filtered = items.value.filter(
+    (item) =>
+      item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
   const start = (currentPage.value - 1) * rowsPerPage.value;
   return filtered.slice(start, start + rowsPerPage.value);
 });
 
-const totalPages = computed(() => 
+const totalPages = computed(() =>
   Math.ceil(filteredItems.value.length / rowsPerPage.value)
 );
 
 const areAllItemsSelected = computed(() =>
-  filteredItems.value.every(item =>
-    selectedItems.value.some(sel => sel.id === item.id)
+  filteredItems.value.every((item) =>
+    selectedItems.value.some((sel) => sel.id === item.id)
   )
 );
 
@@ -228,11 +228,11 @@ const prevPage = () => {
 function toggleAllItems() {
   if (areAllItemsSelected.value) {
     selectedItems.value = selectedItems.value.filter(
-      item => !filteredItems.value.some(fi => fi.id === item.id)
+      (item) => !filteredItems.value.some((fi) => fi.id === item.id)
     );
   } else {
-    const ids = selectedItems.value.map(i => i.id);
-    filteredItems.value.forEach(item => {
+    const ids = selectedItems.value.map((i) => i.id);
+    filteredItems.value.forEach((item) => {
       if (!ids.includes(item.id)) {
         selectedItems.value.push(item);
       }
@@ -242,17 +242,17 @@ function toggleAllItems() {
 
 function editPrices() {
   // Implement price editing logic here
-  alert('Price editing functionality will be implemented here');
+  alert("Price editing functionality will be implemented here");
 }
 
 async function submit() {
   if (!selectedProvider.value) {
-    alert('Please select a provider first');
+    alert("Please select a provider first");
     return;
   }
 
   if (selectedItems.value.length === 0) {
-    alert('Please select at least one service or drug');
+    alert("Please select at least one service or drug");
     return;
   }
 
@@ -263,16 +263,16 @@ async function submit() {
       endDate: endDate.value,
       items: selectedItems.value,
     };
-    console.log('Submitting contract:', payload);
-    alert('Contract would be submitted here');
+    console.log("Submitting contract:", payload);
+    alert("Contract would be submitted here");
   } catch (error) {
-    console.error('Submission failed:', error);
-    alert('Submission failed. Please try again.');
+    console.error("Submission failed:", error);
+    alert("Submission failed. Please try again.");
   }
 }
 
-const tabStyle = 'px-6 py-3 text-[#75778B] bg-white hover:bg-gray-100 text-sm';
-const activeTabStyle = 'px-6 py-3 text-white bg-[#75778B] font-medium text-sm';
+const tabStyle = "px-6 py-3 text-[#75778B] bg-white hover:bg-gray-100 text-sm";
+const activeTabStyle = "px-6 py-3 text-white bg-[#75778B] font-medium text-sm";
 
 onMounted(async () => {
   await fetchProviders();
@@ -283,38 +283,36 @@ onMounted(async () => {
   <div class="bg-white rounded-md p-6 space-y-6">
     <!-- Provider and Date Inputs -->
     <div class="grid md:grid-cols-2 gap-6">
-      <div>
-        <Select     
-          :obj="true"
-          name="provider"
-          label="Select Provider"
-          validation="required"
-          :options="providerOptions"
-          :disabled="fetchPending"
-          :attributes="{
-            placeholder: 'Search and select provider'
-          }"
-          v-model="selectedProvider"
-        />
-      </div>
-      <div class="flex gap-2">
+      <Select
+        :obj="true"
+        name="provider"
+        label="Select Provider"
+        validation="required"
+        :options="providerOptions"
+        :disabled="fetchPending"
+        :attributes="{
+          placeholder: 'Search and select provider',
+        }"
+        v-model="selectedProvider"
+      />
+      <div class="flex gap-6">
         <div class="w-1/2">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label class="block text-sm font-medium text-base-clr mb-1">
             Start date
           </label>
           <input
             type="date"
-            class="w-full p-3 rounded border border-gray-300"
+            class="w-full bg-base-clr3 h-7 pl-3 py-3 rounded border border-base-clr/30"
             v-model="startDate"
           />
         </div>
         <div class="w-1/2">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label class="block text-sm font-medium text-base-clr mb-1">
             End date
           </label>
           <input
             type="date"
-            class="w-full p-3 rounded border border-gray-300"
+            class="w-full h-7 pl-3 bg-base-clr3 py-3 rounded border border-base-clr/30"
             v-model="endDate"
           />
         </div>
@@ -352,7 +350,9 @@ onMounted(async () => {
       <input
         type="text"
         class="w-full p-3 rounded border border-gray-300"
-        :placeholder="`Search and Select ${activeTab === 'services' ? 'Services' : 'Drugs'}`"
+        :placeholder="`Search and Select ${
+          activeTab === 'services' ? 'Services' : 'Drugs'
+        }`"
         v-model="searchQuery"
       />
       <div class="text-center mt-4">
@@ -360,7 +360,8 @@ onMounted(async () => {
           class="text-sm text-white bg-[#75778B] px-4 py-2 rounded hover:bg-gray-600"
           @click="editPrices"
         >
-          If you want to negotiate prices of services and drugs, <strong>Click here</strong>
+          If you want to negotiate prices of services and drugs,
+          <strong>Click here</strong>
         </button>
       </div>
     </div>
@@ -385,7 +386,9 @@ onMounted(async () => {
                   />
                 </th>
                 <th class="p-3">#</th>
-                <th class="p-3">{{ activeTab === 'services' ? 'Service' : 'Drug' }} Name</th>
+                <th class="p-3">
+                  {{ activeTab === "services" ? "Service" : "Drug" }} Name
+                </th>
                 <th class="p-3">Description</th>
                 <th class="p-3">Provider Price</th>
                 <th class="p-3">Your Price</th>
@@ -400,10 +403,12 @@ onMounted(async () => {
                 <td class="p-3">
                   <input
                     type="checkbox"
-                    :checked="selectedItems.some(sel => sel.id === item.id)"
+                    :checked="selectedItems.some((sel) => sel.id === item.id)"
                     @change="
-                      selectedItems.some(sel => sel.id === item.id)
-                        ? selectedItems = selectedItems.filter(sel => sel.id !== item.id)
+                      selectedItems.some((sel) => sel.id === item.id)
+                        ? (selectedItems = selectedItems.filter(
+                            (sel) => sel.id !== item.id
+                          ))
                         : selectedItems.push(item)
                     "
                     class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
@@ -412,7 +417,9 @@ onMounted(async () => {
                 <td class="p-3">{{ index + 1 }}</td>
                 <td class="p-3">{{ item.name }}</td>
                 <td class="p-3">{{ item.description }}</td>
-                <td class="p-3">ETB {{ item.providerPrice.toLocaleString() }}</td>
+                <td class="p-3">
+                  ETB {{ item.providerPrice.toLocaleString() }}
+                </td>
                 <td class="p-3">ETB {{ item.userPrice.toLocaleString() }}</td>
               </tr>
               <tr v-if="filteredItems.length === 0">
@@ -422,7 +429,7 @@ onMounted(async () => {
               </tr>
             </tbody>
           </table>
-          
+
           <!-- Pagination -->
           <div class="flex justify-between items-center p-3 text-sm border-t">
             <div>
@@ -432,9 +439,15 @@ onMounted(async () => {
                 class="border rounded px-2 py-1 mx-1"
                 @change="currentPage = 1"
               >
-                <option v-for="n in [5, 10, 20]" :key="n" :value="n">{{ n }}</option>
+                <option v-for="n in [5, 10, 20]" :key="n" :value="n">
+                  {{ n }}
+                </option>
               </select>
-              <span>Showing {{ (currentPage - 1) * rowsPerPage + 1 }} to {{ Math.min(currentPage * rowsPerPage, filteredItems.length) }} out of {{ filteredItems.length }} records</span>
+              <span
+                >Showing {{ (currentPage - 1) * rowsPerPage + 1 }} to
+                {{ Math.min(currentPage * rowsPerPage, filteredItems.length) }}
+                out of {{ filteredItems.length }} records</span
+              >
             </div>
             <div class="flex items-center gap-1">
               <button
@@ -448,7 +461,9 @@ onMounted(async () => {
                 <button
                   :class="[
                     'px-3 py-1 border rounded',
-                    currentPage === n ? 'bg-[#75778B] text-white' : 'hover:bg-gray-100'
+                    currentPage === n
+                      ? 'bg-[#75778B] text-white'
+                      : 'hover:bg-gray-100',
                   ]"
                   @click="currentPage = n"
                 >
@@ -479,7 +494,7 @@ onMounted(async () => {
               'px-4 py-2 rounded text-sm',
               selectedTab === 'services'
                 ? 'bg-teal-600 text-white'
-                : 'bg-white text-gray-700 border'
+                : 'bg-white text-gray-700 border',
             ]"
           >
             Services
@@ -490,7 +505,7 @@ onMounted(async () => {
               'px-4 py-2 rounded text-sm',
               selectedTab === 'drugs'
                 ? 'bg-teal-600 text-white'
-                : 'bg-white text-gray-700 border'
+                : 'bg-white text-gray-700 border',
             ]"
           >
             Drugs
@@ -506,9 +521,9 @@ onMounted(async () => {
           </thead>
           <tbody>
             <tr
-              v-for="(item, idx) in selectedItems.filter(item => 
-                selectedTab === 'services' 
-                  ? 'serviceUuid' in item 
+              v-for="(item, idx) in selectedItems.filter((item) =>
+                selectedTab === 'services'
+                  ? 'serviceUuid' in item
                   : 'drugUuid' in item
               )"
               :key="item.id"
@@ -518,11 +533,15 @@ onMounted(async () => {
               <td class="p-2">{{ item.name }}</td>
               <td class="p-2">ETB {{ item.userPrice.toLocaleString() }}</td>
             </tr>
-            <tr v-if="selectedItems.filter(item => 
-                selectedTab === 'services' 
-                  ? 'serviceUuid' in item 
-                  : 'drugUuid' in item
-              ).length === 0">
+            <tr
+              v-if="
+                selectedItems.filter((item) =>
+                  selectedTab === 'services'
+                    ? 'serviceUuid' in item
+                    : 'drugUuid' in item
+                ).length === 0
+              "
+            >
               <td colspan="3" class="p-4 text-center text-gray-500">
                 No {{ selectedTab }} selected
               </td>
@@ -549,7 +568,9 @@ input[type="checkbox"] {
   @apply h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded;
 }
 
-input[type="date"], input[type="text"], select {
+input[type="date"],
+input[type="text"],
+select {
   @apply border-gray-300 focus:border-teal-500 focus:ring-teal-500 rounded-md shadow-sm;
 }
 

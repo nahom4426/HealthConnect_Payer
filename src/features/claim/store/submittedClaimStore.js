@@ -13,6 +13,8 @@ export const useSubmittedClaimStore = defineStore("submittedClaimStore", () => {
   }
 
   function remove(id) {
+    console.log(id);
+
     const idx = submittedClaims.value.findIndex((el) => el.claimUuid == id);
     if (idx > -1) {
       submittedClaims.value.splice(idx, 1);
