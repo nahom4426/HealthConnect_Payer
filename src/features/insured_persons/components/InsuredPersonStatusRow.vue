@@ -233,8 +233,8 @@ async function handleDeactivateWithClose(insuredId) {
           :id="`dropdown-${row.insuredUuid || row.id}`"
           class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         >
-          <div class="py-1">
-            
+          <div class="py-1" role="none">
+
               <button 
               @click.stop="handleEditWithClose(row)"
               class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"

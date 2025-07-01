@@ -6,15 +6,13 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import PayerContractsDataProvider from "../components/PayerContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
-import { changePayerContractStatus, deletePayerContract } from "../../active_payer_contracts/api/payerContractApi";
+import { changePayerContractStatus, deletePayerContract } from "../api/payerContractApi";
 import { addToast } from "@/toast";
 import { useApiRequest } from "@/composables/useApiRequest";
-// import StatusRow from ".././active_payer_contracts/components/StatusRow.vue";
+import StatusRow from "../components/contractStatusRow.vue";
 import { openModal } from "@customizer/modal-x";
 import { payerContracts } from "../store/payerContractStore";
 import icons from "@/utils/icons";
-import ContractStatusRow from "../../active_payer_contracts/components/contractStatusRow.vue";
-
 
 const emit = defineEmits(["navigate"]);
 const router = useRouter();
@@ -137,15 +135,18 @@ function handleDeactivate(contract) {
 }
 
 function handleAddContract() {
-  router.push(`/new_contract/new`);
-}
-function handleEdit(contract) {
-  router.push({
-    path: '/edit',
-    state: { contract } // Pass full object here
+  openModal("AddPayerContract", {
+    onAdded: (newContract) => {
+      payerContractsStore.add(newContract);
+      refreshData();
+      addToast({
+        type: "success",
+        title: "Contract Added",
+        message: `Contract "${newContract.contractName}" has been added successfully`,
+      });
+    },
   });
 }
-
 </script>
 
 <template>
@@ -159,15 +160,15 @@ function handleEdit(contract) {
       </button>
     </template>
 
-    <template #add-action>
+    <!-- <template #add-action>
       <button
         @click.prevent="handleAddContract"
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
       >
         <i v-html="icons.plus_circle"></i>
-        <p class="text-base">Initiate Contract</p>
+        <p class="text-base">Add Contract</p>
       </button>
-    </template>
+    </template> -->
 
     <template #default="{ search }">
       <PayerContractsDataProvider
@@ -199,7 +200,7 @@ function handleEdit(contract) {
             ]
           }"
           :rows="contracts"
-          :rowCom="ContractStatusRow"
+          :rowCom="StatusRow"
           :pagination="{
             currentPage,
             itemsPerPage,
@@ -209,7 +210,7 @@ function handleEdit(contract) {
           }"
         >
           <template #row>
-            <ContractStatusRow
+            <StatusRow
               :rowData="contracts"
               :rowKeys="[
                 'contractName',
@@ -231,7 +232,7 @@ function handleEdit(contract) {
                 'Actions'
               ]"
               :onView="viewDetails"
-              :onEdit="handleEdit"
+              :onEdit="openEditModal"
               :onActivate="handleActivate"
               :onDeactivate="handleDeactivate"
               :onRowClick="(row) => {}"

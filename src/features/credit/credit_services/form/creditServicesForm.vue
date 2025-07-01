@@ -510,198 +510,199 @@ watch(searchDrugQuery, async (newQuery) => {
     @submit.prevent="handleSubmit"
   >
     <!-- Step 1: Select Employee -->
-    <div v-if="currentStep === 'selectEmployee'" class="py-3 space-y-6">  
-      <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-        {{ error }}
-      </div>
+   <div v-if="currentStep === 'selectEmployee'" class="py-3 space-y-6 flex flex-col h-full">  
+  <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+    {{ error }}
+  </div>
 
-      <div class="flex gap-4 mt-4">
-        <div class="w-72">
-          <Select     
-            :obj="true"
-            name="payer"
-            label="Select Payer"
-            validation="required"
-            :options="payerOptions"
-            :disabled="fetchPending"
-            :attributes="{
-              placeholder: 'Select a Payer'
-            }"
-            v-model="selectedPayer"
-          />
-        </div>
-        
-        <div class="w-full">
-          <Input 
-            name="searchEmployeeQuery" 
-            label="Search Employees" 
-            :attributes="{
-              placeholder: 'Search employees',
-            }"
-            v-model="searchEmployeeQuery"
-          />
-        </div>
-      </div>
-
-      <!-- Employees Table -->
-      <div class="mt-6">
-        <template v-if="fetchPending">
-          <div class="flex justify-center py-8">
-            <Spinner class="h-8 w-8 text-teal-600" />
-          </div>
-        </template>
-        <template v-else>
-          <div class="border rounded-lg">
-          <table class="min-w-full divide-y divide-gray-200">
-  <thead class="border-b">
-    <tr>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eligibility</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-    </tr>
-  </thead>
-  <tbody class="bg-white divide-y divide-gray-200">
-    <template v-for="(employee, index) in employees" :key="employee.insuredUuid">
-      <!-- Only show employees that are not dependants -->
-      <tr v-if="!employee.isDependant"
-        :class="{
-          'bg-[#DFF1F1]': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid,
-          'border-b-2 border-blue-200': employee.dependants && employee.dependants.length > 0
+  <div class="flex gap-4">
+    <div class="w-72">
+      <Select     
+        :obj="true"
+        name="payer"
+        label="Select Payer"
+        validation="required"
+        :options="payerOptions"
+        :disabled="fetchPending"
+        :attributes="{
+          placeholder: 'Select a Payer'
         }"
-      >
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-          {{ employee.idNumber }}
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {{ employee.fullName }}
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {{ employee.phone }}
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {{ employee.position }}
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
-          <span :class="employee.eligible ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-[#DB2E48] bg-[#DB2E481A] p-1'">
-            {{ employee.eligible ? 'Eligible' : 'Not Eligible' }}
-          </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-          <button
-            type="button"
-            @click="selectEmployee(employee)"
-            :class="{
-              'text-white bg-[#02676B] px-4 py-2 hover:bg-teal-900': 
-                !(selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid) && employee.eligible,
-              'text-white bg-[#02676B] px-4 py-2 rounded': 
-                selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid && employee.eligible,
-              'bg-[#02676B1A] text-white px-4 py-2 cursor-not-allowed': 
-                !employee.eligible
-            }"
-            :disabled="!employee.eligible"
-          >
-            {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Selected' : 'Select' }}
-          </button>
-        </td>
-      </tr>
-      
-      <!-- Show dependants only for the current employee -->
-      <template v-if="!employee.isDependant && employee.dependants && employee.dependants.length > 0">
-        <tr 
-          v-for="(dependant, dIndex) in employee.dependants" 
-          :key="dependant.dependantUuid"
-          class="bg-blue-50"
-          :class="{
-            'bg-blue-100': selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid
-          }"
-        >
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 pl-10">
-            <span class="text-blue-600">↳</span> {{ dIndex + 1 }}
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {{ employee.idNumber }} <span class="text-xs text-gray-400">(Employee ID)</span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 pl-2">
-            {{ `${dependant.dependantFirstName} ${dependant.dependantFatherName} ${dependant.dependantGrandFatherName}`.trim() }}
-            <span class="text-xs text-blue-600 ml-1">(Dependant - {{ dependant.relationship }})</span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {{ employee.phone }}
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            Dependant ({{ dependant.relationship }})
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
-            <span :class="dependant.dependantStatus === 'ACTIVE' ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-[#DB2E48] bg-[#DB2E481A] p-1'">
-              {{ dependant.dependantStatus === 'ACTIVE' ? 'Eligible' : 'Not Eligible' }}
-            </span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-            <button
-              type="button"
-              @click="selectEmployee({
-                insuredUuid: dependant.dependantUuid,
-                fullName: `${dependant.dependantFirstName} ${dependant.dependantFatherName} ${dependant.dependantGrandFatherName}`.trim(),
-                phone: employee.phone,
-                idNumber: employee.idNumber,
-                position: `Dependant (${dependant.relationship})`,
-                birthDate: dependant.dependantBirthDate,
-                eligible: dependant.dependantStatus === 'ACTIVE',
-                status: dependant.dependantStatus,
-                gender: dependant.dependantGender,
-                email: employee.email,
-                address: employee.address,
-                isDependant: true,  // Mark as dependant
-                dependantUuid: dependant.dependantUuid,  // Include dependantUuid
-                employeeUuid: employee.insuredUuid  // Include the parent employee's UUID
-              })"
-              :class="{
-                'text-white bg-[#02676B] px-4 py-2 hover:bg-teal-900': 
-                  !(selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid) && dependant.dependantStatus === 'ACTIVE',
-                'text-white bg-[#02676B] px-4 py-2 rounded': 
-                  selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid && dependant.dependantStatus === 'ACTIVE',
-                'bg-[#02676B1A] text-white px-4 py-2 cursor-not-allowed': 
-                  dependant.dependantStatus !== 'ACTIVE'
-              }"
-              :disabled="dependant.dependantStatus !== 'ACTIVE'"
-            >
-              {{ selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid ? 'Selected' : 'Select' }}
-            </button>
-          </td>
-        </tr>
-      </template>
+        v-model="selectedPayer"
+      />
+    </div>
+    
+    <div class="w-full">
+      <Input 
+        name="searchEmployeeQuery" 
+        label="Search Employees" 
+        :attributes="{
+          placeholder: 'Search employees',
+        }"
+        v-model="searchEmployeeQuery"
+      />
+    </div>
+  </div>
+
+  <!-- Employees Table - Now with fixed height and scroll -->
+  <div class="mt-4 flex-1 flex flex-col">
+    <template v-if="fetchPending">
+      <div class="flex justify-center py-8">
+        <Spinner class="h-8 w-8 text-teal-600" />
+      </div>
     </template>
-  </tbody>
-</table>
-          </div>
-        </template>
+    <template v-else>
+      <div class="border rounded-lg flex-1 flex flex-col">
+        <div class="overflow-auto" style="max-height: calc(100vh - 350px); min-height: 300px;">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50 sticky top-0 z-10">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eligibility</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <template v-for="(employee, index) in employees" :key="employee.insuredUuid">
+                <!-- Only show employees that are not dependants -->
+                <tr v-if="!employee.isDependant"
+                  :class="{
+                    'bg-[#DFF1F1]': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid,
+                    'border-b-2 border-blue-200': employee.dependants && employee.dependants.length > 0
+                  }"
+                >
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ employee.idNumber }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ employee.fullName }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ employee.phone }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ employee.position }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                    <span :class="employee.eligible ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-[#DB2E48] bg-[#DB2E481A] p-1'">
+                      {{ employee.eligible ? 'Eligible' : 'Not Eligible' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      type="button"
+                      @click="selectEmployee(employee)"
+                      :class="{
+                        'text-white bg-[#02676B] px-4 py-2 hover:bg-teal-900': 
+                          !(selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid) && employee.eligible,
+                        'text-white bg-[#02676B] px-4 py-2 rounded': 
+                          selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid && employee.eligible,
+                        'bg-[#02676B1A] text-white px-4 py-2 cursor-not-allowed': 
+                          !employee.eligible
+                      }"
+                      :disabled="!employee.eligible"
+                    >
+                      {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Selected' : 'Select' }}
+                    </button>
+                  </td>
+                </tr>
+                
+                <!-- Show dependants only for the current employee -->
+                <template v-if="!employee.isDependant && employee.dependants && employee.dependants.length > 0">
+                  <tr 
+                    v-for="(dependant, dIndex) in employee.dependants" 
+                    :key="dependant.dependantUuid"
+                    class="bg-blue-50"
+                    :class="{
+                      'bg-blue-100': selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid
+                    }"
+                  >
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 pl-10">
+                      <span class="text-blue-600">↳</span> {{ dIndex + 1 }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ employee.idNumber }} <span class="text-xs text-gray-400">(Employee ID)</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 pl-2">
+                      {{ `${dependant.dependantFirstName} ${dependant.dependantFatherName} ${dependant.dependantGrandFatherName}`.trim() }}
+                      <span class="text-xs text-blue-600 ml-1">(Dependant - {{ dependant.relationship }})</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ employee.phone }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      Dependant ({{ dependant.relationship }})
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                      <span :class="dependant.dependantStatus === 'ACTIVE' ? 'bg-[#DFF1F1] text-[#02676B] p-1' : 'text-[#DB2E48] bg-[#DB2E481A] p-1'">
+                        {{ dependant.dependantStatus === 'ACTIVE' ? 'Eligible' : 'Not Eligible' }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        type="button"
+                        @click="selectEmployee({
+                          insuredUuid: dependant.dependantUuid,
+                          fullName: `${dependant.dependantFirstName} ${dependant.dependantFatherName} ${dependant.dependantGrandFatherName}`.trim(),
+                          phone: employee.phone,
+                          idNumber: employee.idNumber,
+                          position: `Dependant (${dependant.relationship})`,
+                          birthDate: dependant.dependantBirthDate,
+                          eligible: dependant.dependantStatus === 'ACTIVE',
+                          status: dependant.dependantStatus,
+                          gender: dependant.dependantGender,
+                          email: employee.email,
+                          address: employee.address,
+                          isDependant: true,
+                          dependantUuid: dependant.dependantUuid,
+                          employeeUuid: employee.insuredUuid
+                        })"
+                        :class="{
+                          'text-white bg-[#02676B] px-4 py-2 hover:bg-teal-900': 
+                            !(selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid) && dependant.dependantStatus === 'ACTIVE',
+                          'text-white bg-[#02676B] px-4 py-2 rounded': 
+                            selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid && dependant.dependantStatus === 'ACTIVE',
+                          'bg-[#02676B1A] text-white px-4 py-2 cursor-not-allowed': 
+                            dependant.dependantStatus !== 'ACTIVE'
+                        }"
+                        :disabled="dependant.dependantStatus !== 'ACTIVE'"
+                      >
+                        {{ selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid ? 'Selected' : 'Select' }}
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </template>
+            </tbody>
+          </table>
+        </div>
       </div>
+    </template>
+  </div>
 
-      <!-- Continue Button -->
-      <div v-if="selectedEmployee" class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
-        <Button
-          type="button"
-          @click="props.onCancel"
-          class="text-[#75778B] px-6 py-4 border-[1px] border-[#75778B] rounded-lg hover:bg-gray-50"
-          :disabled="fetchPending"
-        >
-          Cancel
-        </Button>
-        <button
-          type="button"
-          class="px-6 py-2 bg-primary text-white rounded-md hover:bg-teal-700"
-          @click="continueToServices"
-        >
-          Continue to Services
-        </button>
-      </div>
+  <!-- Continue Button - Always visible at bottom -->
+  <div v-if="selectedEmployee" class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
+    <Button
+      type="button"
+      @click="props.onCancel"
+      class="text-[#75778B] px-6 py-4 border-[1px] border-[#75778B] rounded-lg hover:bg-gray-50"
+      :disabled="fetchPending"
+    >
+      Cancel
+    </Button>
+    <button
+      type="button"
+      class="px-6 py-2 bg-primary text-white rounded-md hover:bg-teal-700"
+      @click="continueToServices"
+    >
+      Continue to Services
+    </button>
+  </div>
 </div>
-
     <!-- Step 2: Select Services -->
     <div v-else-if="employeeDetails" class="py-3 space-y-6">
       <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">

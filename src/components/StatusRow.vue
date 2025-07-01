@@ -267,7 +267,7 @@ async function handleDeactivateWithClose(providerId) {
             </button>
             
             <!-- View/Detail option -->
-            <button 
+            <!-- <button 
               @click.stop="handleViewWithClose(row.providerUuid || row.id)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
@@ -275,7 +275,7 @@ async function handleDeactivateWithClose(providerId) {
               <i v-html="icons.details" />
               Detail
             </div>
-            </button>
+            </button> -->
             
             <!-- Status change options -->
           <template v-if="row.status">
