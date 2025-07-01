@@ -211,11 +211,11 @@ async function handleDeactivateWithClose(payerUuid) {
       </span>
     </td>  
 
-    <td class="p-3" v-if="headKeys.includes('Actions') || headKeys.includes('actions')">  
-      <div class="dropdown-container relative w-full">
+    <td class="p-3" >  
+      <div class="dropdown-container relative ">
         <button 
           @click.stop="toggleDropdown($event, row.payerUuid || row.id)"
-          class="inline-flex items-start justify-start p-2 w-full text-sm font-medium text-start pl-8 text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 "
+          class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
           type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -225,8 +225,8 @@ async function handleDeactivateWithClose(payerUuid) {
 
         <div 
           :id="`dropdown-${row.payerUuid || row.id}`"
-          class="dropdown-menu hidden absolute right-0 z-10 w-full bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-        >
+          class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                >
           <div class="py-1" role="none">
             <button 
               @click.stop="handleEditWithClose(row)"
@@ -238,7 +238,7 @@ async function handleDeactivateWithClose(payerUuid) {
               </div>
             </button>
             
-            <button 
+            <!-- <button 
               @click.stop="handleViewWithClose(row.payerUuid || row.id)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
@@ -246,7 +246,7 @@ async function handleDeactivateWithClose(payerUuid) {
                 <i v-html="icons.details" />
                 Detail
               </div>
-            </button>
+            </button> -->
             
             <template v-if="row.status">
               <button 

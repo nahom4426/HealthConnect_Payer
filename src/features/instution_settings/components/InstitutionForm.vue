@@ -227,10 +227,10 @@ const categoryOptions = [
             <img :src="previewImage" alt="Logo preview" class="h-20 w-auto object-contain mx-auto" />
           </div>
           
-          <div class="flex items-end justify-center mt-2">
-            <div class="flex items-center ml-4 rounded-md px-3 py-1">
+          <div class="flex items-end justify-end mt-2">
+            <div class="flex items-end ml-4 rounded-md px-3 py-1">
               <button 
-                v-if="isEdit"
+                v-if="previewImage"
                 type="button" 
                 @click="browseFiles"
                 class="text-xs font-medium text-white bg-[#02676B] ml-2 py-2 px-3 hover:underline"

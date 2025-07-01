@@ -281,7 +281,7 @@ function handleImageError(event) {
           :pending="pending"
           :headers="{
             head: [
-              'Institution Name',
+              'Payer Name',
               'Contracts',
               'Payer Admin User',
               'Contact',

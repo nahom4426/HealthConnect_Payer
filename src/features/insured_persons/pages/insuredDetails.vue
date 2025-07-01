@@ -64,7 +64,21 @@
       </div>
 
       <!-- Dependants Section -->
-      <div class="mt-6">
+       <div v-if="insuredData.dependantCoverage === false" class="mt-6">
+  <div class="flex items-start gap-4 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+    <div class="text-yellow-500">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+      </svg>
+    </div>
+    <div class="text-sm text-yellow-800">
+      <h3 class="font-semibold text-base">Dependants Not Allowed</h3>
+      <p>This company does not allow coverage for dependants under this contract or policy.</p>
+    </div>
+  </div>
+</div>
+
+      <div v-if="insuredData.dependantCoverage == true" class="mt-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">Dependants</h3>
           <button 

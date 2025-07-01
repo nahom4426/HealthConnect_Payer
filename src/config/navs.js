@@ -16,7 +16,7 @@ export default [
     navs: [
         {
       path: "/payer_contracts",
-      name: "Active Conttracts",
+      name: "Active Contracts",
       icon: icons.active_contracts,
       privilege: ["Create Employees"],
       // category: "Admin",
