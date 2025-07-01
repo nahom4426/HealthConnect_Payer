@@ -44,7 +44,7 @@ async function handleSubmit(formValues: any) {
 
  const payerData = {
   payerName: formValues.payerName,
-  DependentCoverage: formValues.DependentCoverage,
+  dependantCoverage: formValues.dependantCoverage,
   description: formValues.description || formValues.memo,
  telephone: cleanPhoneNumber(formValues.telephone),
   category: formValues.category,

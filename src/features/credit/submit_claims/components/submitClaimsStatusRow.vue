@@ -8,7 +8,6 @@ import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
 import { watch } from 'vue';
 
-
 const props = defineProps({
   rowData: { type: Array, required: true },
   rowKeys: { type: Array, required: true },
@@ -17,14 +16,13 @@ const props = defineProps({
   onEdit: { type: Function, default: () => {} },
   onActivate: { type: Function, default: () => {} },
   onDeactivate: { type: Function, default: () => {} },
-  onRowClick: { type: Function, default: () => {} }
+  onRowClick: { type: Function, default: () => {} },
+  onRemove: { type: Function, default: () => {} } // Add this new prop for remove action
 });
 
 const { addToast } = useToast();
 const insuredStore = claimServices();
 const payerNames = ref<Record<string, string>>({});
-
-
 
 function handleImageError(event) {
   event.target.src = '/assets/placeholder-profile.png';
@@ -87,7 +85,29 @@ async function handleDeactivateWithClose(insuredId) {
     addToast({ type: 'error', title: 'Deactivation Failed', message: error.message });
   }
 }
+
+// Add this new function for handling remove action
+function handleRemoveWithClose(claimId) {
+  closeAllDropdowns();
+  if (typeof props.onRemove === 'function') {
+    props.onRemove(claimId);
+     console.log('Removing claim:', claimId);
+  }
+}
+function handleRemove(claimId: string) {
+  if (typeof props.onRemove === 'function') {
+    props.onRemove(claimId);
+      console.log('Removing claim:', claimId);
+  }
+}
+const removeClaim = (claimUuid: string) => {
+  console.log('Removing claim:', claimUuid); // Add this
+  selectedClaims.value = selectedClaims.value.filter(
+    claim => claim.dispensingUuid !== claimUuid
+  );
+};
 </script>
+
 <template>
   <tr 
     v-for="(row, idx) in rowData" 
@@ -100,16 +120,16 @@ async function handleDeactivateWithClose(insuredId) {
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <div v-if="key === 'totalAmount'" class="truncate">  
         <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#DFF1F1] text-[#02676B]">
-          ETB {{ row.totalAmount.toFixed(2) }}
+          ETB {{ row.totalAmount?.toFixed(2) || '0.00' }}
         </span>
       </div>
       
- <div v-else-if="key === 'status'" >  
-  <span class="px-2.5 py-0.5 text-xs font-small rounded-sm bg-[#F6F7FA] text-[#75778B] border border-[#75778B] border-opacity-20" 
-        style="border-width: 0.2px">
-    {{ row.status }}
-  </span>
-</div>
+      <div v-else-if="key === 'status'">  
+        <span class="px-2.5 py-0.5 text-xs font-small rounded-sm bg-[#F6F7FA] text-[#75778B] border border-[#75778B] border-opacity-20" 
+              style="border-width: 0.2px">
+          {{ row.status }}
+        </span>
+      </div>
 
       <span v-else class="text-gray-700">
         {{ row[key] }}
@@ -119,7 +139,7 @@ async function handleDeactivateWithClose(insuredId) {
     <td class="p-3">
       <div class="dropdown-container relative">
         <button 
-          @click.stop="toggleDropdown($event, row.insuredUuid || row.id)"
+          @click.stop="toggleDropdown($event, row.dispensingUuid || row.insuredUuid || row.id)"
           class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
           type="button"
         >
@@ -129,7 +149,7 @@ async function handleDeactivateWithClose(insuredId) {
         </button>
 
         <div 
-          :id="`dropdown-${row.insuredUuid || row.id}`"
+          :id="`dropdown-${row.dispensingUuid || row.insuredUuid || row.id}`"
           class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         >
           <div class="py-1">
@@ -142,9 +162,17 @@ async function handleDeactivateWithClose(insuredId) {
                 Edit
               </div>
             </button>
+               <button 
+        @click.stop="handleRemove(row.dispensingUuid)"
+        class="text-red-500 hover:text-red-700"
+        title="Remove claim"
+      >
+       rem <i v-html="icons.trash"></i>
+      </button>
             <button 
               @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+              v-if="row.insuredUuid"
             >
               <div class="flex items-center justify-start pl-4 gap-4">
                 <i v-html="icons.details" />
@@ -175,6 +203,18 @@ async function handleDeactivateWithClose(insuredId) {
                 </div>
               </button>
             </template>
+
+            <!-- Add the Remove button for claims -->
+            <button 
+              v-if="row.dispensingUuid"
+              @click.stop="handleRemoveWithClose(row.dispensingUuid)"
+              class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
+            >
+              <div class="flex items-center justify-start pl-4 gap-4">
+                <i v-html="icons.trash" />
+                Remove
+              </div>
+            </button>
           </div>
         </div>
       </div>

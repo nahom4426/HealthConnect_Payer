@@ -65,7 +65,7 @@ async function handleSubmit(formValues: any) {
     const payerRequestObj = {
       payerName: formValues.payerName || "",
       tinNumber: formValues.tinNumber || 0,
-      DependentCoverage: formValues.DependentCoverage,
+      dependantCoverage: formValues.dependantCoverage,
       description: formValues.description || formValues.memo || "",
        email: formValues.email,
       telephone: cleanPhoneNumber(formValues.telephone),

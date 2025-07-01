@@ -80,7 +80,7 @@ const props = defineProps({
   height: 100%;
 }
 .xl {
-  width: 66rem;
+  width: 100%;
   height: 100%;
 }
 

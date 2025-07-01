@@ -2,12 +2,44 @@ import icons from "@/utils/icons";
 
 // icon set called streamline
 export default [
-  {
-    path: "/dashboard",
-    name: "Dashboard",
-    icon: icons.dashboard,
+ {
+  path: "/dashboard",
+  name: "Dashboard",
+  icon: icons.dashboard,
+
+},
+ {
+    name: "Contracts",
+    icon: icons.contracts,
+    privilege: ['Create Employees'], 
+    //  category: "Payers",
+    navs: [
+        {
+      path: "/payer_contracts",
+      name: "Active Conttracts",
+      icon: icons.active_contracts,
+      privilege: ["Create Employees"],
+      // category: "Admin",
+    },
+      {
+        path: "/new_contract",
+        name: "Create Contracts",
+        icon: icons.new_contract,
+        category: "Pages",
+        privilege: ['Create Employees'], 
+      },
+      {
+        path: "/pending_contracts",
+        name: "Pending Contracts",
+        icon: icons.pending_contracts,
+        category: "Pages",
+       privilege: ['Create Employees'], 
+      },
+     
+    
+    ],
   },
-  {
+ {
     path: "/payer_list",
     name: "Payer List",
     icon: icons.payerList,
@@ -20,13 +52,7 @@ export default [
     icon: icons.Activeprovider,
     privilege: ["CREATE_USER"],
   },
-  {
-    path: "/payer_contracts",
-    name: "Payer Conttracts",
-    icon: icons.payerContracts,
-    privilege: ["CREATE_USER"],
-    // category: "Admin",
-  },
+   
   {
     path: "/services",
     name: "Services",
@@ -42,14 +68,14 @@ export default [
     navs: [
       {
         path: "/credit_services",
-        name: "Create Claims",
+        name: "Credits Services",
         icon: icons.creditservices,
         // category: "main",
         privilege: ["Create Services"],
       },
       {
         path: "/submit_claims",
-        name: "Submit Claims",
+        name: "Create Claims",
         icon: icons.approveClaims,
         category: "Pages",
         privilege: ["Create Services"],
@@ -70,12 +96,13 @@ export default [
       },
     ],
   },
-  {
-    path: "/insured_list",
-    name: "Employees list",
-    icon: icons.active_insured_persons,
-    privilege: ["Create Employees"],
-  },
+   {
+        path: "/insured_list",
+        name: "Employees list",
+        icon: icons.active_insured_persons,
+        privilege: ['Create Employees'],
+      },
+     
   {
     name: "Claims",
     icon: icons.claimManagement,

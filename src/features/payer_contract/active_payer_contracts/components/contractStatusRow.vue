@@ -2,10 +2,9 @@
 import { defineProps, onMounted, onUnmounted } from 'vue';
 import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
-import { useInstitutions } from "@/features/instution_settings/store/InstitutionsStore";
+import { payerContracts } from "../store/payerContractStore";
 import icons from "@/utils/icons";
-import { changePayerContractStatus } from '../api/payerContractApi.ts';
-
+import { changePayerContractStatus } from '../api/payerContractApi';
 
 const props = defineProps({
   rowData: {
@@ -43,7 +42,7 @@ const props = defineProps({
 });
 
 const { addToast } = useToast();
-const payersStore = useInstitutions();
+const payerContractsStore = payerContracts();
 
 function getStatusStyle(status) {
   if (status === 'ACTIVE' || status === 'Active') {
@@ -66,14 +65,20 @@ function handleImageError(event) {
 function handleEdit(row) {
   console.log('Edit button clicked with row data:', row);
   
-  openModal('EditPayer', { 
-    payerUuid: row.payerUuid, 
-    payer: row,
-    onUpdated: (updatedPayer) => {
-      console.log('Payer updated:', updatedPayer);
-      payersStore.update(updatedPayer.payerUuid, updatedPayer);
+  if (row.contractHeaderUuid) {
+    openModal('EditPayerContract', { 
+      contractHeaderUuid: row.contractHeaderUuid, 
+      contract: row,
+      onUpdated: (updatedContract) => {
+        console.log('Contract updated:', updatedContract);
+        payerContractsStore.update(updatedContract.contractHeaderUuid, updatedContract);
+      }
+    });
+  } else {
+    if (typeof props.onEdit === 'function') {
+      props.onEdit(row);
     }
-  });
+  }
 }
 
 function toggleDropdown(event, rowId) {
@@ -109,48 +114,48 @@ function handleViewWithClose(rowId) {
   props.onView(rowId);
 }
 
-async function handleActivateWithClose(payerUuid) {
+async function handleActivateWithClose(contractHeaderUuid) {
   closeAllDropdowns();
   try {
-    const response = await changePayerContractStatus(payerUuid, 'ACTIVE');
+    const response = await changePayerContractStatus(contractHeaderUuid, 'ACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
-        message: 'Payer has been activated successfully'
+        message: 'Contract has been activated successfully'
       });
-      payersStore.update(payerUuid, { status: 'ACTIVE' });
+      payerContractsStore.update(contractHeaderUuid, { status: 'ACTIVE' });
     } else {
-      throw new Error(response.error || 'Failed to activate payer');
+      throw new Error(response.error || 'Failed to activate contract');
     }
   } catch (error) {
     addToast({
       type: 'error',
       title: 'Activation Failed',
-      message: error.message || 'An error occurred while activating the payer'
+      message: error.message || 'An error occurred while activating the contract'
     });
   }
 }
 
-async function handleDeactivateWithClose(payerUuid) {
+async function handleDeactivateWithClose(contractHeaderUuid) {
   closeAllDropdowns();
   try {
-    const response = await changePayerContractStatus(payerUuid, 'INACTIVE');
+    const response = await changePayerContractStatus(contractHeaderUuid, 'INACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
-        message: 'Payer has been deactivated successfully'
+        message: 'Contract has been deactivated successfully'
       });
-      payersStore.update(payerUuid, { status: 'INACTIVE' });
+      payerContractsStore.update(contractHeaderUuid, { status: 'INACTIVE' });
     } else {
-      throw new Error(response.error || 'Failed to deactivate payer');
+      throw new Error(response.error || 'Failed to deactivate contract');
     }
   } catch (error) {
     addToast({
       type: 'error',
       title: 'Deactivation Failed',
-      message: error.message || 'An error occurred while deactivating the payer'
+      message: error.message || 'An error occurred while deactivating the contract'
     });
   }
 }
@@ -165,35 +170,8 @@ async function handleDeactivateWithClose(payerUuid) {
   >  
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
-    <!-- Payer Logo Column (added to match provider) -->
-    <td  class="p-3 py-4 w-16">
-      <div class="flex justify-center items-center">
-        <img 
-          v-if="row.logoBase64" 
-          :src="row.logoBase64" 
-          alt="Payer Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-        />
-        <img 
-          v-else-if="row.logoUrl" 
-          :src="row.logoUrl" 
-          alt="Payer Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-        />
-        <img 
-          v-else-if="row.logoPath" 
-          :src="`${getBaseUrl()}/payer/logo/${row.logoPath}`" 
-          alt="Payer Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-          @error="handleImageError"
-        />
-        <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
-          <span class="text-gray-500 text-xs">No Logo</span>
-        </div>
-      </div>
-    </td>
-
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
+      <!-- Status field -->
       <div v-if="key === 'status'" class="truncate">  
         <span 
           class="px-2.5 py-1 rounded-full text-xs font-medium"
@@ -202,6 +180,15 @@ async function handleDeactivateWithClose(payerUuid) {
           {{ row.status }}
         </span>
       </div>
+      
+      <!-- Contract Name with Logo -->
+      <div v-else-if="key === 'contractName'" class="text-gray-700 flex items-center gap-2.5">
+        
+          {{ row.contractName }}
+       
+      </div>
+
+      <!-- Default field rendering -->
       <span v-else class="text-gray-700">
         {{ row[key] }}
       </span>
@@ -210,8 +197,8 @@ async function handleDeactivateWithClose(payerUuid) {
     <td class="p-3" v-if="headKeys.includes('Actions') || headKeys.includes('actions')">  
       <div class="dropdown-container relative w-full">
         <button 
-          @click.stop="toggleDropdown($event, row.payerUuid || row.id)"
-          class="inline-flex items-center justify-center p-2 w-full text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
+          @click.stop="toggleDropdown($event, row.contractHeaderUuid || row.id)"
+          class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
           type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -220,22 +207,22 @@ async function handleDeactivateWithClose(payerUuid) {
         </button>
 
         <div 
-          :id="`dropdown-${row.payerUuid || row.id}`"
+          :id="`dropdown-${row.contractHeaderUuid || row.id}`"
           class="dropdown-menu hidden absolute right-0 z-10 w-full bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         >
           <div class="py-1" role="none">
             <button 
               @click.stop="handleEditWithClose(row)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              <div class="flex items-center justify-start pl-4 gap-4">
+              <div class="flex items-start justify-start pl-4 gap-4">
                 <i v-html="icons.edits" />
                 Edit
               </div>
             </button>
             
             <button 
-              @click.stop="handleViewWithClose(row.payerUuid || row.id)"
+              @click.prevent="$router.push(`/payer_contracts/detail/${row.contractHeaderUuid}`)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               <div class="flex items-center justify-start pl-4 gap-4">
@@ -247,7 +234,7 @@ async function handleDeactivateWithClose(payerUuid) {
             <template v-if="row.status">
               <button 
                 v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
-                @click.stop="handleActivateWithClose(row.payerUuid || row.id)"
+                @click.stop="handleActivateWithClose(row.contractHeaderUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
@@ -258,7 +245,7 @@ async function handleDeactivateWithClose(payerUuid) {
              
               <button 
                 v-if="row.status === 'ACTIVE' || row.status === 'Active'"
-                @click.stop="handleDeactivateWithClose(row.payerUuid || row.id)"
+                @click.stop="handleDeactivateWithClose(row.contractHeaderUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">

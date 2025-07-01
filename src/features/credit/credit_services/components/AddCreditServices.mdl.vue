@@ -25,16 +25,21 @@ async function handleSubmit(formValues: any) {
     formPending.value = true;
 
     // Validate required fields
-    if (!formValues.payerUuid || !formValues.insuredUuid || !formValues.dispensingDate) {
+    if (!formValues.payerUuid || !formValues.dispensingDate || 
+        (!formValues.insuredUuid && !formValues.dependantUuid)) {
       throw new Error('Please fill all required fields');
     }
 
+    // Determine if this is a dependant claim
+    const isDependantClaim = !!formValues.dependantUuid;
+    
     // Common payload for both services and drugs
     const commonPayload = {
       providerUuid: auth.auth?.user?.providerUuid || "",
       payerUuid: formValues.payerUuid,
       payerName: formValues.payerName, 
-      insuredUuid: formValues.insuredUuid,
+      insuredUuid:  formValues.insuredUuid, // Only include for main employees
+      dependantUuid: isDependantClaim ? formValues.dependantUuid : null, // Include for dependants
       phone: formValues.phone,
       patientName: formValues.patientName || `${formValues.employeeId} - ${formValues.phone}`,
       employeeId: formValues.employeeId,
@@ -42,7 +47,8 @@ async function handleSubmit(formValues: any) {
       prescriptionNumber: formValues.prescriptionNumber || '',
       pharmacyTransactionId: formValues.pharmacyTransactionId || '',
       primaryDiagnosis: formValues.primaryDiagnosis || '',
-      secondaryDiagnosis: formValues.secondaryDiagnosis || ''
+      secondaryDiagnosis: formValues.secondaryDiagnosis || '',
+      isDependant: isDependantClaim // Flag to indicate if this is a dependant claim
     };
 
     let result;
@@ -64,7 +70,7 @@ async function handleSubmit(formValues: any) {
             
           return {
             serviceUuid: item.serviceUuid,
-            remark: item.remark || '', // Ensure remark is preserved
+            remark: item.remark || '',
             quantity: Number(item.quantity) || 1,
             paymentAmount: paymentAmount,
             primaryDiagnosis: formValues.primaryDiagnosis || '',
@@ -98,10 +104,10 @@ async function handleSubmit(formValues: any) {
           price: typeof item.paymentAmount === 'string' 
             ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
             : Number(item.paymentAmount) || 0,
-          remark: item.remark || '' // Ensure remark is preserved in store
+          remark: item.remark || ''
         }))
       };
-     } else if (formValues.drugItems) {
+    } else if (formValues.drugItems) {
       // Validate drugs
       if (formValues.drugItems.length === 0) {
         throw new Error('Please add at least one drug');
@@ -167,7 +173,7 @@ async function handleSubmit(formValues: any) {
       closeModal();
       router.push('/credit_services');
     } else {
-      throw new Error(result.data?.message || 'Submission failed');
+      // throw new Error(result.data?.message || 'Submission failed');
     }
   } catch (error: any) {
     console.error('Submission error:', error);

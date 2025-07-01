@@ -37,7 +37,7 @@ const props = defineProps({
 // Form data
 const payerLogo = ref<File | null>(null);
 const payerName = ref('');
-const DependentCoverage = ref(true);
+const dependantCoverage = ref(true);
 const category = ref('');
 const telephone = ref('');
 const countryCode = ref('+251');
@@ -56,7 +56,7 @@ onMounted(() => {
   if (props.initialData) {
     // Initialize form fields from props
     payerName.value = props.initialData.payerName || '';
-    DependentCoverage.value = props.initialData.dependentCoverage || true;
+    dependantCoverage.value = props.initialData.dependantCoverage || true;
     category.value = props.initialData.category || '';
     email.value = props.initialData.email || '';
     address.value = props.initialData.address || props.initialData.address1 || '';
@@ -88,7 +88,7 @@ onMounted(() => {
   }
   console.log('Form fields initialized:', {
     payerName: payerName.value,
-    DependentCoverage: DependentCoverage.value,
+    dependantCoverage: dependantCoverage.value,
     category: category.value,
     telephone: telephone.value,
     countryCode: countryCode.value,
@@ -157,7 +157,7 @@ function handleSubmit() {
   // Create form data object with all the values
   const formData = {
     payerName: payerName.value,
-    DependentCoverage: DependentCoverage.value,
+    dependantCoverage: dependantCoverage.value,
     category: category.value,
     telephone: `${countryCode.value}${telephone.value}`,
     address: address.value,
@@ -288,19 +288,19 @@ const categoryOptions = [
     <div class="flex gap-4 mt-1">
       <label
         class="flex items-center gap-2 pr-8 pl-4 py-4 rounded-lg cursor-pointer "
-        :class="DependentCoverage === true ? 'bg-[#DFF1F1] text-[#02676B] border-[#02676B]' : 'bg-[#F9F9FD] text-gray-600 border-gray-300'"
+        :class="dependantCoverage === true ? 'bg-[#DFF1F1] text-[#02676B] border-[#02676B]' : 'bg-[#F9F9FD] text-gray-600 border-gray-300'"
       >
         <input
           type="radio"
-          v-model="DependentCoverage"
+          v-model="dependantCoverage"
           :value="true"
           class="sr-only"
         />
         <div
           class="w-5 h-5 flex items-center justify-center rounded-md border"
-          :class="DependentCoverage === true ? 'bg-[#02676B] text-white' : 'border-gray-400'"
+          :class="dependantCoverage === true ? 'bg-[#02676B] text-white' : 'border-gray-400'"
         >
-          <svg v-if="DependentCoverage === true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+          <svg v-if="dependantCoverage === true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z" clip-rule="evenodd"/>
           </svg>
         </div>
@@ -309,19 +309,19 @@ const categoryOptions = [
 
       <label
         class="flex items-center gap-2 pr-8 pl-4 py-4  cursor-pointer "
-        :class="DependentCoverage === false ? 'bg-[#DFF1F1] text-[#02676B] border-[#02676B]' : 'bg-[#F9F9FD] text-gray-600 border-gray-300'"
+        :class="dependantCoverage === false ? 'bg-[#DFF1F1] text-[#02676B] border-[#02676B]' : 'bg-[#F9F9FD] text-gray-600 border-gray-300'"
       >
         <input
           type="radio"
-          v-model="DependentCoverage"
+          v-model="dependantCoverage"
           :value="false"
           class="sr-only"
         />
         <div
           class="w-5 h-5 flex items-center justify-center rounded-md border"
-          :class="DependentCoverage === false ? 'bg-[#02676B] text-white' : 'border-gray-400'"
+          :class="dependantCoverage === false ? 'bg-[#02676B] text-white' : 'border-gray-400'"
         >
-          <svg v-if="DependentCoverage === false" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+          <svg v-if="dependantCoverage === false" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z" clip-rule="evenodd"/>
           </svg>
         </div>
