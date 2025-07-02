@@ -323,7 +323,7 @@ onMounted(() => {
             </div>
             <button
               @click="submitSelectedMembers"
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-4 py-2 bg-primary text-white rounded-md hover:bg-[#014F4F] focus:outline-none focus:ring-2"
               :disabled="loading"
             >
               Add Selected
@@ -500,16 +500,16 @@ onMounted(() => {
       </div>
 
       <template #bottom>
-        <div class="flex justify-between w-full p-4 border-t">
+        <div class="flex justify-end gap-2 w-full p-4 border-t">
           <button
             @click="closeModal"
-            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            class="px-4 py-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Back
           </button>
           <button
             @click="submitSelectedMembers"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            class="px-4 py-4 bg-primary text-white rounded-md shadow-sm text-sm font-medium hover:bg-[#014F4F] "
             :disabled="selectedMembers.length === 0 || loading"
           >
             Continue

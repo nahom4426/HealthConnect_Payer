@@ -6,12 +6,14 @@ import FamilyDataProvider from "@/features/insured_persons/components/FamilyData
 import Dropdown from "@/components/Dropdown.vue";
 import icons from "@/utils/icons";
 import { openModal } from "@customizer/modal-x";
+import { useRoute } from "vue-router";
 
 const props = defineProps({
   search: String,
 });
 
 const auth = useAuthStore();
+const route = useRoute(); // access route params
 const institutionId = ref(auth.auth?.user?.payerUuid || "");
 </script>
 
@@ -50,23 +52,19 @@ const institutionId = ref(auth.auth?.user?.payerUuid || "");
             :ref="setRef"
           >
             <button
-              @click="openModal('AddServiceToContract', {
-  groupUuid: 'cb67bdef-bb6b-434d-a071-c8163cf25daa', // from your row data
-  contractHeaderUuid: '1428b0f2-b678-4468-b631-9c1a1f79f0eb' // from route params
+               @click="openModal('AddServiceToContract', {
+  data: {  // Wrap props in data object
+    groupUuid: row?.groupUuid,
+    contractHeaderUuid: route.params.contractHeaderUuid
+  }
 });"
               class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
             >
               <i v-html="icons.edits" />
-              <span>Edit</span>
+              <span>Add Service</span>
             </button>
+
             <!-- <button
-              @click=""
-              class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
-            >
-              <i v-html="icons.edits" />
-              <span>View</span>
-            </button> -->
-            <button
               @click="
                 $router.push(`/insured_list/group-insured/${row?.groupUuid}`)
               "
@@ -74,14 +72,15 @@ const institutionId = ref(auth.auth?.user?.payerUuid || "");
             >
               <i v-html="icons.details" />
               <span>Detail</span>
-            </button>
-            <button
+            </button> -->
+
+            <!-- <button
               @click="remove(row?.groupUuid)"
               class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
             >
               <i v-html="icons.deactivate" />
               <span>Mark as unavailable</span>
-            </button>
+            </button> -->
           </div>
         </Dropdown>
       </template>

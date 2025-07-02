@@ -13,13 +13,14 @@ import { useApiRequest } from '@/composables/useApiRequest';
 import { useAuthStore } from '@/stores/auth';
 import DatePicker from '@/components/datePicker.vue';
 import Spinner from '@/components/Spinner.vue';
+import ButtonSpinner from '@/components/buttonSpinner.vue';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const contractId = route.params.id;
 const selectedProvider = ref(null); // Will hold { value: uuid, label: name }
-const startDate = ref('');
+const beginDate = ref('');
 const endDate = ref('');
 const services = ref([]);
 const drugs = ref([]);
@@ -50,7 +51,7 @@ const formData = ref({
   contractHeaderUuid: '',
   contractName: '',
   contractDescription: '',
-  startDate: '',
+  beginDate: '',
   endDate: '',
   status: 'ACTIVE',
   payerUuid: auth.auth.user?.payerUuid || '',
@@ -86,7 +87,7 @@ async function fetchContract() {
       });
 
       selectedProvider.value = contract.providerUuid;
-      startDate.value = contract.startDate;
+      beginDate.value = contract.startDate;
       endDate.value = contract.endDate;
 
       if (contract.contractDetails) {
@@ -115,7 +116,7 @@ async function fetchContract() {
     console.error('❌ Error fetching contract:', err);
     error.value = 'Failed to load contract data';
     toasted(false, 'Failed to load contract data');
-    router.push('/payer-contracts');
+    router.push('/payer_contracts');
   } finally {
     loadingContract.value = false;
   }
@@ -322,12 +323,12 @@ function updateItemPrice(item) {
 async function submit() {
   submitAttempted.value = true;
 
-  if (!formData.value.contractName || !selectedProvider.value || !startDate.value || !endDate.value || selectedItems.value.length === 0) {
+  if (!formData.value.contractName || !selectedProvider.value || !beginDate.value || !endDate.value || selectedItems.value.length === 0) {
     toasted(false, 'Please fill all required fields and select at least one service/drug');
     return;
   }
 
-  if (new Date(endDate.value) <= new Date(startDate.value)) {
+  if (new Date(endDate.value) <= new Date(beginDate.value)) {
     toasted(false, 'End date must be after start date');
     return;
   }
@@ -353,7 +354,7 @@ async function submit() {
     const payload = {
       ...formData.value,
       providerUuid: selectedProvider.value, // Ensure the provider UUID is from the selected one
-      startDate: startDate.value,
+      beginDate: beginDate.value,
       endDate: endDate.value,
       contractDetails: contractDetailsPayload,
       totalServices: selectedItems.value.filter(item => item.type === 'service').length,
@@ -392,7 +393,7 @@ onMounted(async () => {
 <template>
   <div v-if="loadingContract" class="flex justify-center items-center h-64">
     <Spinner size="lg" />
-    <span class="ml-2 text-gray-700 font-medium">Loading contract data...</span>
+    
   </div>
 
   <Form v-else @submit.prevent="submit" :loading="pending" :id="'new-contract-form'" class="space-y-6">
@@ -435,11 +436,11 @@ onMounted(async () => {
         <div class="flex gap-4">
           <div class="w-1/2">
             <DatePicker
-              v-model="startDate"
+              v-model="beginDate"
               label="Start date"
               required
-              :error="!startDate && submitAttempted"
-              :error-message="!startDate && submitAttempted ? 'Start date is required' : ''"
+              :error="!beginDate && submitAttempted"
+              :error-message="!beginDate && submitAttempted ? 'Start date is required' : ''"
             />
           </div>
           <div class="w-1/2">
@@ -447,10 +448,10 @@ onMounted(async () => {
               v-model="endDate"
               label="End date"
               required
-              :error="(!endDate || new Date(endDate) <= new Date(startDate)) && submitAttempted"
+              :error="(!endDate || new Date(endDate) <= new Date(beginDate)) && submitAttempted"
               :error-message="
                 !endDate && submitAttempted ? 'End date is required' :
-                (endDate && new Date(endDate) <= new Date(startDate) && submitAttempted ? 'End date must be after start date' : '')
+                (endDate && new Date(endDate) <= new Date(beginDate) && submitAttempted ? 'End date must be after start date' : '')
               "
             />
           </div>
@@ -469,6 +470,7 @@ onMounted(async () => {
             </h3>
             <div class="flex border border-gray-300 rounded-md overflow-hidden">
               <button
+              type="button"
                 @click="activeTab = 'services'"
                 :class="[
                   'px-4 py-2 text-sm font-medium transition-colors duration-200',
@@ -478,6 +480,7 @@ onMounted(async () => {
                 Services
               </button>
               <button
+              type="button"
                 @click="activeTab = 'drugs'"
                 :class="[
                   'px-4 py-2 text-sm font-medium transition-colors duration-200',
@@ -648,6 +651,7 @@ onMounted(async () => {
             </h3>
             <div class="flex rounded-md overflow-hidden border border-[#02676B]">
               <button
+              type="button"
                 @click="selectedTab = 'services'"
                 :class="[
                   'px-3 py-1 rounded-l-md text-sm font-medium transition-colors duration-200',
@@ -657,6 +661,7 @@ onMounted(async () => {
                 Services
               </button>
               <button
+              type="button"
                 @click="selectedTab = 'drugs'"
                 :class="[
                   'px-3 py-1 rounded-r-md text-sm font-medium transition-colors duration-200',
@@ -774,10 +779,10 @@ onMounted(async () => {
         <button
           type="submit"
           :disabled="pending"
-          class="bg-[#02676B] text-white px-8 py-3 rounded-md hover:bg-[#02494D] transition-colors duration-200 text-lg font-semibold"
+          class="bg-[#02676B] text-white px-8 py-3 rounded-md hover:bg-[#02494D] transition-colors duration-200 "
         >
           <span v-if="pending" class="flex items-center justify-center">
-            <Spinner size="sm" class="mr-2" /> Updating...
+            <ButtonSpinner size="xs" class="mr-2" /> Updating...
           </span>
           <span v-else>
             Update Contract

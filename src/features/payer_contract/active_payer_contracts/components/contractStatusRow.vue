@@ -55,8 +55,14 @@ function getStatusStyle(status) {
     return 'bg-[#DFF1F1] text-[#02676B]';
   } else if (status === 'INACTIVE' || status === 'Inactive') {
     return 'bg-red-100 text-red-800';
+  } else if (status === 'PENDING' || status === 'Pending') {
+    return 'bg-[#FFD665] text-[#75778B]';
+  } else if (status === 'ACCEPTED' || status === 'Accepted') {
+    return 'bg-primary text-white';
+  } else if (status === 'REJECTED' || status === 'Rejected') {
+    return 'bg-yellow-100 text-white';
   } else {
-    return 'bg-gray-100 text-gray-800';
+    return 'bg-[#FFD665] text-gray-800';
   }
 }
 
@@ -203,6 +209,7 @@ async function handleDeactivateWithClose(contract) {
           >
             <div class="py-1" role="none">
               <button 
+              
                 @click.stop="handleEditWithClose(row)"
                 class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
@@ -213,6 +220,7 @@ async function handleDeactivateWithClose(contract) {
               </button>
               
              <button 
+         
               @click.prevent="$router.push(`/payer_contracts/detail/${row.contractHeaderUuid}`)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >

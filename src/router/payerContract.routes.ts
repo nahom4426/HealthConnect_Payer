@@ -8,6 +8,7 @@ import Details from "@/features/payer_contract/active_payer_contracts/pages/paye
 import NewContracts from "@/features/payer_contract/new_contracts/components/newContract.vue";
 import PayerContractIndex from "@/features/payer_contract/new_contracts/pages/PayerContractIndex.vue";
 import EditContract from "@/features/payer_contract/new_contracts/components/editContract.vue";
+import Pending_contracts from "@/features/payer_contract/pending_contracts/pages/pending_contracts.vue";
 
 export default [
 	{
@@ -55,5 +56,24 @@ export default [
 				props: true,
 			}
 		]
+	},
+	{
+		path: '/pending_contracts',
+		name: 'Pending Contracts',
+		component: PayerIndex,
+		children: [
+			{
+				path: '',
+				name: 'Pending Contracts List',
+				component: Pending_contracts,
+			}
+			// {
+			// 	path: 'detail/:contractHeaderUuid',
+			// 	name: 'Pending Contract Details',
+			// 	component: Details,
+			// 	props: true,
+			// }
+		]
 	}
+
 ];

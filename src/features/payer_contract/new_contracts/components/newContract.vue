@@ -29,12 +29,12 @@ const selectedTab = ref('services');
 const services = ref([]);
 const drugs = ref([]);
 const selectedItems = ref([]);
-
 const searchQuery = ref('');
 const rowsPerPage = ref(5);
 const currentPage = ref(1);
 const fetchPending = ref(false);
 const error = ref(null);
+const submitting = ref(false); // New submitting state
 
 const providerOptions = computed(() => {
   return providers.value.map(provider => ({
@@ -42,6 +42,7 @@ const providerOptions = computed(() => {
     value: provider.providerUuid,
   }));
 });
+
 
 async function fetchProviders() {
   try {
@@ -295,72 +296,89 @@ function applyPercentageDiscount() {
 
 const pending = ref(false);
 const contractReq = useApiRequest();
-
 async function submit() {
   submitAttempted.value = true;
-  
+  submitting.value = true; // Start loading
+
+  // Validation checks
   if (!selectedProvider.value) {
-    toasted(false, "","Please select a provider first");
-    
+    toasted(false, "", "Please select a provider first");
+    submitting.value = false;
     return;
   }
 
   if (!startDate.value) {
-    toasted(false,"","Start date is required");
+    toasted(false, "", "Start date is required");
+    submitting.value = false;
     return;
   }
 
   if (!endDate.value) {
-    toasted(false,"","End date is required");
+    toasted(false, "", "End date is required");
+    submitting.value = false;
     return;
   }
 
   if (new Date(endDate.value) <= new Date(startDate.value)) {
-    toasted(false,"","End date must be after start date");
+    toasted(false, "", "End date must be after start date");
+    submitting.value = false;
     return;
   }
 
   if (!payerUuid.value) {
-    toasted(false,"","No payer information found. Please login again.");
+    toasted(false, "", "No payer information found. Please login again.");
+    submitting.value = false;
     return;
   }
 
   if (selectedItems.value.length === 0) {
-    toasted(false,"","Please select at least one service or drug");
+    toasted(false, "", "Please select at least one service or drug");
+    submitting.value = false;
     return;
   }
 
-  const payload = {
-    providerUuid: selectedProvider.value,
-    description: "Contract created on " + new Date().toLocaleDateString(),
-    payerUuid: payerUuid.value,
-    status: "ACTIVE",
-    beginDate: new Date(startDate.value).toISOString(),
-    endDate: new Date(endDate.value).toISOString(),
-    contractItems: selectedItems.value.map(item => ({
-      itemUuid: 'serviceUuid' in item ? item.serviceUuid : item.drugUuid,
-      itemType: 'serviceUuid' in item ? 'SERVICE' : 'DRUG',
-      negotiatedPrice: item.userPrice
-    }))
-  };
-
-  pending.value = true;
-
   try {
+    const payload = {
+      providerUuid: selectedProvider.value,
+      description: "Contract created on " + new Date().toLocaleDateString(),
+      payerUuid: payerUuid.value,
+      status: "ACTIVE",
+      beginDate: new Date(startDate.value).toISOString(),
+      endDate: new Date(endDate.value).toISOString(),
+      contractItems: selectedItems.value.map(item => ({
+        itemUuid: 'serviceUuid' in item ? item.serviceUuid : item.drugUuid,
+        itemType: 'serviceUuid' in item ? 'SERVICE' : 'DRUG',
+        negotiatedPrice: item.userPrice
+      }))
+    };
+
     const response = await createNewContract(payload);
-    toasted(true, 'Contract submitted successfully!');
-    // Reset form on success
-    selectedProvider.value = null;
-    startDate.value = '';
-    endDate.value = '';
-    selectedItems.value = [];
-    submitAttempted.value = false;
+    
+    if (response.success) {
+      toasted(true, 'Contract submitted successfully!');
+      // Reset form
+      resetForm();
+    } else {
+      throw new Error(response.message || 'Failed to submit contract');
+    }
   } catch (error) {
     console.error('Submission failed:', error);
-    toasted(false, error.message || 'Failed to submit contract');
+    toasted(false, "", error.message || 'Failed to submit contract');
   } finally {
-    pending.value = false;
+    submitting.value = false;
   }
+}
+
+function resetForm() {
+  selectedProvider.value = null;
+  startDate.value = '';
+  endDate.value = '';
+  selectedItems.value = [];
+  services.value = [];
+  drugs.value = [];
+  submitAttempted.value = false;
+  activeTab.value = 'services';
+  selectedTab.value = 'services';
 }
 const tabStyle = 'px-12 py-3 text-[#75778B] bg-white hover:bg-gray-100 text-sm';
 const activeTabStyle = 'px-12 py-3 text-white bg-[#75778B] font-medium text-sm';
@@ -436,12 +454,14 @@ onMounted(async () => {
       </h3>
       <div class="flex border rounded overflow-hidden">
         <button
+          type="button"
           @click="activeTab = 'services'"
           :class="activeTab === 'services' ? activeTabStyle : tabStyle"
         >
           Services
         </button>
         <button
+        type="button"
           @click="activeTab = 'drugs'"
           :class="activeTab === 'drugs' ? activeTabStyle : tabStyle"
         >
@@ -604,6 +624,7 @@ onMounted(async () => {
     </h3>
     <div class="flex mb-4">
       <button
+      type="button"
         @click="selectedTab = 'services'"
         :class="[
           'px-4 py-2 rounded text-sm',
@@ -615,6 +636,7 @@ onMounted(async () => {
         Services
       </button>
       <button
+        type="button"
         @click="selectedTab = 'drugs'"
         :class="[
           'px-4 py-2 rounded text-sm',
@@ -700,14 +722,18 @@ onMounted(async () => {
     </div>
 
     <!-- Submit Button -->
-     <div class="text-right">
-        <button
-          type="submit"
-          class="bg-[#146C5C] text-white px-6 py-3 rounded hover:bg-green-800 transition"
-        >
-          Submit Contract
-        </button>
-      </div>
+         <div class="text-right">
+      <button
+        type="submit"
+        :disabled="submitting"
+       class="bg-primary text-white px-6 py-3 rounded hover:bg-[#146C5C] transition"
+        :class="{ 'opacity-75 cursor-not-allowed': submitting }"
+      >
+        <Spinner v-if="submitting" class="h-5 w-5 text-white" />
+        {{ submitting ? 'Submitting...' : 'Submit Contract' }}
+      </button>
+    </div>
+
     </div>
   </Form>
 </template>
