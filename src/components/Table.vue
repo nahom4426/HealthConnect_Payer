@@ -122,6 +122,7 @@ const active = ref(1);
           headKeys: spec.head,
           rowData: rows,
           rowKeys: spec.row,
+          pending: pending,
         }"
       />
     </template>
@@ -152,8 +153,9 @@ const active = ref(1);
             <div class="flex flex-col gap-2 items-center">
               <div
                 class="flex-1 w-full flex justify-center py-5 h-full size-28 *:h-56"
-                v-html="icons.no_data"
-              />
+              >
+                <img src="../assets/img/noData.gif" alt="No Data" />
+              </div>
               <p class="text-xl">
                 {{ placeholder ? placeholder : "No Data Found" }}
               </p>

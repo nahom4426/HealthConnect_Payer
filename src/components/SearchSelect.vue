@@ -37,12 +37,11 @@ watch(value, () => {
   emit("update:modelValue", value.value);
 });
 
-const input = ref()
+const input = ref();
 function selectRow(result: any) {
   props.selectCb && props.selectCb(result);
-  input.value && (input.value.value = result[props.option.label])
+  input.value && (input.value.value = result[props.option.label]);
 }
-
 </script>
 
 <template>
@@ -105,7 +104,7 @@ function selectRow(result: any) {
               v-ripple
               :key="input?.value"
               tabindex="0"
-							@keydown.once.enter="selectRow(result)"
+              @keydown.once.enter="selectRow(result)"
               @click.once="selectRow(result)"
               class="cursor-pointer"
               >{{ result[option.label] }}</b

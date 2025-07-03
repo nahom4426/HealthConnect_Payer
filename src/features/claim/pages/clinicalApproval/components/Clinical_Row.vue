@@ -29,6 +29,7 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  pending: Boolean,
   cells: Object,
 });
 const route = useRoute();
@@ -196,13 +197,14 @@ function handleApproval(id, main) {
       </Dropdown>
     </td>
   </tr>
-  <tr v-if="!rowData?.length">
+  <tr v-if="!rowData?.length && !pending">
     <td :colspan="headKeys.length + 1">
       <slot name="placeholder">
-        <div class="flex-1 w-full flex justify-center py-5 *:h-56">
-          <div class="text-xl">
-            {{ "No Data Found" }}
-          </div>
+        <div class="flex-1 w-full flex flex-col justify-center py-5 *:h-56">
+          <div
+            class="flex-1 w-full flex justify-center py-5 h-full size-28 *:h-56"
+            v-html="icons.no_data"
+          />
         </div>
       </slot>
     </td>

@@ -14,7 +14,7 @@ const props = defineProps(["label", "error"]);
         >{{ label }}</span
       >
       <div
-        class="max-w-full border-dark/10 bg-[#F9F9FD] p-2 overflow-hidden text-base rounded-md min-h-9 flex"
+        class="max-w-full focus-within:border focus-within:border-primary bg-[#F9F9FD] p-2 overflow-hidden text-base rounded-md min-h-9 flex"
         :class="$attrs.class"
       >
         <slot></slot>

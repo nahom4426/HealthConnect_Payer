@@ -413,6 +413,7 @@ onMounted(async () => {
               "
             />
           </div>
+
           <div class="w-1/2">
             <DatePicker
               v-model="endDate"
@@ -819,8 +820,8 @@ input[type="checkbox"]:checked {
 input[type="checkbox"]:checked::after {
   content: "";
   position: absolute;
-  left: 5px;
-  top: 1px;
+  left: 6px;
+  top: 2px;
   width: 4px;
   height: 8px;
   border: solid white;
