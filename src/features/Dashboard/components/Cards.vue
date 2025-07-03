@@ -5,25 +5,23 @@ const props = defineProps({
   data: {
     type: Array,
   },
+  customClass: String,
 });
 </script>
 <template>
   <div
     v-for="entries in props.data"
     :key="entries.title"
-    class="flex flex-col gap-1 bg-white p-2 rounded-lg"
+    :class="[entries.customClass]"
+    class="flex flex-col gap-3 p-4 rounded-xl"
   >
-    <div class="flex justify-between">
-      <i v-html="entries.Image" />
-      <i v-html="entries.today" />
-    </div>
-    <p class="opacity-70">{{ entries.title }}</p>
-    <p class="font-bold leading-8 text-2xl">{{ entries.amount }}</p>
+    <i v-html="entries.today" />
+    <p class="font-semibold leading-8">{{ entries.amount }}</p>
+    <p class="text-xs text-base-clr">{{ entries.title }}</p>
 
-    <div class="font flex gap-1">
-      <i v-html="icons.trending" />
-      <p class="text-primary">{{ entries.percent }}</p>
-      Up from yesterday
+    <div class="flex gap-1 text-primary text-[9px] font-medium">
+      <p class="">{{ entries.percent }}</p>
+      from last year
     </div>
   </div>
 </template>

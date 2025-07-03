@@ -199,14 +199,14 @@ function handleApproval(id, main) {
   </tr>
   <tr v-if="!rowData?.length && !pending">
     <td :colspan="headKeys.length + 1">
-      <slot name="placeholder">
-        <div class="flex-1 w-full flex flex-col justify-center py-5 *:h-56">
-          <div
-            class="flex-1 w-full flex justify-center py-5 h-full size-28 *:h-56"
-            v-html="icons.no_data"
-          />
-        </div>
-      </slot>
+      <div class="flex-1 w-full flex flex-col items-center py- h-full">
+        <img
+          class="size-60"
+          src="../../../../../assets/img/noData.gif"
+          alt=""
+        />
+        <p class="text-xl">No Data Found</p>
+      </div>
     </td>
   </tr>
 </template>

@@ -11,6 +11,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  providerUuid: String,
   status: { String },
 
   search: {
@@ -31,6 +32,7 @@ function fetchData() {
       getClaimByStatus(
         removeUndefined({
           ClaimStatus: props.status,
+          providerUuid: props.providerUuid,
 
           searchKey: props.search,
           ...data,
@@ -50,7 +52,7 @@ function fetchData() {
 fetchData();
 
 watch(
-  () => props.search,
+  () => [props.search, props.providerUuid],
   () => {
     fetchData();
   }

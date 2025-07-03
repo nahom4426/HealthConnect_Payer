@@ -6,17 +6,37 @@ import icons from "@/utils/icons";
 import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAndStatusRow.vue";
 import SubmittedClaimDataProvider from "../submittedClaim/components/SubmittedClaimDataProvider.vue";
 import Clinical_Row from "./components/Clinical_Row.vue";
+import { ref } from "vue";
+import { usePagination } from "@/composables/usePagination";
+import { getContaractedProviders } from "@/features/providers/api/providerApi";
+import { useAuthStore } from "@/stores/auth";
+const search = ref("");
+const selectedOption = ref("");
+const authstore = useAuthStore();
+const pagination = usePagination({
+  cb: () => getContaractedProviders(authstore.auth?.user?.payerUuid),
+});
 </script>
 
 <template>
   <DefaultPage :first="false" placeholder="Search Insured Members">
     <template #first>
-      <button
+      <div
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-base-clr bg-base-clr3"
       >
         <i v-html="icons.filter"></i>
-        <p class="text-base">All Claims</p>
-      </button>
+        <select class="bg-transparent appearance-none" v-model="selectedOption">
+          <option selected value="">All Claims</option>
+
+          <option
+            v-for="option in pagination.data?.value?.content"
+            :key="option.providerUuid"
+            :value="option.providerUuid"
+          >
+            {{ option.providerName }}
+          </option>
+        </select>
+      </div>
     </template>
 
     <template #add-action>
@@ -39,6 +59,7 @@ import Clinical_Row from "./components/Clinical_Row.vue";
       status="DRAFT"
       :id="$route.params.id"
       :search="search"
+      :providerUuid="selectedOption"
       v-slot="{ claims, pending }"
     >
       <Table
