@@ -61,7 +61,7 @@ function update({ values }) {
       <template #bottom>
         <div class="flex justify- w-full p-2 px-4">
           <Button
-            class="flex w-full items-center gap-3 bg-primary !text-white py-2"
+            class="flex w-full items-center gap-3 bg-primary !text-white py-3"
             :pending="req.pending.value"
             type="primary"
             @click.prevent="submit(update)"

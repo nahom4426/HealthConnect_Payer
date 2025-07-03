@@ -4,6 +4,7 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
 import SubmittedClaimDataProvider from "./components/SubmittedClaimDataProvider.vue";
+import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAndStatusRow.vue";
 </script>
 
 <template>
@@ -34,6 +35,7 @@ import SubmittedClaimDataProvider from "./components/SubmittedClaimDataProvider.
       </div>
     </template>
     <SubmittedClaimDataProvider
+      status="DRAFT"
       :id="$route.params.id"
       :search="search"
       v-slot="{ submittedClaims, pending }"
@@ -41,9 +43,26 @@ import SubmittedClaimDataProvider from "./components/SubmittedClaimDataProvider.
       <Table
         :pending="pending"
         :headers="{
-          head: ['Full Name', 'ID Number', 'Phone', 'Position', 'Status'],
-          row: ['fullName', 'id', 'telephone', 'Position', 'status'],
+          head: [
+            'Batch Code',
+            'Provider Name',
+            'Requested On',
+            'Claim dating from',
+            'Claim dating to',
+            'Claim Amount',
+            'NO of Claims',
+            'Actions',
+          ],
+          row: [
+            'batchCode',
+            'providerName',
+            'visitDate',
+            'claimDatingFrom',
+            'claimDatingTo',
+            'totalAmount',
+          ],
         }"
+        :row-com="PriceAndStatusRow"
         :rows="submittedClaims"
       >
       </Table>

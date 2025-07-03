@@ -24,20 +24,16 @@ const insuredData = ref({});
 const insuredUuid = ref('');
 
 onMounted(() => {
-  console.log('EditInsured modal mounted with data prop:', props.data);
   
   if (props.data) {
     insuredUuid.value = props.data.insuredUuid || '';
     insuredData.value = props.data.insured || {};
     
-    console.log('Extracted insured UUID:', insuredUuid.value);
-    console.log('Extracted insured data:', insuredData.value);
   }
 });
 
 watch(() => props.data, (newData) => {
   if (newData) {
-    console.log('Data prop updated:', newData);
     insuredUuid.value = newData.insuredUuid || '';
     insuredData.value = newData.insured || {};
   }
@@ -124,7 +120,6 @@ async function handleSubmit(formValues: any) {
       throw new Error(result?.error || 'Update failed');
     }
   } catch (err) {
-    console.error('Update error:', err);
     error.value = err.message || 'An error occurred while updating insured member';
     toasted(false, 'Failed to update insured member', error.value);
   } finally {

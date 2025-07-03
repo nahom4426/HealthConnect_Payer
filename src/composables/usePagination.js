@@ -64,7 +64,6 @@ export function usePagination(options = {}) {
     req.send(
       () => paginationOptions.value.cb(getPaginationData(next, current)),
       (res) => {
-        console.log(res?.data);
 
         if (paginationOptions.value.store && res?.success) {
           paginationOptions.value.store.set(

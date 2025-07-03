@@ -12,6 +12,7 @@
   --base-clr: 117 119 139;
   --base-clr2: 245 245 255;
   --base-clr3: 246 247 250;
+  --error: 219 46 72;
 
   --drawer-width: 16rem;
   --navbar-height: 5rem;
@@ -132,4 +133,15 @@ svg {
     height: var(--btnWidth);
     opacity: 0;
   }
+}
+.no-image-placeholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  border: 2px dashed #ccc;
 }

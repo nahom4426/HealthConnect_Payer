@@ -29,6 +29,7 @@ const props = defineProps({
     class="__ripple px-4 py-1 flex items-center justify-center rounded capitalize"
   >
     <slot v-if="!pending"></slot>
+
     <p v-else v-html="icons.spinner" />
   </button>
 </template>

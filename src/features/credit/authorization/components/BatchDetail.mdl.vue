@@ -11,6 +11,7 @@ import icons from "@/utils/icons";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { getInsuredPersonById } from "../api/authorizationApi";
 import StatusCard from "@/components/StatusCard.vue";
+import Spinner from "@/components/Spinner.vue";
 
 const props = defineProps({
   data: {
@@ -64,9 +65,7 @@ async function processProfilePicture() {
       "image/jpeg",
       0.85
     );
-  } catch (error) {
-    console.error("Error processing profile picture:", error);
-  }
+  } catch (error) {}
 }
 
 watch(profilePicture, () => {
@@ -103,8 +102,7 @@ const search = ref("");
       title="Credit Service detail"
       subtitle="detail"
     >
-      {{ console.log(props.data) }}
-      <div class="flex flex-col gap-6">
+      <div v-if="!api.pending.value" class="flex flex-col gap-6">
         <div class="grid grid-cols-7 gap-4 p-4 w-full rounded-md bg-base-clr3">
           <div class="flex-1 col-span-1 flex gap-2">
             <div class="p-2 bg-base-clr3 rounded">
@@ -170,6 +168,9 @@ const search = ref("");
           ></component>
         </div>
       </div>
+      <div class="w-full h-full justify-center items-center" v-else>
+        <Spinner />
+      </div>
     </NewFormParent>
   </ModalParent>
 </template>
@@ -178,17 +179,5 @@ const search = ref("");
   width: 173px;
   height: 160px;
   object-fit: cover;
-}
-
-.no-image-placeholder {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background-color: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
-  border: 2px dashed #ccc;
 }
 </style>

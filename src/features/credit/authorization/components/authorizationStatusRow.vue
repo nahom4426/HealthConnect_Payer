@@ -1,4 +1,4 @@
-<script setup >
+<script setup>
 import { defineProps, onMounted, onUnmounted, ref, toRefs } from "vue";
 import Button from "@/components/Button.vue";
 import { openModal } from "@customizer/modal-x";
@@ -37,7 +37,6 @@ async function fetchPayerName(payerUuid) {
     }
     return "Unknown Payer";
   } catch (error) {
-    console.error("Error fetching payer name:", error);
     return "Unknown Payer";
   }
 }

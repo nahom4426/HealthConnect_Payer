@@ -5,7 +5,6 @@ export const usePrivilege = defineStore("Privilegestore", () => {
   const privilege = ref([]);
 
   function set(data) {
-    console.log(data);
     privilege.value = data;
   }
 

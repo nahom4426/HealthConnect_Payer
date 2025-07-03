@@ -19,7 +19,6 @@ req.send(
         if (res.success) {
             src.value = URL.createObjectURL(res.data)
         }
-        console.log(res);
     })
 </script>
 <template>

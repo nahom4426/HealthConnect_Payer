@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
@@ -35,12 +35,14 @@ const payerSearchTerm = ref("");
 
 // Date range setup
 const currentDate = new Date();
-const previousMonthDate = new Date(currentDate.setMonth(currentDate.getMonth() - 1));
-const fromDate = ref(previousMonthDate.toISOString().split('T')[0]);
-const toDate = ref(new Date().toISOString().split('T')[0]);
+const previousMonthDate = new Date(
+  currentDate.setMonth(currentDate.getMonth() - 1)
+);
+const fromDate = ref(previousMonthDate.toISOString().split("T")[0]);
+const toDate = ref(new Date().toISOString().split("T")[0]);
 
 // Selected claims that can be removed
-const selectedClaims = ref<Array<any>>([]);
+const selectedClaims = ref([]);
 
 // Payer selection
 const selectedPayerUuid = ref("");
@@ -56,15 +58,17 @@ const payerOptions = computed(() => claimServicesStore.payerOptions);
 // Filtered payer options with search
 const filteredPayerOptions = computed(() => {
   if (!payerSearchTerm.value) return claimServicesStore.payerOptions;
-  
-  return claimServicesStore.payerOptions.filter(option =>
+
+  return claimServicesStore.payerOptions.filter((option) =>
     option.label.toLowerCase().includes(payerSearchTerm.value.toLowerCase())
   );
 });
 
 // Watch for payer selection changes
 watch(selectedPayerUuid, (newUuid) => {
-  const selected = claimServicesStore.institutions.find(i => i.uuid === newUuid);
+  const selected = claimServicesStore.institutions.find(
+    (i) => i.uuid === newUuid
+  );
   selectedPayerName.value = selected ? selected.name : "";
 });
 
@@ -77,7 +81,7 @@ const generateClaims = async () => {
     dataProvider.value.setFilters({
       startDate: fromDate.value,
       endDate: toDate.value,
-      payerUuid: selectedPayerUuid.value
+      payerUuid: selectedPayerUuid.value,
     });
     await dataProvider.value.refresh();
     hasGenerated.value = true;
@@ -89,9 +93,9 @@ const generateClaims = async () => {
 };
 
 // Remove a claim from selected claims
-const removeClaim = (claimUuid: string) => {
+const removeClaim = (claimUuid) => {
   selectedClaims.value = selectedClaims.value.filter(
-    claim => claim.dispensingUuid !== claimUuid
+    (claim) => claim.dispensingUuid !== claimUuid
   );
 };
 
@@ -100,11 +104,16 @@ const submitClaims = async () => {
   if (selectedClaims.value.length === 0 || isSubmitting.value) return;
 
   isSubmitting.value = true;
-  const dispensingUuids = selectedClaims.value.map(claim => claim.dispensingUuid);
+  const dispensingUuids = selectedClaims.value.map(
+    (claim) => claim.dispensingUuid
+  );
 
   try {
-    const response = await submitClaimsStatusUpdate(providerUuid.value, dispensingUuids);
-    
+    const response = await submitClaimsStatusUpdate(
+      providerUuid.value,
+      dispensingUuids
+    );
+
     if (response?.status === 200) {
       addToast({
         type: "success",
@@ -129,7 +138,7 @@ const submitClaims = async () => {
 };
 
 // Refresh data with current filters
-const refreshDataWithDates = async (startDate: string, endDate: string) => {
+const refreshDataWithDates = async (startDate, endDate) => {
   if (!dataProvider.value) return;
 
   try {
@@ -139,29 +148,33 @@ const refreshDataWithDates = async (startDate: string, endDate: string) => {
       payerUuid: selectedPayerUuid.value,
     });
     await dataProvider.value.refresh();
-  } catch (error) {
-    console.error("Error refreshing data:", error);
-  }
+  } catch (error) {}
 };
 
 // Watch for date changes
-watch([fromDate, toDate], ([newFromDate, newToDate]) => {
-  if (newFromDate && newToDate) {
-    refreshDataWithDates(newFromDate, newToDate);
-  }
-}, { immediate: true });
+watch(
+  [fromDate, toDate],
+  ([newFromDate, newToDate]) => {
+    if (newFromDate && newToDate) {
+      refreshDataWithDates(newFromDate, newToDate);
+    }
+  },
+  { immediate: true }
+);
 
 // Watch for payer changes
 watch(selectedPayerUuid, (newPayerUuid) => {
   if (newPayerUuid) {
-    const selected = claimServicesStore.institutions.find(i => i.uuid === newPayerUuid);
+    const selected = claimServicesStore.institutions.find(
+      (i) => i.uuid === newPayerUuid
+    );
     selectedPayerName.value = selected ? selected.name : "";
     refreshDataWithDates(fromDate.value, toDate.value);
   }
 });
 
 // Pagination handlers
-function handlePageChange(page: number) {
+function handlePageChange(page) {
   if (isClaimCreationMode.value) {
     dataProvider.value?.setPage(page);
   } else {
@@ -169,7 +182,7 @@ function handlePageChange(page: number) {
   }
 }
 
-function handleLimitChange(limit: number) {
+function handleLimitChange(limit) {
   if (isClaimCreationMode.value) {
     dataProvider.value?.setLimit(limit);
   } else {
@@ -189,7 +202,9 @@ function refreshData() {
 <template>
   <DefaultPage :placeholder="!isClaimCreationMode ? 'Search Batches' : ''">
     <template #filter v-if="!isClaimCreationMode">
-      <button class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3">
+      <button
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
+      >
         <i v-html="icons.filter"></i>
         <span>Filter</span>
       </button>
@@ -202,7 +217,7 @@ function refreshData() {
         @click="isClaimCreationMode = !isClaimCreationMode"
       >
         <i v-html="icons.add"></i>
-        <span>{{ isClaimCreationMode ? 'Back' : 'Add Credit' }}</span>
+        <span>{{ isClaimCreationMode ? "Back" : "Add Credit" }}</span>
       </button>
     </template>
 
@@ -226,7 +241,7 @@ function refreshData() {
               'Number of Claims',
               'Total Amount',
               'Status',
-              'Action'
+              'Action',
             ],
             row: [
               'batchCode',
@@ -235,8 +250,8 @@ function refreshData() {
               'dateRange',
               'numberOfClaims',
               'formattedTotalAmount',
-              'status'
-            ]
+              'status',
+            ],
           }"
           :rows="batchStore.batch"
           :rowCom="BatchStatusRow"
@@ -245,7 +260,7 @@ function refreshData() {
             itemsPerPage,
             totalPages,
             onPageChange: handlePageChange,
-            onLimitChange: handleLimitChange
+            onLimitChange: handleLimitChange,
           }"
         />
       </batchDataProvider>
@@ -266,20 +281,20 @@ function refreshData() {
                 label="Credits From"
                 :validation="'required'"
                 :validationMessage="'Start date is required'"
-                :attributes="{ 
-                  placeholder: 'Select start date', 
+                :attributes="{
+                  placeholder: 'Select start date',
                   type: 'date',
-                  max: toDate
+                  max: toDate,
                 }"
               />
               <Input
                 v-model="toDate"
                 label="Credits To"
                 :validation="'required'"
-                :attributes="{ 
-                  placeholder: 'Select end date', 
+                :attributes="{
+                  placeholder: 'Select end date',
                   type: 'date',
-                  min: fromDate
+                  min: fromDate,
                 }"
               />
             </div>
@@ -291,9 +306,9 @@ function refreshData() {
                   label="Payer Name"
                   validation="required"
                   :options="payerOptions"
-                  :attributes="{ 
+                  :attributes="{
                     placeholder: 'Select Payer',
-                    clearable: true
+                    clearable: true,
                   }"
                   v-model="selectedPayerUuid"
                 />
@@ -310,10 +325,13 @@ function refreshData() {
           </div>
 
           <div class="border rounded-lg p-4 border-[#ECECEE]">
-            <div v-if="hasGenerated" class="flex justify-between items-center p-3.5 mb-4 rounded-lg bg-[#F6F7FA]">
+            <div
+              v-if="hasGenerated"
+              class="flex justify-between items-center p-3.5 mb-4 rounded-lg bg-[#F6F7FA]"
+            >
               <p class="font-medium text-base">
-                Result for claims from "{{ fromDate }}" to "{{ toDate }}" for {{ selectedPayerName }}
-                ({{ selectedClaims.length }} selected)
+                Result for claims from "{{ fromDate }}" to "{{ toDate }}" for
+                {{ selectedPayerName }} ({{ selectedClaims.length }} selected)
               </p>
               <ModalFormSubmitButton
                 :pending="isSubmitting"
@@ -323,56 +341,60 @@ function refreshData() {
                 @click="submitClaims"
               />
             </div>
-            <div v-else class="flex justify-center items-center p-3.5 mb-4 rounded-lg bg-[#F6F7FA] text-gray-700 italic">
-              Please select a payer and date range and click on <strong class="px-1 text-base"> Generate </strong> to submit claims.
+            <div
+              v-else
+              class="flex justify-center items-center p-3.5 mb-4 rounded-lg bg-[#F6F7FA] text-gray-700 italic"
+            >
+              Please select a payer and date range and click on
+              <strong class="px-1 text-base"> Generate </strong> to submit
+              claims.
             </div>
           </div>
         </div>
-<Table
-  :pending="pending"
-  :headers="{
-    head: [
-      'Invoice ID',
-      'Payer',
-      'Patient Name',
-      'Encounter Date',
-      'Branch',
-      'Credit Amount',
-      'Status',
-      'Actions'
-    ],
-    row: [
-      'invoiceNumber',
-      'payerName',
-      'patientName',
-      'dispensingDate',
-      'branchName',
-      'totalAmount',
-      'status'
-    ]
-  }"
-  :rows="selectedClaims"
-  :customActions="true"  
-  :pagination="{
-    currentPage,
-    itemsPerPage,
-    totalPages,
-    onPageChange: handlePageChange,
-    onLimitChange: handleLimitChange
-  }"
->
-  <template #actions="{ row }">
-    <button 
-      @click.stop="removeClaim(row.dispensingUuid)"
-      class="text-red-500 hover:text-red-700"
-      title="Remove claim"
-    >
-      <i v-html="icons.trash"></i>Remove
-    </button>
-  </template>
-</Table>
+        <Table
+          :pending="pending"
+          :headers="{
+            head: [
+              'Invoice ID',
+              'Payer',
+              'Patient Name',
+              'Encounter Date',
+              'Branch',
+              'Credit Amount',
+              'Status',
+              'Actions',
+            ],
+            row: [
+              'invoiceNumber',
+              'payerName',
+              'patientName',
+              'dispensingDate',
+              'branchName',
+              'totalAmount',
+              'status',
+            ],
+          }"
+          :rows="selectedClaims"
+          :customActions="true"
+          :pagination="{
+            currentPage,
+            itemsPerPage,
+            totalPages,
+            onPageChange: handlePageChange,
+            onLimitChange: handleLimitChange,
+          }"
+        >
+          <template #actions="{ row }">
+            <button
+              @click.stop="removeClaim(row.dispensingUuid)"
+              class="text-red-500 hover:text-red-700"
+              title="Remove claim"
+            >
+              <i v-html="icons.trash"></i>Remove
+            </button>
+          </template>
+        </Table>
       </submitClaimsDataProvider>
     </template>
-  
   </DefaultPage>
 </template>

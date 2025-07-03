@@ -28,12 +28,9 @@ if (!Object.keys(role.value).length) {
             }
         }
     );
-    console.log(role);
 }
-    console.log(role);
 
 function update({ values }) {
-    console.log(values);
     updateReq.send(
         () => updateRolebyId(roleUuid, values),
         (res) => {

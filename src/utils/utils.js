@@ -397,7 +397,6 @@ export const hospitals = [
   "Lancet Hospital",
   "Biras Hospital",
 ];
-
 export async function convertBase64Image(
   base64String,
   outputFormat = "image/png",
@@ -405,19 +404,24 @@ export async function convertBase64Image(
 ) {
   return new Promise((resolve, reject) => {
     try {
-      // Create an image element
+      const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(base64String);
+      if (!isBase64) {
+        return reject(new Error("Invalid Base64 string"));
+      }
+
+      if (!base64String.startsWith("data:image/")) {
+        base64String = `data:image/png;base64,${base64String}`;
+      }
+
       const img = new Image();
       img.onload = () => {
-        // Create a canvas element
         const canvas = document.createElement("canvas");
         canvas.width = img.width;
         canvas.height = img.height;
 
-        // Draw image to canvas
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0);
 
-        // Convert to desired format
         const convertedData = canvas.toDataURL(outputFormat, quality);
         resolve(convertedData);
       };

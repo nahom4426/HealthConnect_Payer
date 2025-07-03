@@ -6,7 +6,6 @@ export const useUserStore = defineStore("userStore", () => {
   const users = ref([]);
 
   function set(data) {
-    console.log(data);
     users.value = data;
   }
 
@@ -45,14 +44,10 @@ export const useUserStore = defineStore("userStore", () => {
       if (response.success) {
         set(response.data);
       } else {
-        console.error("Failed to fetch users:", response.error);
         throw new Error(response.error || "Failed to fetch users");
       }
       return response;
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      throw error;
-    }
+    } catch (error) {}
   }
 
   return {
@@ -63,7 +58,7 @@ export const useUserStore = defineStore("userStore", () => {
     update,
     remove,
     updateStatus,
-    fetchUsers
+    fetchUsers,
   };
 });
 

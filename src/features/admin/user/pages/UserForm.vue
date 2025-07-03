@@ -82,7 +82,6 @@ async function fetchRoles() {
       rolesError.value = 'No roles available';
     }
   } catch (err) {
-    console.error('Error fetching roles:', err);
     rolesError.value = 'Failed to load roles. Please try again.';
   } finally {
     fetchRolesPending.value = false;

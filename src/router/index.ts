@@ -45,7 +45,6 @@ const router = createRouter({
         ...priceRoutes,
         ...claimRoutes,
         ...adminRoutes,
-        // ...institutionRoutes,
         ...instutionSetingRoutes,
         ...insuredPersonRoutes,
         ...Provider_contractsRoutes,

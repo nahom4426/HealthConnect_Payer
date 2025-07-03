@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-import icons from '@/utils/icons'
+import { ref } from "vue";
+import icons from "@/utils/icons";
 
 const props = defineProps({
   modelValue: String,
@@ -8,28 +8,28 @@ const props = defineProps({
   required: Boolean,
   placeholder: {
     type: String,
-    default: 'mm/dd/yyyy'
+    default: "mm/dd/yyyy",
   },
   error: {
     type: Boolean,
-    default: false
+    default: false,
   },
   errorMessage: {
     type: String,
-    default: ''
-  }
-})
+    default: "",
+  },
+});
 
-const emit = defineEmits(['update:modelValue'])
-const inputRef = ref(null)
+const emit = defineEmits(["update:modelValue"]);
+const inputRef = ref(null);
 
 const openDatePicker = () => {
-  inputRef.value?.showPicker?.()
-}
+  inputRef.value?.showPicker?.();
+};
 
 const updateValue = (e) => {
-  emit('update:modelValue', e.target.value)
-}
+  emit("update:modelValue", e.target.value);
+};
 </script>
 
 <template>
@@ -46,7 +46,7 @@ const updateValue = (e) => {
       <input
         ref="inputRef"
         type="date"
-        class="bg-transparent outline-none flex-1 text-sm appearance-none w-full"
+        class="bg-transparent h-7 outline-none flex-1 text-sm appearance-none w-full"
         :value="modelValue"
         @input="updateValue"
         :placeholder="placeholder"

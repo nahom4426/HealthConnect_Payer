@@ -6,23 +6,15 @@ const api = new ApiService(import.meta.env.v_API_URI);
 const path = "/users";
 
 export function CreateUser(data) {
-  console.log("Creating user with data:", data);
-
-  // Ensure gender is properly formatted (lowercase)
   const formattedData = {
     ...data,
     gender: data.gender?.toLowerCase(),
   };
 
-  console.log("Sending formatted data:", formattedData);
-  console.log("API endpoint:", `${path}/signup`);
-
-  // Add authentication header for the signup request
   return api
     .addAuthenticationHeader()
     .post(`${path}/signup`, formattedData)
     .catch((error) => {
-      console.error("Error creating user:", error);
       return {
         success: false,
         error: error.message || "Failed to create user. Server error.",

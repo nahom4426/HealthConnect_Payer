@@ -1,16 +1,19 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import Table from "@/components/Table.vue";
 import Button from "@/components/Button.vue";
 import icons from "@/utils/icons";
 import DefaultPage from "@/components/DefaultPage.vue";
 import AuthorizationBatchDataProvider from "../components/AuthorizationBatchDataProvider.vue";
 import Dropdown from "@/components/Dropdown.vue";
-import { formatCurrency, formatDateToYYMMDD } from "@/utils/utils";
+import {
+  convertBase64Image,
+  formatCurrency,
+  formatDateToYYMMDD,
+} from "@/utils/utils";
 import { useRoute } from "vue-router";
 import { usePagination } from "@/composables/usePagination";
 import AboutPayerForm from "../form/AboutPayerForm.vue";
-import ClaimSummaryForm from "../form/ClaimSummaryForm.vue";
 import { getAuthorizationDetail } from "../api/authorizationApi";
 import DynamicForm from "../form/DynamicForm.vue";
 import { openModal } from "@customizer/modal-x";
@@ -25,23 +28,61 @@ const aboutPayer = computed(() => [
   { title: "Category", value: pagination.data?.value?.providerName || "N/A" },
   { title: "Contact", value: "123-456-7890" },
 ]);
+const claimSummary = computed(() => [
+  { title: "Claim Amount", value: pagination.data?.value?.employeeId || "N/A" },
+  {
+    title: "Number of claims",
+    value: pagination.data?.value?.address || "N/A",
+  },
+  { title: "Time Range", value: pagination.data?.value?.gender || "N/A" },
+]);
+const profilePicture = computed(() => pagination.data?.value?.profileLogo);
+async function processProfilePicture() {
+  if (!profilePicture.value) {
+    return;
+  }
+
+  try {
+    if (profilePicture.value.startsWith("data:image/jpeg")) {
+      return;
+    }
+
+    profilePicture.value = await convertBase64Image(
+      profilePicture.value,
+      "image/jpeg",
+      0.85
+    );
+  } catch (error) {}
+}
+
+watch(profilePicture, () => {
+  processProfilePicture();
+});
 </script>
 
 <template>
   <DefaultPage :first="false">
     <template #first>
-      <div class="grid grid-cols-2 gap-4 w-full">
-        <div class="flex-1 flex gap-2">
-          <div class="p-2 bg-base-clr3 rounded-lg">
-            <img
-              class="object-cover"
-              src="../../../../assets/img/letter-logo.png"
-              alt=""
-            />
-          </div>
-          <DynamicForm :aboutPayer="aboutPayer" />
+      <div class="grid grid-cols-3 gap-4 w-full">
+        <div class="p-2 bg-base-clr3 rounded-lg">
+          <img
+            v-if="profilePicture"
+            :src="profilePicture"
+            alt="Profile picture"
+            class="profile-image"
+          />
+          <div v-else class="no-image-placeholder">No profile picture</div>
         </div>
-        <ClaimSummaryForm />
+        <DynamicForm
+          header="About Payer"
+          customClass="bg-base-clr3 "
+          :data="aboutPayer"
+        />
+        <DynamicForm
+          header="Claim Summary"
+          customClass="bg-base-clr3 ml-4"
+          :data="claimSummary"
+        />
       </div>
     </template>
     <div class="bg-base-clr3 rounded-md p-4">

@@ -23,7 +23,7 @@ watch(search, () => {
 <template>
   <div class="flex flex-col h-full bg-white rounded-2xl p-6 gap-6">
     <div
-      class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+      class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8"
     >
       <!-- Search Bar -->
       <div

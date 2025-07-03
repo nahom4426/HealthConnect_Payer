@@ -30,7 +30,6 @@ watch(
 );
 </script>
 <template>
-  {{ console.log(roles) }}
   <slot
     :roles="roles.roles"
     :pending="pagination.pending.value"

@@ -60,7 +60,6 @@ async function handleSubmit(formValues: any) {
     
     formData.append('insured', JSON.stringify(insuredData));
 
-    console.log('Submitting insured data:', insuredData);
     
     const result = await formDataProvider.value.register(formData);
     
@@ -92,7 +91,6 @@ async function handleSubmit(formValues: any) {
       throw new Error(result.error || 'Registration failed');
     }
   } catch (error) {
-    console.error('Submission error:', error);
     toasted(false, 'Failed to submit form', error.message);
   } finally {
     pending.value = false;

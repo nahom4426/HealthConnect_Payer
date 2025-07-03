@@ -100,7 +100,6 @@ function handleEdit(role) {
   } else if (typeof props.onEdit === 'function') {
     props.onEdit(role);
   } else {
-    console.error("No valid role UUID or edit handler provided.");
   }
 }
 

@@ -20,12 +20,9 @@ export function getCreditClaimsbyProviderUuid(id, query = {}, config = {}) {
       ...config,
     })
     .then((response) => {
-      console.log("API raw response:", response);
-      // Return the response data directly, the component will handle pagination
       return response.data;
     })
     .catch((error) => {
-      console.error("API error:", error);
       throw error;
     });
 }
@@ -37,12 +34,9 @@ export function getPayerbyPayerUuid(id, query = {}, config = {}) {
       ...config,
     })
     .then((response) => {
-      console.log("API raw response:", response);
-      // Return the response data directly, the component will handle pagination
       return response.data;
     })
     .catch((error) => {
-      console.error("API error:", error);
       throw error;
     });
 }
@@ -54,12 +48,9 @@ export function getInsuredById(id, query = {}, config = {}) {
       ...config,
     })
     .then((response) => {
-      console.log("API raw response:", response);
-      // Return the response data directly, the component will handle pagination
       return response.data;
     })
     .catch((error) => {
-      console.error("API error:", error);
       throw error;
     });
 }

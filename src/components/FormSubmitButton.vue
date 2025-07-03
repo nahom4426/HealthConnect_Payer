@@ -24,6 +24,7 @@ const pendingRequest = inject("pending", false);
     class="w-full h-10 text-sm bg-primary text-white rounded-xl"
   >
     <span v-if="!pending && !pendingRequest">{{ btnText }}</span>
+
     <Icon icon="svg-spinners:3-dots-scale" class="text-2xl" v-else />
   </Button>
 </template>

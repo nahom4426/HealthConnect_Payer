@@ -20,7 +20,7 @@ onMounted(() => {
       <img
         :src="loginImageUrl"
         alt="Login background"
-        class="w-full h-full rounded-2xl"
+        class="w-full h-full object-cover rounded-2xl"
       />
     </div>
 

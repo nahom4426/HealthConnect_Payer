@@ -5,43 +5,53 @@
       <div class="bg-white shadow rounded-lg overflow-hidden">
         <!-- Cover Photo -->
         <div class="h-48 bg-gradient-to-r from-blue-500 to-teal-600"></div>
-        
+
         <!-- Profile Info -->
         <div class="px-6 py-4 relative">
           <!-- Profile Picture -->
           <div class="absolute -top-16 left-6">
             <div class="relative">
-              <img 
-                :src="profileImage || 'https://ui-avatars.com/api/?name='+user.firstName+'+'+user.fatherName+'&background=random'" 
+              <img
+                :src="
+                  profileImage ||
+                  'https://ui-avatars.com/api/?name=' +
+                    user.firstName +
+                    '+' +
+                    user.fatherName +
+                    '&background=random'
+                "
                 class="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg"
+              />
+              <label
+                for="profile-upload"
+                class="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-100"
               >
-              <label for="profile-upload" class="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-100">
                 <CameraIcon class="h-5 w-5 text-gray-600" />
-                <input 
-                  id="profile-upload" 
-                  type="file" 
-                  accept="image/*" 
-                  class="hidden" 
+                <input
+                  id="profile-upload"
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
                   @change="handleProfileUpload"
-                >
+                />
               </label>
             </div>
           </div>
-          
+
           <!-- User Info -->
           <div class="ml-40">
             <h1 class="text-2xl font-bold text-gray-900">{{ fullName }}</h1>
             <p class="text-gray-600">{{ user.email }}</p>
             <p class="text-gray-600">{{ user.mobilePhone }}</p>
-            
+
             <!-- Roles Badges -->
             <div class="mt-2 flex flex-wrap gap-2">
-              <span 
-                v-for="(role, index) in user.authorities" 
+              <span
+                v-for="(role, index) in user.authorities"
                 :key="index"
                 class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
               >
-                {{ role.replace('ROLE_', '') }}
+                {{ role.replace("ROLE_", "") }}
               </span>
             </div>
           </div>
@@ -55,32 +65,52 @@
           <!-- Personal Information Card -->
           <div class="bg-white shadow rounded-lg overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
-              <h2 class="text-lg font-medium text-gray-900">Personal Information</h2>
+              <h2 class="text-lg font-medium text-gray-900">
+                Personal Information
+              </h2>
             </div>
             <div class="px-6 py-4">
               <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">First Name</label>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >First Name</label
+                  >
                   <p class="mt-1 text-sm text-gray-900">{{ user.firstName }}</p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">Father's Name</label>
-                  <p class="mt-1 text-sm text-gray-900">{{ user.fatherName }}</p>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Father's Name</label
+                  >
+                  <p class="mt-1 text-sm text-gray-900">
+                    {{ user.fatherName }}
+                  </p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">Grandfather's Name</label>
-                  <p class="mt-1 text-sm text-gray-900">{{ user.grandFatherName }}</p>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Grandfather's Name</label
+                  >
+                  <p class="mt-1 text-sm text-gray-900">
+                    {{ user.grandFatherName }}
+                  </p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">Email</label>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Email</label
+                  >
                   <p class="mt-1 text-sm text-gray-900">{{ user.email }}</p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">Phone</label>
-                  <p class="mt-1 text-sm text-gray-900">{{ user.mobilePhone }}</p>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Phone</label
+                  >
+                  <p class="mt-1 text-sm text-gray-900">
+                    {{ user.mobilePhone }}
+                  </p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">User ID</label>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >User ID</label
+                  >
                   <p class="mt-1 text-sm text-gray-900">{{ user.userUuid }}</p>
                 </div>
               </div>
@@ -88,15 +118,25 @@
           </div>
 
           <!-- Additional Details from API -->
-          <div v-if="personalDetails" class="bg-white shadow rounded-lg overflow-hidden">
+          <div
+            v-if="personalDetails"
+            class="bg-white shadow rounded-lg overflow-hidden"
+          >
             <div class="px-6 py-4 border-b border-gray-200">
-              <h2 class="text-lg font-medium text-gray-900">Additional Details</h2>
+              <h2 class="text-lg font-medium text-gray-900">
+                Additional Details
+              </h2>
             </div>
             <div class="px-6 py-4">
               <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div v-for="(value, key) in filteredPersonalDetails" :key="key">
-                  <label class="block text-sm font-medium text-gray-700 capitalize">{{ key.replace(/([A-Z])/g, ' $1').trim() }}</label>
-                  <p class="mt-1 text-sm text-gray-900">{{ value || 'Not provided' }}</p>
+                  <label
+                    class="block text-sm font-medium text-gray-700 capitalize"
+                    >{{ key.replace(/([A-Z])/g, " $1").trim() }}</label
+                  >
+                  <p class="mt-1 text-sm text-gray-900">
+                    {{ value || "Not provided" }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -114,41 +154,53 @@
               <form @submit.prevent="changePassword">
                 <div class="space-y-4">
                   <div>
-                    <label for="current-password" class="block text-sm font-medium text-gray-700">Current Password</label>
-                    <input 
-                      v-model="password.current" 
-                      type="password" 
-                      id="current-password" 
+                    <label
+                      for="current-password"
+                      class="block text-sm font-medium text-gray-700"
+                      >Current Password</label
+                    >
+                    <input
+                      v-model="password.current"
+                      type="password"
+                      id="current-password"
                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       required
-                    >
+                    />
                   </div>
                   <div>
-                    <label for="new-password" class="block text-sm font-medium text-gray-700">New Password</label>
-                    <input 
-                      v-model="password.new" 
-                      type="password" 
-                      id="new-password" 
+                    <label
+                      for="new-password"
+                      class="block text-sm font-medium text-gray-700"
+                      >New Password</label
+                    >
+                    <input
+                      v-model="password.new"
+                      type="password"
+                      id="new-password"
                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       required
                       minlength="8"
-                    >
+                    />
                   </div>
                   <div>
-                    <label for="confirm-password" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                    <input 
-                      v-model="password.confirm" 
-                      type="password" 
-                      id="confirm-password" 
+                    <label
+                      for="confirm-password"
+                      class="block text-sm font-medium text-gray-700"
+                      >Confirm New Password</label
+                    >
+                    <input
+                      v-model="password.confirm"
+                      type="password"
+                      id="confirm-password"
                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       required
-                    >
+                    />
                   </div>
                   <div v-if="passwordError" class="text-red-500 text-sm">
                     {{ passwordError }}
                   </div>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Update Password
@@ -164,7 +216,7 @@
               <h2 class="text-lg font-medium text-gray-900">Account Actions</h2>
             </div>
             <div class="px-6 py-4 space-y-4">
-              <button 
+              <button
                 @click="logout"
                 class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
@@ -178,11 +230,11 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { CameraIcon } from '@heroicons/vue/24/outline';
-import { getPersonalDetails } from '../api/profileApi'; // Your API function
+<script setup>
+import { ref, computed, onMounted } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { CameraIcon } from "@heroicons/vue/24/outline";
+import { getPersonalDetails } from "../api/profileApi"; // Your API function
 
 const auth = useAuthStore();
 const user = auth.auth?.user || {};
@@ -203,25 +255,25 @@ const handleProfileUpload = (event) => {
 
 // Password change
 const password = ref({
-  current: '',
-  new: '',
-  confirm: ''
+  current: "",
+  new: "",
+  confirm: "",
 });
-const passwordError = ref('');
+const passwordError = ref("");
 const changePassword = async () => {
   if (password.value.new !== password.value.confirm) {
-    passwordError.value = 'New passwords do not match';
+    passwordError.value = "New passwords do not match";
     return;
   }
-  
+
   try {
     // Call your password change API here
     // await changePasswordApi(password.value.current, password.value.new);
-    passwordError.value = '';
-    password.value = { current: '', new: '', confirm: '' };
-    alert('Password changed successfully!');
+    passwordError.value = "";
+    password.value = { current: "", new: "", confirm: "" };
+    alert("Password changed successfully!");
   } catch (error) {
-    passwordError.value = error.message || 'Failed to change password';
+    passwordError.value = error.message || "Failed to change password";
   }
 };
 
@@ -238,9 +290,7 @@ const filteredPersonalDetails = computed(() => {
 onMounted(async () => {
   try {
     personalDetails.value = await getPersonalDetails(user.userUuid);
-  } catch (error) {
-    console.error('Failed to fetch personal details:', error);
-  }
+  } catch (error) {}
 });
 
 // Computed properties
