@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePagination } from "@/composables/usePagination";
-import { getProviders } from "../api/payerContractApi";
+import { getProviders } from "../api/providerContractApi";
 import { useProviders } from "../store/payerContractStore";
 import { watch, computed } from "vue";
 import { Status } from "@/types/interface";

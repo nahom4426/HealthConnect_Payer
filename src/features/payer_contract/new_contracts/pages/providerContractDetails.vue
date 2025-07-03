@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPayerContractById } from '../api/providerContractApi';
+import { getPayerContractById } from '../api/payerContractApi';
 import { toasted } from '@/utils/utils';
 import { openModal } from "@customizer/modal-x";
 import icons from '@/utils/icons';
-import FamilyGroup from '@/features/insured_persons/pages/FamilyGroup.vue';
+import FamilyGroup from '../components/EmployeePayerGroup.vue';
 const router = useRouter();
 const route = useRoute();
 const contractId = route.params.contractHeaderUuid;
@@ -64,6 +64,7 @@ const prevEmployeePage = () => {
 
 // Services data
 const serviceSearch = ref('');
+
 const filteredServices = computed(() => {
   if (!contractData.value.contractDetails) return [];
   const searchTerm = serviceSearch.value.toLowerCase();
@@ -330,7 +331,8 @@ onMounted(() => {
                 : 'text-[#75778B] hover:bg-gray-100'
             ]"
           >
-            Employee Groups ({{ contractData.employeeGroups?.length ?? 0 }})
+            Employee Groups
+             <!-- ({{ contractData.employeeGroups?.length }}) -->
           </button>
           <button
             @click="activeTab = 'services'"
@@ -346,7 +348,7 @@ onMounted(() => {
         </div>
 
      <button
-  class="bg-[#007E73] hover:bg-[#005f58] text-white px-5 py-2 rounded-md text-sm"
+  class="bg-primary hover:bg-[#014F4F] text-white px-5 py-4 rounded-md text-sm"
   @click="handleOpenModal"
 >
   {{ activeTab === 'groups' ? 'Add Group' : 'Add Employee' }}

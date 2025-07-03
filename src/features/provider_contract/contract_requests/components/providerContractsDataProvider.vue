@@ -3,7 +3,7 @@ import { usePagination } from "@/composables/usePagination";
 import { payerContracts } from "../store/payerContractStore";
 import { watch } from "vue";
 import { removeUndefined } from "@/utils/utils";
-import { getPayerContracts } from "../../active_payer_contracts/api/payerContractApi";
+import { getPayerContracts } from "../../active_payer_contracts/api/providerContractApi";
 
 const props = defineProps({
   auto: {

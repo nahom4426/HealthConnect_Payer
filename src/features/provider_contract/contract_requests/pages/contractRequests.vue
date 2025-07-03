@@ -3,17 +3,17 @@ import { ref, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import PayerContractsDataProvider from "../components/PayerContractsDataProvider.vue";
+import ProviderContractsDataProvider from "../components/providerContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
-import { changePayerContractStatus, deletePayerContract } from "../../active_payer_contracts/api/payerContractApi";
+import { changePayerContractStatus, deletePayerContract } from "../../active_payer_contracts/api/providerContractApi";
 import { addToast } from "@/toast";
 import { useApiRequest } from "@/composables/useApiRequest";
 // import StatusRow from ".././active_payer_contracts/components/StatusRow.vue";
 import { openModal } from "@customizer/modal-x";
 import { payerContracts } from "../store/payerContractStore";
 import icons from "@/utils/icons";
-import ContractStatusRow from "../../active_payer_contracts/components/contractStatusRow.vue";
+import contractRequestStatusRow from "../components/contractRequestStatusRow.vue";
 
 
 const emit = defineEmits(["navigate"]);
@@ -159,18 +159,10 @@ function handleEdit(contract) {
       </button>
     </template>
 
-    <template #add-action>
-      <button
-        @click.prevent="handleAddContract"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
-      >
-        <i v-html="icons.plus_circle"></i>
-        <p class="text-base">Initiate Contract</p>
-      </button>
-    </template>
+   
 
     <template #default="{ search }">
-      <PayerContractsDataProvider
+      <ProviderContractsDataProvider
         ref="dataProvider"
         :search="search"
         v-slot="{ contracts, pending, currentPage, itemsPerPage, totalPages }"
@@ -179,27 +171,25 @@ function handleEdit(contract) {
           :pending="pending"
           :headers="{
             head: [
+              'Payer Name',
               'Contract Name',
-              'Contract Number',
-              'Payer',
-              'Provider',
+              'Contract ID',
               'Start Date',
               'End Date',
               'Status',
               'Actions'
             ],
             row: [
+              'payerName', 
               'contractName',
-              'contractNumber',
-              'payerName',
-              'providerName',
+              'contractCode',
               'startDate',
               'endDate',
               'status'
             ]
           }"
           :rows="contracts"
-          :rowCom="ContractStatusRow"
+          :rowCom="contractRequestStatusRow"
           :pagination="{
             currentPage,
             itemsPerPage,
@@ -209,7 +199,7 @@ function handleEdit(contract) {
           }"
         >
           <template #row>
-            <ContractStatusRow
+            <contractRequestStatusRow
               :rowData="contracts"
               :rowKeys="[
                 'contractName',
@@ -238,7 +228,7 @@ function handleEdit(contract) {
             />
           </template>
         </Table>
-      </PayerContractsDataProvider>
+      </ProviderContractsDataProvider>
     </template>
   </DefaultPage>
 </template>

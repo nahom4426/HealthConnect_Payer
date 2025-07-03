@@ -12,6 +12,7 @@ import { useApiRequest } from '@/composables/useApiRequest';
 import { useAuthStore } from '@/stores/auth';
 import DatePicker from '@/components/datePicker.vue';
 import Spinner from '@/components/Spinner.vue';
+import ButtonSpinner from '@/components/buttonSpinner.vue';
 
 const auth = useAuthStore();
 const payerUuid = computed(() => auth.auth.user?.payerUuid || '');
@@ -729,7 +730,7 @@ onMounted(async () => {
        class="bg-primary text-white px-6 py-3 rounded hover:bg-[#146C5C] transition"
         :class="{ 'opacity-75 cursor-not-allowed': submitting }"
       >
-        <Spinner v-if="submitting" class="h-5 w-5 text-white" />
+        <ButtonSpinner v-if="submitting" class="h-5 w-5 text-white" />
         {{ submitting ? 'Submitting...' : 'Submit Contract' }}
       </button>
     </div>

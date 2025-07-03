@@ -5,7 +5,7 @@ import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
 import { payerContracts } from "../store/payerContractStore";
 import icons from "@/utils/icons";
-import { changePayerContractStatus } from '../api/providerContractApi';
+import { changePayerContractStatus } from '../api/submitContractApi';
 
 const router = useRouter();
 const props = defineProps({
@@ -66,7 +66,7 @@ function handleImageError(event) {
 
 function handleEdit(contract) {
   router.push({
-    name: 'Edit Payer Contract',
+    name: 'Edit Provider Contract',
     params: { 
       id: contract.contractHeaderUuid // Pass only the ID
     }

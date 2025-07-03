@@ -6,7 +6,7 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import PayerContractsDataProvider from "../components/PayerContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
-import { changePayerContractStatus, deletePayerContract } from "../api/payerContractApi";
+import { changePayerContractStatus, deletePayerContract } from "../api/providerContractApi";
 import { addToast } from "@/toast";
 import { useApiRequest } from "@/composables/useApiRequest";
 import StatusRow from "../components/contractStatusRow.vue";

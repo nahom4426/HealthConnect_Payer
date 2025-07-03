@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useApiRequest } from "@/composables/useApiRequest";
-import { createPayerContract, importPayerContracts, downloadPayerContractTemplate } from "../api/payerContractApi";
+import { createPayerContract, importPayerContracts, downloadPayerContractTemplate } from "../api/providerContractApi";
 import { ref } from "vue";
 import { toasted } from "@/utils/utils";
 

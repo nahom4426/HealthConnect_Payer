@@ -39,6 +39,37 @@ export default [
     
     ],
   },
+  {
+    name: "Contracts",
+    icon: icons.contracts,
+    privilege: ['Create Services'], 
+    //  category: "Payers",
+    navs: [
+        {
+      path: "/payer_contracts",
+      name: "Active Contracts",
+      icon: icons.active_contracts,
+      privilege: ["Create Services"],
+      // category: "Admin",
+    },
+      {
+        path: "/contract_requests",
+        name: "Contracts Requests",
+        icon: icons.new_contract,
+        category: "Pages",
+        privilege: ['Create Services'], 
+      },
+      {
+        path: "/pending_contracts",
+        name: "Pending Contracts",
+        icon: icons.pending_contracts,
+        category: "Pages",
+       privilege: ['Create Services'], 
+      },
+     
+    
+    ],
+  },
  {
     path: "/payer_list",
     name: "Payer List",

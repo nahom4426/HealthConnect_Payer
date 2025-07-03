@@ -7,7 +7,7 @@ import InactiveProvidersDataProvider from "../components/InactiveProvidersDataPr
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
 import { useProviders } from "../store/payerContractStore";
-import { changePayerContractStatus } from "../api/payerContractApi";
+import { changePayerContractStatus } from "../api/providerContractApi";
 import { addToast } from "@/toast";
 import EditPayerContractModal from "../components/EditPayerContractModal.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
