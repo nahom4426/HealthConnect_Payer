@@ -1,7 +1,7 @@
 <script setup>
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
-import ProviderForm from "./PayerContractForm.vue";
+import ProviderForm from "./ProviderContractForm.vue";
 import Button from "@/components/Button.vue";
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";

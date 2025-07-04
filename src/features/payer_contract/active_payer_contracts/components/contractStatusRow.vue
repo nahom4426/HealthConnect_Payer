@@ -60,12 +60,11 @@ function getStatusStyle(status) {
   } else if (status === 'ACCEPTED' || status === 'Accepted') {
     return 'bg-primary text-white';
   } else if (status === 'REJECTED' || status === 'Rejected') {
-    return 'bg-yellow-100 text-white';
+    return 'bg-[#DB2E48] text-white';
   } else {
     return 'bg-[#FFD665] text-gray-800';
   }
 }
-
 function handleImageError(event) {
   event.target.src = '/assets/placeholder-logo.png';
 }
@@ -112,51 +111,30 @@ function handleViewWithClose(row) {
   props.onView(row);
 }
 
-async function handleActivateWithClose(contract) {
+
+function handleApprove(row) {
   closeAllDropdowns();
-  try {
-    const response = await changePayerContractStatus(contract.contractHeaderUuid, 'ACTIVE');
-    if (response.success) {
-      addToast({
-        type: 'success',
-        title: 'Status Updated',
-        message: 'Contract has been activated successfully'
-      });
-      payerContractsStore.update(contract.contractHeaderUuid, { status: 'ACTIVE' });
-    } else {
-      throw new Error(response.error || 'Failed to activate contract');
-    }
-  } catch (error) {
+ openModal('acceptContractPayer', {
+  contractHeaderUuid: row.contractHeaderUuid,
+  onUpdated: () => {
     addToast({
-      type: 'error',
-      title: 'Activation Failed',
-      message: error.message || 'An error occurred while activating the contract'
+      type: 'success',
+      title: 'Approved',
+      message: 'Contract approved successfully'
     });
+  },
+  onCancel: () => {
+    console.log('Approval canceled');
   }
+});
 }
 
-async function handleDeactivateWithClose(contract) {
+function handleReject(row) {
   closeAllDropdowns();
-  try {
-    const response = await changePayerContractStatus(contract.contractHeaderUuid, 'INACTIVE');
-    if (response.success) {
-      addToast({
-        type: 'success',
-        title: 'Status Updated',
-        message: 'Contract has been deactivated successfully'
-      });
-      payerContractsStore.update(contract.contractHeaderUuid, { status: 'INACTIVE' });
-    } else {
-      throw new Error(response.error || 'Failed to deactivate contract');
-    }
-  } catch (error) {
-    addToast({
-      type: 'error',
-      title: 'Deactivation Failed',
-      message: error.message || 'An error occurred while deactivating the contract'
-    });
-  }
+  openModal('rejectContract', { contractHeaderUuid: row.contractHeaderUuid });
 }
+
+
 </script>
 
 
@@ -173,7 +151,7 @@ async function handleDeactivateWithClose(contract) {
         <!-- Status field -->
         <div v-if="key === 'status'" class="truncate">  
           <span 
-            class="px-2.5 py-1 rounded-full text-xs font-medium"
+            class="px-2.5 py-1 rounded-md text-xs font-medium"
             :class="getStatusStyle(row.status)"
           >
             {{ row.status }}
@@ -232,24 +210,24 @@ async function handleDeactivateWithClose(contract) {
               
               <template v-if="row.status">
                 <button 
-                  v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
-                  @click.stop="handleActivateWithClose(row)"
+                  v-if="row.status === 'APPROVED' || row.status === 'APPROVED'"
+                  @click.stop="handleApprove(row)"
                   class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
                 >
                   <div class="flex items-center justify-start pl-4 gap-4">
                     <i v-html="icons.activate" />
-                    Activate
+                    Accept
                   </div>
                 </button>
                
                 <button 
-                  v-if="row.status === 'ACTIVE' || row.status === 'Active'"
-                  @click.stop="handleDeactivateWithClose(row)"
+                  v-if="row.status === 'REJECTED' || row.status === 'Active'"
+                  @click.stop="handleEdit(row)"
                   class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
                 >
                   <div class="flex items-center justify-start pl-4 gap-4">
                     <i v-html="icons.deactivate" />
-                    Deactivate
+                    ReSubmit
                   </div>
                 </button>
               </template>

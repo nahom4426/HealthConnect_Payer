@@ -632,7 +632,7 @@ watch(searchDrugQuery, () => {
       <!-- Step 2: Select Services -->
       <div v-else-if="employeeDetails" class="py-3 space-y-6">
         <!-- Employee Details -->
-          {{ error }}
+          {{ error }} 
         <EmployeeDetails :employee="employeeDetails" />
 
         <!-- Credit Service Details -->

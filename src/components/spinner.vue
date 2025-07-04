@@ -10,16 +10,22 @@
 </template>
 
 <script setup lang="ts">
-// No logic needed
+// No additional logic needed for the spinner
 </script>
 
 <style scoped>
 .spinner-container {
-  @apply flex justify-center items-center min-h-[300px] w-full;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
 }
 
 .spinner {
-  @apply flex flex-col items-center gap-4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 .spinner-inner {
@@ -33,7 +39,7 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  border-radius: 9999px;
+  border-radius: 50%;
   border: 4px solid transparent;
   border-top-color: #3b82f6;
   border-bottom-color: #3b82f6;
@@ -43,11 +49,11 @@
 .spinner-inner::before {
   content: "";
   position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
-  bottom: 6px;
-  border-radius: 9999px;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border-radius: 50%;
   border: 4px solid transparent;
   border-left-color: #10b981;
   border-right-color: #10b981;
@@ -55,28 +61,17 @@
 }
 
 .loading-text {
-<<<<<<< HEAD
   font-family: 'Segoe UI', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  letter-spacing: 0.05em;
-  text-shadow: 0 0 5px rgba(75, 85, 99, 0.5);
-  animation: pulse 1.5s ease-in-out infinite, glow 1.5s ease-in-out infinite alternate;
-=======
-  font-family: "Segoe UI", sans-serif;
   font-size: 1.2rem; /* Slightly larger font size */
   font-weight: 600; /* Bolder font weight */
   color: #1f2937; /* Darker color for better contrast */
   letter-spacing: 0.1em; /* Increased letter spacing */
   text-shadow: 0 0 5px rgba(75, 85, 99, 0.5); /* Subtle text shadow */
-  animation: pulse 1.5s ease-in-out infinite,
-    glow 1.5s ease-in-out infinite alternate; /* Added glow animation */
+  animation: pulse 1.5s ease-in-out infinite, glow 1.5s ease-in-out infinite alternate; /* Added glow animation */
 }
 
 @keyframes pulse {
-  0%,
-  100% {
+  0%, 100% {
     opacity: 0.7; /* Faded at start and end */
   }
   50% {
@@ -91,7 +86,6 @@
   100% {
     text-shadow: 0 0 20px rgba(75, 85, 99, 1); /* Glow effect */
   }
->>>>>>> 4c6d73fcf119e252d8c7032ef777af26925325be
 }
 
 @keyframes rotate {
@@ -129,22 +123,13 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.8;
-    transform: scale(1);
   }
   50% {
     opacity: 1;
     transform: scale(1.05);
-  }
-}
-
-@keyframes glow {
-  0% {
-    text-shadow: 0 0 5px rgba(75, 85, 99, 0.5);
-  }
-  100% {
-    text-shadow: 0 0 20px rgba(75, 85, 99, 1);
   }
 }
 </style>

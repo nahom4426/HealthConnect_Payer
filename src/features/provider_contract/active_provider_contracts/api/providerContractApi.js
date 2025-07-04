@@ -6,15 +6,15 @@ const basePath = '/payer-provider-contract';
 
 export function getPayerContracts(query = {}) {
   const authStore = useAuthStore();
-  const payerUuid = authStore.auth?.user?.payerUuid;
+  const providerUuid = authStore.auth?.user?.providerUuid;
 
-  if (!payerUuid) {
+  if (!providerUuid) {
     throw new Error('Payer UUID not found in auth store');
   }
 
   return api.addAuthenticationHeader().get(`${basePath}/all`, {
     params: {
-      payerUuid,
+      providerUuid,
       page: 0,
       size: 10,
       sort: 'startDate',
@@ -24,8 +24,15 @@ export function getPayerContracts(query = {}) {
 }
 
 export function getPayerContractById(id) {
-  return api.addAuthenticationHeader().get(`${basePath}/${id}`);
+  return api
+    .addAuthenticationHeader()
+    .get(`${basePath}/${id}`, {
+      params: {
+        userType: 'provider',
+      },
+    });
 }
+
 
 export function createPayerContract(formData) {
   return api.addAuthenticationHeader().post(basePath, formData, {
@@ -94,31 +101,6 @@ export function searchInsuredByInstitution(id, query = {}, config = {}) {
       throw error;
     });
 }
-export function assignServicesToGroup(groupUuid, serviceUuids = []) {
-  // if (!groupUuid || !Array.isArray(serviceUuids)) {
-  //   throw new Error('Invalid group UUID or service list');
-  // }
-
-  return api.addAuthenticationHeader().post(
-    `${basePath}/${groupUuid}/assign-services`,
-    serviceUuids,
-    {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }
-  );
-}
-export function getContractDetailsByGroup(groupUuid, contractHeaderUuid) {
-  // if (!groupUuid || !contractHeaderUuid) {
-  //   throw new Error('Both groupUuid and contractHeaderUuid are required');
-  // }
-
-  return api.addAuthenticationHeader().get(
-    `/groups/groups/${groupUuid}/contracts/${contractHeaderUuid}/contract-details`
-  );
-}
-
 
 // Helper function for safe API responses
 export async function safeApiCall(apiCall) {

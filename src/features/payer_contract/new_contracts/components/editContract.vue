@@ -103,7 +103,7 @@ async function fetchContract() {
             assignedGroups: item.assignedGroups || [],
             type: item.serviceUuid ? 'service' : (item.drugUuid ? 'drug' : 'unknown'),
           };
-          console.log('🧩 Parsed item:', parsedItem);
+          console.log('🧩 Parsed items:', parsedItem);
           return parsedItem;
         });
       }
@@ -370,7 +370,7 @@ async function submit() {
 
     if (response.success) {
       toasted(true, 'Contract updated successfully');
-      router.push('/payer-contracts');
+      router.push('/contract_requests');
     } else {
       toasted(false, response.error || 'Failed to update contract');
     }
@@ -512,6 +512,7 @@ onMounted(async () => {
                 </div>
                 <div class="text-center mt-4">
                   <button
+                  type="button"
                     class="text-sm px-4 py-2 rounded-lg transition-colors duration-200"
                     :class="isNegotiating ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-[#75778B] text-white hover:bg-[#616373]'"
                     @click="editPrices"
@@ -560,7 +561,7 @@ onMounted(async () => {
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(item, index) in paginatedItems"
+                    v-for="(item, index) in paginatedItems "
                     :key="item.id"
                     class="border-b border-gray-100 hover:bg-gray-50"
                   >
@@ -583,7 +584,7 @@ onMounted(async () => {
                     <td class="p-3">
                       <input
                         v-if="isNegotiating"
-                        v-model.number="item.userPrice"
+                        v-model="item.userPrice"
                         type="number"
                         min="0"
                         step="0.01"
@@ -615,6 +616,7 @@ onMounted(async () => {
               </div>
               <div class="flex items-center gap-1">
                 <button
+                type="button"
                   @click="prevPage"
                   :disabled="currentPage === 1"
                   class="px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -623,6 +625,7 @@ onMounted(async () => {
                 </button>
                 <span v-for="n in totalPages" :key="n">
                   <button
+                  type="button"
                     :class="[
                       'px-3 py-1 border rounded-md font-medium transition-colors duration-200',
                       currentPage === n ? 'bg-[#02676B] text-white' : 'text-gray-700 hover:bg-gray-100'
@@ -633,6 +636,7 @@ onMounted(async () => {
                   </button>
                 </span>
                 <button
+                type="button"
                   @click="nextPage"
                   :disabled="currentPage === totalPages"
                   class="px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"

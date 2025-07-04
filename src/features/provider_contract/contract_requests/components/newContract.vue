@@ -6,7 +6,7 @@ import { getAllProviders } from '@/features/providers/api/providerApi';
 import Select from '@/components/new_form_elements/Select.vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import icons from '@/utils/icons';
-import { createNewContract } from '../api/submitContractApi';
+import { createNewContract } from '../api/contractRequestApi';
 import { toasted } from '@/utils/utils';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { useAuthStore } from '@/stores/auth';
