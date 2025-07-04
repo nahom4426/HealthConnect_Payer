@@ -4,7 +4,9 @@ import ClinicalIndex from "@/features/claim/pages/clinicalApproval/ClinicalIndex
 import FinancialApproval from "@/features/claim/pages/financialApproval/FinancialApproval.vue";
 import FinancialApprovalDetail from "@/features/claim/pages/financialApproval/FinancialApprovalDetail.vue";
 import FinancialClaimIndex from "@/features/claim/pages/financialApproval/FinancialClaimIndex.vue";
+import ClaimPaymentDetail from "@/features/claim/pages/payment/ClaimPaymentDetail.vue";
 import Payment from "@/features/claim/pages/payment/Payment.vue";
+import PaymentIndex from "@/features/claim/pages/payment/PaymentIndex.vue";
 import SubmittedClaimDetail from "@/features/claim/pages/submittedClaim/SubmittedClaimDetail.vue";
 import SubmittedClaimIndex from "@/features/claim/pages/submittedClaim/SubmittedClaimIndex.vue";
 import SubmittedClaims from "@/features/claim/pages/submittedClaim/SubmittedClaims.vue";
@@ -69,10 +71,24 @@ export default [
     name: "Track Claims",
     component: TrackClaim,
   },
+
   {
-    path: "/Payment",
+    
+    path: "/payment",
     name: "Payment",
-    component: Payment,
+    component: PaymentIndex,
+    children: [
+      { 
+        path: "",
+        name: "Claim Payment",
+        component: Payment,},
+      {
+        path: "detail/:id",
+        name: "Claim Payment Detail",
+        component: ClaimPaymentDetail,
+      }
+    ]
   },
+ 
   
 ];

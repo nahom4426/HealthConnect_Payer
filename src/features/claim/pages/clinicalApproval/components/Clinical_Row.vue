@@ -118,7 +118,7 @@ function handleApproval(id, main) {
 
       <div class="truncate flex gap-4" v-else-if="key == 'claimStatus'">
         <p
-          v-if="row?.claimStatus == 'SUBMITTED'"
+          v-if="row?.claimStatus == 'DRAFT'"
           class="bg-base-clr3 text-base-clr px-2 py-1 rounded border border-base-clr"
         >
           {{ row?.claimStatus }}

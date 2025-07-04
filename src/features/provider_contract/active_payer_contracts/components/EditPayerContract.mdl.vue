@@ -6,7 +6,7 @@ import Button from "@/components/Button.vue";
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref, onMounted, watch } from "vue";
-import { updatePayerContract } from "../api/payerContractApi";
+import { updatePayerContract } from "../api/providerContractApi";
 import { payerContracts } from "../store/payerContractStore";
 
 // In modal-x, props are passed via the 'data' prop

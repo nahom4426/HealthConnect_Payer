@@ -3,7 +3,7 @@ import { ref, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import PayerContractsDataProvider from "../components/PayerContractsDataProvider.vue";
+import pendingContractsDataProvider from "../components/pendingContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
 import { changePayerContractStatus, deletePayerContract } from "../../active_payer_contracts/api/payerContractApi";
@@ -136,15 +136,7 @@ function handleDeactivate(contract) {
   }
 }
 
-function handleAddContract() {
-  router.push(`/new_contract/new`);
-}
-function handleEdit(contract) {
-  router.push({
-    path: '/edit',
-    state: { contract } // Pass full object here
-  });
-}
+
 
 </script>
 
@@ -159,18 +151,10 @@ function handleEdit(contract) {
       </button>
     </template>
 
-    <template #add-action>
-      <button
-        @click.prevent="handleAddContract"
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
-      >
-        <i v-html="icons.plus_circle"></i>
-        <p class="text-base">Initiate Contract</p>
-      </button>
-    </template>
+   
 
     <template #default="{ search }">
-      <PayerContractsDataProvider
+      <pendingContractsDataProvider
         ref="dataProvider"
         :search="search"
         v-slot="{ contracts, pending, currentPage, itemsPerPage, totalPages }"
@@ -238,7 +222,7 @@ function handleEdit(contract) {
             />
           </template>
         </Table>
-      </PayerContractsDataProvider>
+      </pendingContractsDataProvider>
     </template>
   </DefaultPage>
 </template>

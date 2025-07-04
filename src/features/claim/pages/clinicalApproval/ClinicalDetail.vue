@@ -35,8 +35,9 @@ api.send(
         {
           title: "Time Range",
           value:
-            `${res.data?.claimFromDate}   To  ${res.data?.claimToDate}` ||
-            "N/A",
+            `${res.data?.claimFromDate || ""}   To  ${
+              res.data?.claimToDate || ""
+            }` || "N/A",
         },
       ];
       clinicalStore.set(res.data?.services);

@@ -12,6 +12,7 @@ const props = defineProps({
   },
   status: {
     type: String,
+    default: "ACTIVE"
   },
   search: {
     type: String,
@@ -27,7 +28,7 @@ const pagination = usePagination({
     getPayerContracts(
       removeUndefined({
         ...data,
-        status: props.status,
+         status: props.status,
         search: props.search.trim()
       })
     )

@@ -17,7 +17,7 @@ const props = defineProps({
 <template>
   <div
     :class="[props.customClass]"
-    class="flex flex-col gap-2 p-2 rounded-md w-full"
+    class="flex flex-col gap-2 p-2 rounded-md w-"
   >
     <h1 v-if="header" class="text-base-clr ml-2 border-b pb-2">
       {{ props.header }}

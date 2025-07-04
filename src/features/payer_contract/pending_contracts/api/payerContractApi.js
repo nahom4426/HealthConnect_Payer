@@ -94,6 +94,31 @@ export function searchInsuredByInstitution(id, query = {}, config = {}) {
       throw error;
     });
 }
+export function assignServicesToGroup(groupUuid, serviceUuids = []) {
+  // if (!groupUuid || !Array.isArray(serviceUuids)) {
+  //   throw new Error('Invalid group UUID or service list');
+  // }
+
+  return api.addAuthenticationHeader().post(
+    `${basePath}/${groupUuid}/assign-services`,
+    serviceUuids,
+    {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+}
+export function getContractDetailsByGroup(groupUuid, contractHeaderUuid) {
+  // if (!groupUuid || !contractHeaderUuid) {
+  //   throw new Error('Both groupUuid and contractHeaderUuid are required');
+  // }
+
+  return api.addAuthenticationHeader().get(
+    `/groups/groups/${groupUuid}/contracts/${contractHeaderUuid}/contract-details`
+  );
+}
+
 
 // Helper function for safe API responses
 export async function safeApiCall(apiCall) {

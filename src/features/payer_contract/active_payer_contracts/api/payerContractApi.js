@@ -95,9 +95,9 @@ export function searchInsuredByInstitution(id, query = {}, config = {}) {
     });
 }
 export function assignServicesToGroup(groupUuid, serviceUuids = []) {
-  if (!groupUuid || !Array.isArray(serviceUuids)) {
-    throw new Error('Invalid group UUID or service list');
-  }
+  // if (!groupUuid || !Array.isArray(serviceUuids)) {
+  //   throw new Error('Invalid group UUID or service list');
+  // }
 
   return api.addAuthenticationHeader().post(
     `${basePath}/${groupUuid}/assign-services`,
@@ -110,9 +110,9 @@ export function assignServicesToGroup(groupUuid, serviceUuids = []) {
   );
 }
 export function getContractDetailsByGroup(groupUuid, contractHeaderUuid) {
-  if (!groupUuid || !contractHeaderUuid) {
-    throw new Error('Both groupUuid and contractHeaderUuid are required');
-  }
+  // if (!groupUuid || !contractHeaderUuid) {
+  //   throw new Error('Both groupUuid and contractHeaderUuid are required');
+  // }
 
   return api.addAuthenticationHeader().get(
     `/groups/groups/${groupUuid}/contracts/${contractHeaderUuid}/contract-details`

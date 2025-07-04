@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 defineProps({
   percentage: {
     type: Number,
@@ -26,11 +26,10 @@ defineProps({
       :style="{
         height,
         width,
-        backgroundColor: color,
       }"
     >
       <div
-        class="progress-bar"
+        class="progress-bar z-10"
         :style="{
           width: `${percentage}%`,
           backgroundColor: color,
@@ -49,7 +48,7 @@ defineProps({
 
 .progress-bg {
   width: 100%;
-  background-color: #ffd5a4;
+  background-color: #dff1f1;
   border-radius: 9999px;
   overflow: hidden;
 }

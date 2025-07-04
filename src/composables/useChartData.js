@@ -10,17 +10,15 @@ export function useChartData() {
     labels: months.value,
     datasets: [
       {
-        label: "Policies",
-        data: policyData.value,
-        backgroundColor: "#4C3F3F",
-        borderColor: "#4C3F3F",
+        label: "Services",
+        data: claimData.value,
+        backgroundColor: "#FFD665",
         borderWidth: 1,
       },
       {
-        label: "Claims",
-        data: claimData.value,
-        backgroundColor: "#55291B80",
-        borderColor: "#55291B",
+        label: "Drugs",
+        data: policyData.value,
+        backgroundColor: "#02676B",
         borderWidth: 1,
       },
     ],

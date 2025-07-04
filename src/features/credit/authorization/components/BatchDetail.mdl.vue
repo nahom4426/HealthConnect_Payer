@@ -51,10 +51,9 @@ const fetchInsuredPersonData = () => {
 };
 
 async function processProfilePicture() {
-  if (!profilePicture.value) {
-    return;
+  if (!profilePicture.value.startsWith("data:image/")) {
+    profilePicture.value = `data:image/png;base64,${profilePicture.value}`;
   }
-
   try {
     if (profilePicture.value.startsWith("data:image/jpeg")) {
       return;

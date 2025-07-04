@@ -10,7 +10,7 @@ import claimRoutes from "./claim.routes";
 import adminRoutes from "./admin.routes";
 import instutionSetingRoutes from "./institution_settings.routes";
 import insuredPersonRoutes from "./insured_persons.routes";
-import Provider_contractsRoutes from "./provider_contracts.routes";
+import Provider_contractsRoutes from "./providerContract.routes";
 import providerRoutes from "./providers.routes"
 import payerContractRoutes from "./payerContract.routes";
 import creditServicesRoutes from "./credit_services.routes";

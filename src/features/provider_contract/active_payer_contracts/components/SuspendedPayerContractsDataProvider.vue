@@ -1,6 +1,6 @@
 <script setup>
 import { usePagination } from "@/composables/usePagination";
-import { getProviders } from "../api/payerContractApi";
+import { getProviders } from "../api/providerContractApi";
 import { payerContracts } from "../store/payerContractStore";
 import { watch, computed } from "vue";
 

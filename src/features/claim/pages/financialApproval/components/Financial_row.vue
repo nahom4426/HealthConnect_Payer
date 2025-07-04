@@ -13,9 +13,9 @@ import { openModal } from "@customizer/modal-x";
 import Dropdown from "@/components/Dropdown.vue";
 import { approveClaim } from "@/features/claim/api/clinicalApi";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { useClinical } from "@/features/claim/store/clinicalStore";
 import { approveBatchClaims } from "@/features/claim/api/batchClaim";
-import { useSubmittedClaimStore } from "@/features/claim/store/submittedClaimStore";
+import { useFinancialStore } from "@/features/claim/store/financialStore";
+import { useFinancialDetailStore } from "@/features/claim/store/financialDetailStore";
 
 const props = defineProps({
   rowData: {
@@ -39,14 +39,14 @@ const isOnDetailPage = computed(() => {
 const api = useApiRequest();
 
 const emit = defineEmits(["row"]);
-const clinicalStore = useClinical();
+const financialDetailStore = useFinancialDetailStore();
 const title = ref(isOnDetailPage ? "Approve Claim" : "Approve Batch Claim");
 const message = ref(
   isOnDetailPage
     ? "Are you sure you want to approve this claim?"
     : "Are you sure you want to approve this batch claim?"
 );
-const submittedClaimStore = useSubmittedClaimStore();
+const financialStore = useFinancialStore();
 
 function handleApproval(id, main) {
   openModal(
@@ -59,10 +59,10 @@ function handleApproval(id, main) {
       if (confirmed) {
         if (main) {
           api.send(
-            () => approveBatchClaims(id, { newStatus: "SUBMITTED" }),
+            () => approveBatchClaims(id, { newStatus: "APPROVED" }),
             (res) => {
               if (res.success) {
-                submittedClaimStore.remove(claimUuid);
+                financialStore.remove(claimUuid);
                 //   clinicalStore.remove(id);
               }
               toasted(res.success, "Claim Approved Successfully", res.error);
@@ -70,10 +70,10 @@ function handleApproval(id, main) {
           );
         } else {
           api.send(
-            () => approveClaim(id, { newStatus: "SUBMITTED" }),
+            () => approveClaim(id, { newStatus: "APPROVED" }),
             (res) => {
               if (res.success) {
-                clinicalStore.remove(id);
+                financialDetailStore.remove(id);
               }
               toasted(res.success, "Claim Approved Successfully", res.error);
             }

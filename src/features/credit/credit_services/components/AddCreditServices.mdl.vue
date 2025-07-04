@@ -6,10 +6,7 @@ import { useRouter } from "vue-router";
 import { closeModal } from "@customizer/modal-x";
 import { ref } from "vue";
 import creditServicesFormDataProvider from "../form/creditServicesFormDataProvider.vue";
-import {
-  createCreditService,
-  createCreditDrug,
-} from "../api/creditServicesApi";
+import { createCreditService } from "../api/creditServicesApi";
 import { useAuthStore } from "@/stores/auth";
 import { claimServices } from "../store/creditClaimsStore";
 import { toasted } from "@/utils/utils";
@@ -20,6 +17,7 @@ const auth = useAuthStore();
 const formPending = ref(false);
 const router = useRouter();
 const formDataProvider = ref();
+
 async function handleSubmit(formValues: any) {
   try {
     formPending.value = true;
@@ -30,16 +28,17 @@ async function handleSubmit(formValues: any) {
       throw new Error('Please fill all required fields');
     }
 
-    // Determine if this is a dependant claim
-    const isDependantClaim = !!formValues.dependantUuid;
-    
-    // Common payload for both services and drugs
-    const commonPayload = {
+    // Validate at least one medication item exists
+    if (!formValues.medicationItems || formValues.medicationItems.length === 0) {
+      throw new Error('Please add at least one medication item');
+    }
+
+    // Prepare the payload according to the new structure
+    const payload = {
       providerUuid: auth.auth?.user?.providerUuid || "",
       payerUuid: formValues.payerUuid,
-      payerName: formValues.payerName, 
-      insuredUuid:  formValues.insuredUuid, // Only include for main employees
-      dependantUuid: isDependantClaim ? formValues.dependantUuid : null, // Include for dependants
+      insuredUuid: formValues.insuredUuid,
+      dependantUuid: formValues.dependantUuid,
       phone: formValues.phone,
       patientName: formValues.patientName || `${formValues.employeeId} - ${formValues.phone}`,
       employeeId: formValues.employeeId,
@@ -48,124 +47,50 @@ async function handleSubmit(formValues: any) {
       pharmacyTransactionId: formValues.pharmacyTransactionId || '',
       primaryDiagnosis: formValues.primaryDiagnosis || '',
       secondaryDiagnosis: formValues.secondaryDiagnosis || '',
-      isDependant: isDependantClaim // Flag to indicate if this is a dependant claim
-    };
-
-    let result;
-    let storeData;
-
-    if (formValues.medicationItems) {
-      // Validate services
-      if (formValues.medicationItems.length === 0) {
-        throw new Error('Please add at least one service');
-      }
-
-      // Handle service submission
-      const servicePayload = {
-        ...commonPayload,
-        medicationItems: formValues.medicationItems.map((item: any) => {
-          const paymentAmount = typeof item.paymentAmount === 'string' 
-            ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
-            : Number(item.paymentAmount) || 0;
-            
-          return {
-            serviceUuid: item.serviceUuid,
-            remark: item.remark || '',
-            quantity: Number(item.quantity) || 1,
-            paymentAmount: paymentAmount,
-            primaryDiagnosis: formValues.primaryDiagnosis || '',
-            secondaryDiagnosis: formValues.secondaryDiagnosis || ''
-          };
-        })
-      };
-      result = await createCreditService(servicePayload);
-
-      // Prepare data for store
-      storeData = {
-        ...commonPayload,
-        invoiceNumber: result.data?.invoiceNumber || `TEMP-${Date.now()}`,
-        dispensingUuid: result.data?.dispensingUuid || `TEMP-${Date.now()}`,
-        totalAmount: formValues.medicationItems.reduce((sum: number, item: any) => {
-          const paymentAmount = typeof item.paymentAmount === 'string' 
-            ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
-            : Number(item.paymentAmount) || 0;
-          return sum + (paymentAmount * (Number(item.quantity) || 1));
-        }, 0),
-        patientResponsibility: 0,
-        insuranceCoverage: 0,
-        branchName: null,
-        createdAt: new Date().toISOString(),
-        type: 'service',
-        items: formValues.medicationItems.map((item: any) => ({
-          ...item,
-          type: 'service',
-          name: item.serviceName,
-          code: item.serviceCode,
-          price: typeof item.paymentAmount === 'string' 
-            ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
-            : Number(item.paymentAmount) || 0,
-          remark: item.remark || ''
-        }))
-      };
-    } else if (formValues.drugItems) {
-      // Validate drugs
-      if (formValues.drugItems.length === 0) {
-        throw new Error('Please add at least one drug');
-      }
-
-      const invalidDrug = formValues.drugItems.find((item: any) => 
-        !item.route || !item.frequency || !item.dose || !item.duration
-      );
-      if (invalidDrug) {
-        throw new Error('Please fill all drug administration details');
-      }
-
-      // Handle drug submission
-      const drugPayload = {
-        ...commonPayload,
-        drugItems: formValues.drugItems.map((item: any) => ({
-          drugUuid: item.drugUuid,
-          quantity: Number(item.quantity) || 1,
-          totalPrice: (item.price || 0) * (Number(item.quantity) || 1),
+      medicationItems: formValues.medicationItems.map((item: any) => ({
+        contractDetailUuid: item.contractHeaderUuid || '',
+        itemType: item.itemType,
+        remark: item.remark || '',
+        price: item.price || 
+              (item.itemType === 'SERVICE' 
+                ? (typeof item.paymentAmount === 'string' 
+                    ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
+                    : Number(item.paymentAmount) || 0)
+                : item.price || 0),
+        quantity: Number(item.quantity) || 1,
+        // Include drug-specific fields if present
+        ...(item.itemType === 'DRUG' ? {
           route: item.route || 'oral',
           frequency: item.frequency || 'daily',
           dose: item.dose || '1',
-          duration: item.duration || '7 days',
-          remark: item.remark || ''
-        }))
-      };
-      result = await createCreditDrug(drugPayload);
+          duration: item.duration || '7 days'
+        } : {})
+      }))
+    };
 
+    // Submit the claim
+    const result = await createCreditService(payload);
+
+    if (result.success) {
       // Prepare data for store
-      storeData = {
-        ...commonPayload,
+      const storeData = {
+        ...payload,
         invoiceNumber: result.data?.invoiceNumber || `TEMP-${Date.now()}`,
         dispensingUuid: result.data?.dispensingUuid || `TEMP-${Date.now()}`,
-        totalAmount: formValues.drugItems.reduce((sum: number, item: any) => 
+        totalAmount: payload.medicationItems.reduce((sum: number, item: any) => 
           sum + ((item.price || 0) * (Number(item.quantity) || 1)), 0),
         patientResponsibility: 0,
         insuranceCoverage: 0,
         branchName: null,
         createdAt: new Date().toISOString(),
-        type: 'drug',
-        items: formValues.drugItems.map((item: any) => ({
+        items: payload.medicationItems.map((item: any) => ({
           ...item,
-          type: 'drug',
-          name: item.drugName,
-          code: item.drugCode,
-          price: item.price || 0
+          name: item.itemType === 'SERVICE' ? item.serviceName : item.drugName,
+          code: item.itemType === 'SERVICE' ? item.serviceCode : item.drugCode,
         }))
       };
-    } else {
-      throw new Error('No items added - must have either services or drugs');
-    }
 
-    if (result.success) {
-      const successMessage = formValues.medicationItems 
-        ? 'Credit service added successfully' 
-        : 'Credit drug added successfully';
-      
-      toasted(true, 'Success', result.data?.message || successMessage);
+      toasted(true, 'Success', result.data?.message || 'Credit claim added successfully');
       
       // Add to store
       claimServicesStore.add(storeData);
@@ -173,7 +98,7 @@ async function handleSubmit(formValues: any) {
       closeModal();
       router.push('/credit_services');
     } else {
-      // throw new Error(result.data?.message || 'Submission failed');
+      throw new Error(result.data?.message || 'Submission failed');
     }
   } catch (error: any) {
     console.error('Submission error:', error);
@@ -192,8 +117,8 @@ async function handleSubmit(formValues: any) {
     <NewFormParent 
       class="" 
       size="xl" 
-      :title="`Add New Credit services/Drug`" 
-      :subtitle="`To add a new credit services/Drug, please fill out the information in the fields below.`"
+      :title="`Add New Credit Claim`" 
+      :subtitle="`To add a new credit claim, please fill out the information in the fields below.`"
     >
       <div class="bg-white rounded-lg">
         <creditServicesFormDataProvider ref="formDataProvider">

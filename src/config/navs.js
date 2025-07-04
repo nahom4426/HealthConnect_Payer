@@ -2,44 +2,70 @@ import icons from "@/utils/icons";
 
 // icon set called streamline
 export default [
- {
-  path: "/dashboard",
-  name: "Dashboard",
-  icon: icons.dashboard,
-
-},
- {
+  {
+    path: "/dashboard",
+    name: "Dashboard",
+    icon: icons.dashboard,
+  },
+  {
     name: "Contracts",
     icon: icons.contracts,
-    privilege: ['Create Employees'], 
+    privilege: ["Create Employees"],
     //  category: "Payers",
     navs: [
-        {
-      path: "/payer_contracts",
-      name: "Active Contracts",
-      icon: icons.active_contracts,
-      privilege: ["Create Employees"],
-      // category: "Admin",
-    },
+      {
+        path: "/payer_contracts",
+        name: "Active Contracts",
+        icon: icons.active_contracts,
+        privilege: ["Create Employees"],
+        // category: "Admin",
+      },
       {
         path: "/new_contract",
         name: "Create Contracts",
         icon: icons.new_contract,
         category: "Pages",
-        privilege: ['Create Employees'], 
+        privilege: ["Create Employees"],
       },
       {
         path: "/pending_contracts",
         name: "Pending Contracts",
         icon: icons.pending_contracts,
         category: "Pages",
-       privilege: ['Create Employees'], 
+        privilege: ["Create Employees"],
       },
-     
-    
     ],
   },
- {
+  {
+    name: "Contracts",
+    icon: icons.contracts,
+    privilege: ["Create Services"],
+    //  category: "Payers",
+    navs: [
+      {
+        path: "/payer_contracts",
+        name: "Active Contracts",
+        icon: icons.active_contracts,
+        privilege: ["Create Services"],
+        // category: "Admin",
+      },
+      {
+        path: "/contract_requests",
+        name: "Contracts Requests",
+        icon: icons.new_contract,
+        category: "Pages",
+        privilege: ["Create Services"],
+      },
+      {
+        path: "/pending_contracts",
+        name: "Pending Contracts",
+        icon: icons.pending_contracts,
+        category: "Pages",
+        privilege: ["Create Services"],
+      },
+    ],
+  },
+  {
     path: "/payer_list",
     name: "Payer List",
     icon: icons.payerList,
@@ -52,7 +78,7 @@ export default [
     icon: icons.Activeprovider,
     privilege: ["CREATE_USER"],
   },
-   
+
   {
     path: "/services",
     name: "Services",
@@ -96,25 +122,25 @@ export default [
       },
     ],
   },
-   {
-        path: "/insured_list",
-        name: "Employees list",
-        icon: icons.active_insured_persons,
-        privilege: ['Create Employees'],
-      },
-     
+  {
+    path: "/insured_list",
+    name: "Employees list",
+    icon: icons.active_insured_persons,
+    privilege: ["Create Employees"],
+  },
+
   {
     name: "Claims",
     icon: icons.claimManagement,
     privilege: ["Create Employees"],
     category: "Payers",
     navs: [
-      {
-        path: "/submitted_claims",
-        name: "New Claims",
-        category: "pages",
-        privilege: ["Create Employees"],
-      },
+      // {
+      //   path: "/submitted_claims",
+      //   name: "New Claims",
+      //   category: "pages",
+      //   privilege: ["Create Employees"],
+      // },
       {
         path: "/clinical_approval",
         name: "Clinical Approval",
@@ -128,7 +154,7 @@ export default [
         privilege: ["Create Employees"],
       },
       {
-        path: "/Payment",
+        path: "/payment",
         name: "Payment",
         category: "service",
         privilege: ["Create Employees"],

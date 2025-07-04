@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { onMounted, ref, watch } from "vue";
 import { Chart, registerables } from "chart.js";
 Chart.register(...registerables);

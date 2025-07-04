@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePagination } from "@/composables/usePagination";
 import { payerContracts } from "../store/payerContractStore";
-import { getPayerContracts } from "../api/payerContractApi";
+import { getPayerContracts } from "../api/providerContractApi";
 import { watch } from "vue";
 import { removeUndefined } from "@/utils/utils";
 

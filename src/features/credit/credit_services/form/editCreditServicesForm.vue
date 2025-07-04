@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useForm } from '@/components/new_form_builder/useForm';
 import Form from '@/components/new_form_builder/Form.vue';
@@ -16,92 +16,29 @@ import { getAllServices } from '@/features/service/api/serviceApi';
 import { getAllDrugs } from '@/features/service/api/drugApi';
 import selectServices from '../components/selectServices.vue';
 import EmployeeDetails from '../components/EmployeeDetails.vue';
-import { getDispensingDetail, updateDispensingRecord, updateDrugDispensingRecord } from '../api/creditServicesApi';
-
-interface Payer {
-  payerUuid: string;
-  payerName: string;
-  email: string;
-  telephone?: string;
-}
-
-interface Employee {
-  insuredUuid: string;
-  fullName: string;
-  phone: string;
-  insuredIdNumber: string;
-  position: string;
-  idNumber: string;
-  birthDate: string;
-  eligible: boolean;
-  profilePictureBase64?: string;
-  status?: string;
-  gender?: string;
-  address?: string;
-  email?: string;
-  isDependant?: boolean;
-  dependantUuid?: string;
-  employeeUuid?: string;
-}
-
-interface Service {
-  id: string;
-  serviceUuid: string; 
-  serviceCode: string;
-  serviceName: string;
-  paymentAmount: string;
-  primaryDiagnosis?: string;
-  secondaryDiagnosis?: string;
-  status: string;
-  remark?: string;
-  quantity?: number;
-}
-
-interface Drug {
-  id: string;
-  drugUuid: string;
-  drugCode: string;
-  drugName: string;
-  price: number;
-  status: string;
-  quantity: number;
-  route?: string;
-  frequency?: string;
-  dose?: string;
-  duration?: string;
-}
+import { getDispensingDetail, updateDispensingRecord } from '../api/creditServicesApi';
 
 const props = defineProps({
-  dispensingUuid: {
-    type: String,
-    required: true
-  },
-  onUpdated: {
-    type: Function,
-    default: () => {}
-  },
-  onCancel: {
-    type: Function,
-    required: true
-  }
+  dispensingUuid: { type: String, required: true },
+  onUpdated: { type: Function, default: () => {} },
+  onCancel: { type: Function, required: true }
 });
 
-// Reactive state
-const payers = ref<Payer[]>([]);
-const employees = ref<Employee[]>([]);
-const selectedPayer = ref<string | null>(null);
-const selectedEmployee = ref<Employee | null>(null);
+const payers = ref([]);
+const employees = ref([]);
+const selectedPayer = ref(null);
+const selectedEmployee = ref(null);
 const searchEmployeeQuery = ref('');
 const searchServiceQuery = ref('');
 const searchDrugQuery = ref('');
 const fetchPending = ref(false);
-const error = ref<string | null>(null);
-const currentStep = ref<'selectEmployee' | 'selectServices'>('selectEmployee');
-const activeTab = ref<'services' | 'drugs'>('services');
-const availableServices = ref<Service[]>([]);
-const availableDrugs = ref<Drug[]>([]);
-const addedServices = ref<Service[]>([]);
-const addedDrugs = ref<Drug[]>([]);
+const error = ref(null);
+const currentStep = ref('selectEmployee');
+const activeTab = ref('services');
+const availableServices = ref([]);
+const availableDrugs = ref([]);
+const addedServices = ref([]);
+const addedDrugs = ref([]);
 const primaryDiagnosis = ref('');
 const secondaryDiagnosis = ref('');
 const auth = useAuthStore();
@@ -110,10 +47,9 @@ const prescriptionNumber = ref('');
 const pharmacyTransactionId = ref('');
 const dispensingDate = ref(new Date().toISOString().split('T')[0]);
 const loading = ref(true);
-const claimData = ref<any>({});
-const remarks = ref<Record<string, string>>({});
+const claimData = ref({});
+const remarks = ref({});
 
-// Computed properties
 const employeeDetails = computed(() => {
   if (!selectedEmployee.value) return null;
   return {
@@ -134,37 +70,27 @@ const employeeDetails = computed(() => {
   };
 });
 
-const payerOptions = computed(() => {
-  return payers.value.map(payer => ({
-    label: `${payer.payerName} (${payer.telephone || payer.email || 'N/A'})`,
-    value: payer.payerUuid,
-  }));
-});
+const payerOptions = computed(() =>
+  payers.value.map(p => ({
+    label: `${p.payerName} (${p.telephone || p.email || 'N/A'})`,
+    value: p.payerUuid,
+  }))
+);
 
-// Methods
 async function fetchPayers() {
   try {
     fetchPending.value = true;
-    error.value = null;
     const response = await getActiveInstitutions({ page: 1, limit: 100 });
-    
-    if (!response?.data?.content || !Array.isArray(response.data.content)) {
-      throw new Error('Invalid data format: missing content array');
-    }
-
-    payers.value = response.data.content.map(item => ({
+    payers.value = (response?.data?.content || []).map(item => ({
       payerUuid: item.payerUuid,
       payerName: item.payerName || `Unnamed Payer (${item.email})`,
       email: item.email,
       telephone: item.telephone
     }));
-
-    if (payers.value.length === 0) {
-      error.value = 'No payers available';
-    }
+    if (payers.value.length === 0) error.value = 'No payers available';
   } catch (err) {
     console.error('Error fetching payers:', err);
-    error.value = 'Failed to load payers. Please try again.';
+    error.value = 'Failed to load payers';
   } finally {
     fetchPending.value = false;
   }
@@ -172,21 +98,13 @@ async function fetchPayers() {
 
 async function fetchEmployees() {
   if (!selectedPayer.value) return;
-  
   try {
     fetchPending.value = true;
-    error.value = null;
     const response = await searchInsuredByInstitution(selectedPayer.value, {
       search: searchEmployeeQuery.value
     });
-
-    const employeesData = Array.isArray(response) ? response : 
-                       response?.content ? response.content : 
-                       response?.data?.content ? response.data.content : [];
-
-    if (!Array.isArray(employeesData)) {
-      throw new Error('Invalid employee data format');
-    }
+    const employeesData = Array.isArray(response) ? response :
+      response?.content || response?.data?.content || [];
 
     employees.value = employeesData.flatMap(emp => {
       const employeeRecord = {
@@ -204,25 +122,25 @@ async function fetchEmployees() {
         status: emp.status || 'UNKNOWN',
         dependants: emp.dependants || []
       };
-      
-      const dependantRecords = emp.dependants?.map(dependant => ({
-        insuredUuid: dependant.dependantUuid,
-        fullName: `${dependant.dependantFirstName || ''} ${dependant.dependantFatherName || ''} ${dependant.dependantGrandFatherName || ''}`.trim(),
+
+      const dependantRecords = emp.dependants?.map(dep => ({
+        insuredUuid: dep.dependantUuid,
+        fullName: `${dep.dependantFirstName || ''} ${dep.dependantFatherName || ''} ${dep.dependantGrandFatherName || ''}`.trim(),
         phone: emp.phone,
         email: emp.email || 'N/A',
-        gender: dependant.dependantGender || 'Unknown',
+        gender: dep.dependantGender || 'Unknown',
         address: emp.address || 'Unknown',
-        eligible: dependant.dependantStatus === 'ACTIVE',
-        position: `Dependant (${dependant.relationship})`,
+        eligible: dep.dependantStatus === 'ACTIVE',
+        position: `Dependant (${dep.relationship})`,
         idNumber: 'N/A',
-        birthDate: dependant.dependantBirthDate || 'Unknown',
+        birthDate: dep.dependantBirthDate || 'Unknown',
         profilePictureBase64: null,
-        status: dependant.dependantStatus || 'UNKNOWN',
+        status: dep.dependantStatus || 'UNKNOWN',
         isDependant: true,
-        dependantUuid: dependant.dependantUuid,
+        dependantUuid: dep.dependantUuid,
         employeeUuid: emp.insuredUuid
       })) || [];
-      
+
       return [employeeRecord, ...dependantRecords];
     });
 
@@ -231,33 +149,26 @@ async function fetchEmployees() {
     }
   } catch (err) {
     console.error('Error fetching employees:', err);
-    error.value = 'Failed to load employees. Please try again.';
+    error.value = 'Failed to load employees';
   } finally {
     fetchPending.value = false;
   }
 }
 
-function selectEmployee(employee: Employee) {
+function selectEmployee(employee) {
   if (!employee.eligible) return;
   selectedEmployee.value = employee;
 }
 
 function continueToServices() {
-  if (selectedEmployee.value) {
-    currentStep.value = 'selectServices';
-  }
+  if (selectedEmployee.value) currentStep.value = 'selectServices';
 }
 
-async function fetchServices(query: string) {
+async function fetchServices(query) {
   try {
     fetchPending.value = true;
-    const response = await getAllServices(providerUuid.value, {
-      search: query,
-      page: 1,
-      limit: 25
-    });
-
-    availableServices.value = response.data.content.map((service: any) => ({
+    const response = await getAllServices(providerUuid.value, { search: query, page: 1, limit: 25 });
+    availableServices.value = response.data.content.map(service => ({
       id: service.serviceUuid,
       serviceUuid: service.serviceUuid,
       serviceCode: service.serviceCode,
@@ -274,16 +185,11 @@ async function fetchServices(query: string) {
   }
 }
 
-async function fetchDrugs(query: string) {
+async function fetchDrugs(query) {
   try {
     fetchPending.value = true;
-    const response = await getAllDrugs(providerUuid.value, {
-      search: query,
-      page: 1,
-      limit: 25
-    });
-    
-    availableDrugs.value = response.data.content.map((drug: any) => ({
+    const response = await getAllDrugs(providerUuid.value, { search: query, page: 1, limit: 25 });
+    availableDrugs.value = response.data.content.map(drug => ({
       id: drug.drugUuid || `temp-${Math.random().toString(36).substr(2, 9)}`,
       drugUuid: drug.drugUuid,
       drugCode: drug.drugCode,
@@ -304,177 +210,110 @@ async function fetchDrugs(query: string) {
   }
 }
 
-function handleSearchItems({ type, query }: { type: string, query: string }) {
-  if (type === 'services') {
-    fetchServices(query);
-  } else if (type === 'drugs') {
-    fetchDrugs(query);
-  }
+function handleSearchItems({ type, query }) {
+  type === 'services' ? fetchServices(query) : fetchDrugs(query);
 }
-
-function handleUpdateRemarks(newRemarks: Record<string, string>) {
+function handleUpdateRemarks(newRemarks) {
   remarks.value = newRemarks;
 }
-
-function changeTab(tab: 'services' | 'drugs') {
-  activeTab.value = tab;
-  error.value = null;
+function handleAddItem(item) {
+  (activeTab.value === 'services' ? addedServices : addedDrugs).value.push(item);
 }
-
-function handleAddItem(item: any) {
-  if (activeTab.value === 'services') {
-    addedServices.value.push(item);
-  } else {
-    addedDrugs.value.push(item);
-  }
+function handleRemoveItem(index) {
+  (activeTab.value === 'services' ? addedServices : addedDrugs).value.splice(index, 1);
 }
-
-function handleRemoveItem(index: number) {
-  if (activeTab.value === 'services') {
-    addedServices.value.splice(index, 1);
-  } else {
-    addedDrugs.value.splice(index, 1);
-  }
+function handleUpdateQuantity({ index, value }) {
+  (activeTab.value === 'services' ? addedServices : addedDrugs).value[index].quantity = value;
 }
-
-function handleUpdateQuantity({ index, value }: { index: number, value: number }) {
-  if (activeTab.value === 'services') {
-    addedServices.value[index].quantity = value;
-  } else {
-    addedDrugs.value[index].quantity = value;
-  }
+function handleUpdateDiagnosis({ index, primaryDiagnosis: primary, secondaryDiagnosis: secondary }) {
+  const list = addedServices;
+  if (primary !== undefined) list.value[index].primaryDiagnosis = primary;
+  if (secondary !== undefined) list.value[index].secondaryDiagnosis = secondary;
 }
-
-function handleUpdateDiagnosis({ index, primaryDiagnosis: primary, secondaryDiagnosis: secondary }: 
-  { index: number, primaryDiagnosis?: string, secondaryDiagnosis?: string }) {
-  if (primary !== undefined) {
-    addedServices.value[index].primaryDiagnosis = primary;
-  }
-  if (secondary !== undefined) {
-    addedServices.value[index].secondaryDiagnosis = secondary;
-  }
+function handleUpdateItem({ index, item }) {
+  addedDrugs.value[index] = { ...addedDrugs.value[index], ...item };
 }
-
-function handleUpdateItem({ index, item }: { index: number, item: any }) {
-  if (activeTab.value === 'drugs') {
-    addedDrugs.value[index] = { ...addedDrugs.value[index], ...item };
-  }
-}
-
-function handleClearItems(tab: 'services' | 'drugs') {
+function handleClearItems(tab) {
   if (tab === 'services') {
-    addedDrugs.value = [];
-  } else {
     addedServices.value = [];
+  } else {
+    addedDrugs.value = [];
   }
 }
 
-function validateForm(): boolean {
+function validateForm() {
   if (!selectedPayer.value || !selectedEmployee.value || !dispensingDate.value) {
     error.value = 'Please fill all required fields';
     return false;
-  } 
-
-  if (activeTab.value === 'services') {
-    if (addedServices.value.length === 0) {
-      error.value = 'Please add at least one service';
-      return false;
-    }
-  } else {
-    if (addedDrugs.value.length === 0) {
-      error.value = 'Please add at least one drug';
-      return false;
-    }
-    const invalidDrug = addedDrugs.value.find(item => 
-      !item.route || !item.frequency || !item.dose || !item.duration
-    );
-    if (invalidDrug) {
-      error.value = 'Please fill all drug administration details';
-      return false;
-    }
   }
-  
+
+  const hasItems = addedServices.value.length > 0 || addedDrugs.value.length > 0;
+  if (!hasItems) {
+    error.value = 'Please add at least one service or drug';
+    return false;
+  }
+
+  const invalidDrug = addedDrugs.value.some(item =>
+    !item.route || !item.frequency || !item.dose || !item.duration
+  );
+  if (invalidDrug) {
+    error.value = 'Please fill all drug administration details';
+    return false;
+  }
+
   return true;
 }
 
 async function handleSubmit() {
   if (!validateForm()) return;
-
   try {
     fetchPending.value = true;
-    error.value = null;
-
     const payload = {
       dispensingUuid: props.dispensingUuid,
-      payerUuid: selectedPayer.value!,
-      payerName: payers.value.find(p => p.payerUuid === selectedPayer.value!)?.payerName || '',
-      phone: selectedEmployee.value!.phone,
-      employeeId: selectedEmployee.value!.idNumber,
-      insuredUuid: selectedEmployee.value!.isDependant ? selectedEmployee.value!.employeeUuid : selectedEmployee.value!.insuredUuid,
-      dependantUuid: selectedEmployee.value!.isDependant ? selectedEmployee.value!.dependantUuid : null,
-      patientName: selectedEmployee.value!.fullName,
-      dispensingDate: dispensingDate.value,
-      prescriptionNumber: prescriptionNumber.value,
-      pharmacyTransactionId: pharmacyTransactionId.value,
+      insuredUuid: selectedEmployee.value.isDependant
+        ? selectedEmployee.value.employeeUuid
+        : selectedEmployee.value.insuredUuid,
+      dependantUuid: selectedEmployee.value.isDependant ? selectedEmployee.value.dependantUuid : null,
       primaryDiagnosis: primaryDiagnosis.value,
       secondaryDiagnosis: secondaryDiagnosis.value,
-      providerUuid: providerUuid.value
+      medicationItems: [
+        ...addedServices.value.map(item => ({
+          contractDetailUuid: item.serviceUuid,
+          itemType: 'SERVICE',
+          remark: item.remark || '',
+          price: typeof item.paymentAmount === 'string'
+            ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
+            : Number(item.paymentAmount) || 0,
+          quantity: Number(item.quantity) || 1,
+          primaryDiagnosis: item.primaryDiagnosis || primaryDiagnosis.value,
+          secondaryDiagnosis: item.secondaryDiagnosis || secondaryDiagnosis.value
+        })),
+        ...addedDrugs.value.map(item => ({
+          contractDetailUuid: item.drugUuid,
+          itemType: 'DRUG',
+          remark: item.remark || '',
+          price: item.price || 0,
+          quantity: Number(item.quantity) || 1,
+          route: item.route || 'oral',
+          frequency: item.frequency || 'daily',
+          dose: item.dose || '1',
+          duration: item.duration || '7 days',
+          primaryDiagnosis: item.primaryDiagnosis || primaryDiagnosis.value,
+          secondaryDiagnosis: item.secondaryDiagnosis || secondaryDiagnosis.value
+        }))
+      ]
     };
 
-    try {
-      let response;
-      if (activeTab.value === 'services') {
-        response = await updateDispensingRecord(props.dispensingUuid, {
-          ...payload,
-          medicationItems: addedServices.value.map(item => ({
-            serviceUuid: item.serviceUuid,
-            remark: item.remark || '',
-            quantity: item.quantity || 1,
-            paymentAmount: parseFloat(item.paymentAmount.replace('ETB ', '')) || 0,
-            primaryDiagnosis: item.primaryDiagnosis || primaryDiagnosis.value,
-            secondaryDiagnosis: item.secondaryDiagnosis || secondaryDiagnosis.value
-          }))
-        });
-      } else {
-        response = await updateDrugDispensingRecord(props.dispensingUuid, {
-          ...payload,
-          drugItems: addedDrugs.value.map(item => ({
-            drugUuid: item.drugUuid,
-            quantity: Number(item.quantity),
-            totalPrice: item.price * item.quantity,
-            route: item.route,
-            frequency: item.frequency,
-            dose: item.dose,
-            duration: item.duration,
-            remark: item.remark || ''
-          }))
-        });
-      }
-
-      // Check if response exists and has success property
-      if (response && response.success) {
-        toasted(true, 'Success', 'Claim updated successfully');
-        props.onUpdated(response.data);
-        closeModal(); // Only close on success
-      } else {
-        // Handle case where response exists but success is false
-        const errorMessage = response?.message || response?.error || 'Update failed without error message';
-        throw new Error(errorMessage);
-      }
-    } catch (apiError: any) {
-      if (apiError.response?.status === 401) {
-        // Special handling for 401 - show toast but keep modal open
-        toasted(false, 'Error', 'Full authentication is required to access this resource');
-        return; // Exit early to prevent modal from closing
-      }
-      // For other API errors
-      throw apiError;
+    const response = await updateDispensingRecord(props.dispensingUuid, payload);
+    if (response?.success) {
+      toasted(true, 'Success', 'Claim updated successfully');
+      props.onUpdated(response.data);
+      closeModal();
+    } else {
+      throw new Error(response?.message || response?.error || 'Update failed without error message');
     }
-  } catch (err: any) {
-    console.error('Update error:', err);
-    const errorMessage = err.response?.data?.message || 
-                       err.message || 
-                       'Failed to update claim';
+  } catch (err) {
+    const errorMessage = err.response?.data?.message || err.message || 'Failed to update claim';
     error.value = errorMessage;
     toasted(false, 'Error', errorMessage);
   } finally {
@@ -482,71 +321,76 @@ async function handleSubmit() {
   }
 }
 
-// Lifecycle hooks
 onMounted(async () => {
   try {
     loading.value = true;
     await fetchPayers();
-    
     const response = await getDispensingDetail(props.dispensingUuid);
-    
     if (response.success) {
       claimData.value = response.data;
-      
       selectedPayer.value = claimData.value.payerUuid;
       dispensingDate.value = claimData.value.dispensingDate;
       prescriptionNumber.value = claimData.value.prescriptionNumber || '';
       pharmacyTransactionId.value = claimData.value.pharmacyTransactionId || '';
       primaryDiagnosis.value = claimData.value.primaryDiagnosis || '';
       secondaryDiagnosis.value = claimData.value.secondaryDiagnosis || '';
-      
+
       if (claimData.value.insuredUuid) {
         await fetchEmployees();
-        const employee = employees.value.find(e => e.insuredUuid === claimData.value.insuredUuid);
+        const employee = employees.value.find(e =>
+          e.insuredUuid === claimData.value.insuredUuid ||
+          (e.isDependant && e.dependantUuid === claimData.value.dependantUuid)
+        );
         if (employee) {
           selectedEmployee.value = employee;
           currentStep.value = 'selectServices';
         }
       }
-      
+
       if (claimData.value.items) {
-        const services = claimData.value.items.filter((item: any) => item.itemType === 'SERVICE');
-        const drugs = claimData.value.items.filter((item: any) => item.itemType === 'DRUG');
-        
-        if (services.length > 0) {
-          activeTab.value = 'services';
-          addedServices.value = services.map((item: any) => ({
+        for (const item of claimData.value.items) {
+          const baseItem = {
             id: item.itemUuid,
-            serviceUuid: item.itemUuid,
-            serviceCode: item.medicationCode,
-            serviceName: item.medicationName,
-            paymentAmount: `ETB ${item.unitPrice?.toFixed(2) || '0.00'}`,
-            quantity: item.quantity || 1,
             remark: item.remark || '',
+            quantity: item.quantity || 1,
             primaryDiagnosis: item.primaryDiagnosis || claimData.value.primaryDiagnosis || '',
             secondaryDiagnosis: item.secondaryDiagnosis || claimData.value.secondaryDiagnosis || ''
-          }));
-        } else if (drugs.length > 0) {
+          };
+
+          if (item.itemType === 'SERVICE') {
+            addedServices.value.push({
+              ...baseItem,
+              itemType: 'SERVICE',
+              serviceUuid: item.itemUuid,
+              serviceCode: item.medicationCode,
+              serviceName: item.medicationName,
+              paymentAmount: `ETB ${item.unitPrice?.toFixed(2) || '0.00'}`
+            });
+          } else if (item.itemType === 'DRUG') {
+            addedDrugs.value.push({
+              ...baseItem,
+              itemType: 'DRUG',
+              drugUuid: item.itemUuid,
+              drugCode: item.medicationCode,
+              drugName: item.medicationName,
+              price: item.unitPrice || 0,
+              route: item.route,
+              frequency: item.frequency,
+              dose: item.dose,
+              duration: item.duration
+            });
+          }
+        }
+        if (addedServices.value.length > 0) {
+          activeTab.value = 'services';
+        } else if (addedDrugs.value.length > 0) {
           activeTab.value = 'drugs';
-          addedDrugs.value = drugs.map((item: any) => ({
-            id: item.itemUuid,
-            drugUuid: item.itemUuid,
-            drugCode: item.medicationCode,
-            drugName: item.medicationName,
-            price: item.unitPrice || 0,
-            quantity: item.quantity || 1,
-            route: item.route || 'oral',
-            frequency: item.frequency || 'daily',
-            dose: item.dose || '1',
-            duration: item.duration || '7 days',
-            remark: item.remark || ''
-          }));
         }
       }
     } else {
       throw new Error(response.error || 'Failed to load claim details');
     }
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.message || 'Failed to load claim details';
     toasted(false, 'Error', error.value);
   } finally {
@@ -554,32 +398,27 @@ onMounted(async () => {
   }
 });
 
-// Watchers
-let searchTimeout: number;
-watch(searchEmployeeQuery, async (newQuery) => {
+watch(searchEmployeeQuery, () => {
   clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(async () => {
-    if (selectedPayer.value) {
-      await fetchEmployees();
-    }
+  searchTimeout = setTimeout(() => {
+    if (selectedPayer.value) fetchEmployees();
   }, 300);
 });
 
-watch(selectedPayer, async (newPayerId) => {
-  if (!newPayerId) return;
-  await fetchEmployees();
+watch(selectedPayer, () => {
+  if (selectedPayer.value) fetchEmployees();
 });
 
-let drugSearchTimeout: number;
-watch(searchDrugQuery, async (newQuery) => {
+watch(searchDrugQuery, () => {
   clearTimeout(drugSearchTimeout);
-  drugSearchTimeout = setTimeout(async () => {
-    if (newQuery.trim().length > 0) {
-      await fetchDrugs(newQuery);
+  drugSearchTimeout = setTimeout(() => {
+    if (searchDrugQuery.value.trim().length > 0) {
+      fetchDrugs(searchDrugQuery.value);
     }
   }, 500);
 });
 </script>
+
 
 <template>
   <Form
@@ -604,10 +443,7 @@ watch(searchDrugQuery, async (newQuery) => {
     <template v-else>
       <!-- Step 1: Select Employee -->
       <div v-if="currentStep === 'selectEmployee'" class="py-3 space-y-6">  
-        <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-          {{ error }}
-        </div>
-
+         {{ error }}
         <div class="flex gap-4 mt-4">
           <div class="w-72">
             <Select     
@@ -659,7 +495,6 @@ watch(searchDrugQuery, async (newQuery) => {
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                   <template v-for="(employee, index) in employees" :key="employee.insuredUuid">
-                    <!-- Only show employees that are not dependants -->
                     <tr v-if="!employee.isDependant"
                       :class="{
                         'bg-[#DFF1F1]': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid,
@@ -703,7 +538,6 @@ watch(searchDrugQuery, async (newQuery) => {
                       </td>
                     </tr>
                     
-                    <!-- Show dependants only for the current employee -->
                     <template v-if="!employee.isDependant && employee.dependants && employee.dependants.length > 0">
                       <tr 
                         v-for="(dependant, dIndex) in employee.dependants" 
@@ -797,11 +631,8 @@ watch(searchDrugQuery, async (newQuery) => {
 
       <!-- Step 2: Select Services -->
       <div v-else-if="employeeDetails" class="py-3 space-y-6">
-        <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-          {{ error }}
-        </div>
-
         <!-- Employee Details -->
+          {{ error }}
         <EmployeeDetails :employee="employeeDetails" />
 
         <!-- Credit Service Details -->
@@ -877,16 +708,8 @@ watch(searchDrugQuery, async (newQuery) => {
             Cancel
           </Button>
           <ModalFormSubmitButton
-            v-if="activeTab === 'services'"
             :pending="fetchPending"
-            btn-text="Update Service Claim"
-            class="bg-primary hover:bg-teal-700 text-white px-6 py-2"
-            :disabled="fetchPending"
-          />
-          <ModalFormSubmitButton
-            v-else-if="activeTab === 'drugs'"
-            :pending="fetchPending"
-            btn-text="Update Drug Claim"
+            btn-text="Update Claim"
             class="bg-primary hover:bg-teal-700 text-white px-6 py-2"
             :disabled="fetchPending"
           />

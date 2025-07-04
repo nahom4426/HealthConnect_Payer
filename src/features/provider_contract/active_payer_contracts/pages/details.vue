@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPayerContractById } from '../api/payerContractApi';
+import { getPayerContractById } from '../api/providerContractApi';
 import { toasted } from '@/utils/utils';
 import { openModal } from "@customizer/modal-x";
 import icons from '@/utils/icons';

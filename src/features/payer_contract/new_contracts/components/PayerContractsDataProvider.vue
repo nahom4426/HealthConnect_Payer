@@ -12,6 +12,7 @@ const props = defineProps({
   },
   status: {
     type: String,
+    default: "PENDING" // Default status for active contracts
   },
   search: {
     type: String,

@@ -3,6 +3,26 @@ import icons from "@/utils/icons";
 import Dropdown from "./Dropdown.vue";
 import { useAuthStore } from "@/stores/auth";
 import { ref, computed } from "vue";
+import { convertBase64Image } from "@/utils/utils";
+const authStore = useAuthStore();
+
+async function processProfilePicture() {
+  if (!profilePicture.value.startsWith("data:image/")) {
+    profilePicture.value = `data:image/png;base64,${authStore.auth?.user?.profilePicture}`;
+  }
+  try {
+    if (profilePicture.value.startsWith("data:image/jpeg")) {
+      return;
+    }
+
+    profilePicture.value = await convertBase64Image(
+      profilePicture.value,
+      "image/jpeg",
+      0.85
+    );
+  } catch (error) {}
+}
+processProfilePicture();
 
 const imageLoaded = ref(true);
 const imageSrc = "/src/assets/img/profile.png";
@@ -18,7 +38,6 @@ function logout() {
   localStorage.removeItem("userDetail");
   window.location.href = "/login";
 }
-const authStore = useAuthStore();
 const props = defineProps({
   breadcrumbs: Object,
 });
@@ -93,7 +112,7 @@ function getTypeStyle(type) {
             class="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
           >
             <img
-              :src="imageSrc"
+              :src="profilePicture || imageSrc"
               alt="User avatar"
               class="w-full h-full object-cover"
               @error="handleImageError"

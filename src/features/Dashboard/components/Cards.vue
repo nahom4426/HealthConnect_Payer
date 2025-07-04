@@ -16,7 +16,7 @@ const props = defineProps({
     class="flex flex-col gap-3 p-4 rounded-xl"
   >
     <i v-html="entries.today" />
-    <p class="font-semibold leading-8">{{ entries.amount }}</p>
+    <p class="font-semibold text-2xl leading-8">{{ entries.amount }}</p>
     <p class="text-xs text-base-clr">{{ entries.title }}</p>
 
     <div class="flex gap-1 text-primary text-[9px] font-medium">

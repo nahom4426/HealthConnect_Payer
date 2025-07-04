@@ -5,7 +5,7 @@ import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
 import { payerContracts } from "../store/payerContractStore";
 import icons from "@/utils/icons";
-import { changePayerContractStatus } from '../api/payerContractApi';
+import { changePayerContractStatus } from '../api/providerContractApi';
 
 const router = useRouter();
 const props = defineProps({

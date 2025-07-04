@@ -55,10 +55,10 @@ const props = defineProps({
 }
 
 .secondary {
-  @apply bg-secondary text-error;
+  @apply bg-secondary text-white;
 }
 
 .primary {
-  @apply bg-primary text-error;
+  @apply bg-primary text-white;
 }
 </style>

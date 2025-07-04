@@ -28,7 +28,7 @@ const emit = defineEmits(["row"]);
     <slot name="top" :row="row" />
     <tr
       @click="emit('row', row)"
-      class="cursor-pointer even:bg-white odd:bg-[#F9F9FF] hover:bg-gray-"
+      class="cursor-pointer even:bg- odd:b hover:bg-gray-100"
     >
       <td v-if="firstCol" class="p-2">
         <slot name="select" :row="row" />

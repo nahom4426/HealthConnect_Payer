@@ -9,6 +9,7 @@ import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAnd
 
 import { onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import Financial_row from "./components/Financial_row.vue";
 
 const route = useRoute();
 
@@ -21,18 +22,24 @@ const fetchClaim = () => {
     () => getClaimByID(route.params?.id),
     (res) => {
       if (res.success) {
-        profilePicture.value = res.data?.profilePictureBase64;
+        profilePicture.value = res.data?.providerLogo;
 
         providerInfo.value = [
           { title: "Provider Name", value: res.data?.providerName || "N/A" },
-          { title: "Category", value: res.data?.position || "N/A" },
-          { title: "Phone", value: res.data?.phone || "N/A" },
-          { title: "Email", value: res.data?.email || "N/A" },
+          { title: "Category", value: res.data?.providerCategory || "N/A" },
+          { title: "Phone", value: res.data?.providerPhone || "N/A" },
+          { title: "Email", value: res.data?.providerEmail || "N/A" },
         ];
         claimSummary.value = [
-          { title: "Claim Amount", value: res.data?.employeeId || "N/A" },
-          { title: "Number of claims", value: res.data?.address || "N/A" },
-          { title: "Time Range", value: res.data?.gender || "N/A" },
+          { title: "Claim Amount", value: res.data?.totalAmount || "N/A" },
+          { title: "Number of claims", value: res.data?.totalClaims || "N/A" },
+          {
+            title: "Time Range",
+            value:
+              `${res.data?.claimFromDate || ""}   To  ${
+                res.data?.claimToDate || ""
+              }` || "N/A",
+          },
         ];
       }
     }
@@ -45,8 +52,8 @@ async function processProfilePicture() {
   }
 
   try {
-    if (profilePicture.value.startsWith("data:image/jpeg")) {
-      return;
+    if (!profilePicture.value.startsWith("data:image/")) {
+      profilePicture.value = `data:image/png;base64,${profilePicture.value}`;
     }
 
     profilePicture.value = await convertBase64Image(
@@ -109,16 +116,16 @@ onMounted(() => {
             'Actions',
           ],
           row: [
-            'batchCode',
+            'invoiceNumber',
             'insuredPersonName',
-            'recordedAt',
+            'encounterDate',
             'branchName',
             'totalAmount',
             'claimStatus',
           ],
         }"
         ,
-        :row-com="PriceAndStatusRow"
+        :row-com="Financial_row"
       >
         <template #actions="{ row }">
           <div class="flex gap-2">
