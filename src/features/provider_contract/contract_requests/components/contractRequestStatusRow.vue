@@ -5,7 +5,7 @@ import { openModal } from "@customizer/modal-x";
 import { useToast } from "@/toast/store/toast";
 import { payerContracts } from "../store/payerContractStore";
 import icons from "@/utils/icons";
-import { changePayerContractStatus } from "../../active_payer_contracts/api/providerContractApi";
+import { changePayerContractStatus } from "../api/contractRequestApi";
 
 const router = useRouter();
 const props = defineProps({
@@ -56,8 +56,14 @@ function getStatusStyle(status) {
     return "bg-[#DFF1F1] text-[#02676B]";
   } else if (status === "INACTIVE" || status === "Inactive") {
     return "bg-red-100 text-red-800";
+  } else if (status === "PENDING" || status === "Pending") {
+    return "bg-[#FFD665] text-[#75778B]";
+  } else if (status === "ACCEPTED" || status === "Accepted") {
+    return "bg-primary text-white";
+  } else if (status === "REJECTED" || status === "Rejected") {
+    return "bg-[#DB2E48] text-white";
   } else {
-    return "bg-gray-100 text-gray-800";
+    return "bg-[#FFD665] text-gray-800";
   }
 }
 
@@ -66,11 +72,8 @@ function handleImageError(event) {
 }
 
 function handleEdit(contract) {
-  router.push({
-    name: "Edit Provider Contract",
-    params: {
-      id: contract.contractHeaderUuid, // Pass only the ID
-    },
+  router.push(`/contract_requests/view/${contract.contractHeaderUuid}`, {
+    state: { contract },
   });
 }
 
@@ -164,6 +167,12 @@ async function handleDeactivateWithClose(contract) {
     });
   }
 }
+function handleReject(row) {
+  closeAllDropdowns();
+  openModal("rejectContractPayer", {
+    contractHeaderUuid: row.contractHeaderUuid,
+  });
+}
 </script>
 
 <template>
@@ -179,7 +188,7 @@ async function handleDeactivateWithClose(contract) {
         <!-- Status field -->
         <div v-if="key === 'status'" class="truncate">
           <span
-            class="px-2.5 py-1 rounded-full text-xs font-medium"
+            class="px-2.5 py-1 rounded-md text-xs font-medium"
             :class="getStatusStyle(row.status)"
           >
             {{ row.status }}
@@ -235,23 +244,19 @@ async function handleDeactivateWithClose(contract) {
               >
                 <div class="flex items-start justify-start pl-4 gap-4">
                   <i v-html="icons.edits" />
-                  Edit
+                  View Contract
                 </div>
               </button>
 
-              <button
-                @click.prevent="
-                  $router.push(
-                    `/payer_contracts/detail/${row.contractHeaderUuid}`
-                  )
-                "
-                class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <div class="flex items-center justify-start pl-4 gap-4">
-                  <i v-html="icons.details" />
-                  Detail
-                </div>
-              </button>
+              <!-- <button 
+              @click.prevent="$router.push(`/payer_contracts/detail/${row.contractHeaderUuid}`)"
+              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <div class="flex items-center justify-start pl-4 gap-4">
+                <i v-html="icons.details" />
+                Detail
+              </div>
+            </button> -->
 
               <template v-if="row.status">
                 <button
@@ -266,13 +271,13 @@ async function handleDeactivateWithClose(contract) {
                 </button>
 
                 <button
-                  v-if="row.status === 'ACTIVE' || row.status === 'Active'"
-                  @click.stop="handleDeactivateWithClose(row)"
+                  v-if="row.status === 'PENDING' || row.status === 'pending'"
+                  @click.stop="handleReject(row)"
                   class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
                 >
                   <div class="flex items-center justify-start pl-4 gap-4">
                     <i v-html="icons.deactivate" />
-                    Deactivate
+                    Reject
                   </div>
                 </button>
               </template>

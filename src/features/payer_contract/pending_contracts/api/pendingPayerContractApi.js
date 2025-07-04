@@ -6,15 +6,15 @@ const basePath = '/payer-provider-contract';
 
 export function getPayerContracts(query = {}) {
   const authStore = useAuthStore();
-  const providerUuid = authStore.auth?.user?.providerUuid;
+  const payerUuid = authStore.auth?.user?.payerUuid;
 
-  if (!providerUuid) {
+  if (!payerUuid) {
     throw new Error('Payer UUID not found in auth store');
   }
 
   return api.addAuthenticationHeader().get(`${basePath}/all`, {
     params: {
-      providerUuid,
+      payerUuid,
       page: 0,
       size: 10,
       sort: 'startDate',
@@ -28,7 +28,7 @@ export function getPayerContractById(id) {
     .addAuthenticationHeader()
     .get(`${basePath}/${id}`, {
       params: {
-        userType: 'provider',
+        userType: 'payer',
       },
     });
 }
@@ -101,6 +101,23 @@ export function searchInsuredByInstitution(id, query = {}, config = {}) {
       throw error;
     });
 }
+export function activateApproveContract(contractHeaderUuid, remark = "") {
+  return api.addAuthenticationHeader().put(`${basePath}/${contractHeaderUuid}/status`, {
+    action: "ACTIVATE",
+    rejectionReason: "",
+    remark,
+  });
+}
+
+// ✅ New: Reject contract
+export function rejectContract(contractHeaderUuid, rejectionReason, remark = "") {
+  return api.addAuthenticationHeader().put(`${basePath}/${contractHeaderUuid}/status`, {
+    action: "REJECT",
+    rejectionReason,
+    remark,
+  });
+}
+
 export function assignServicesToGroup(groupUuid, serviceUuids = []) {
   // if (!groupUuid || !Array.isArray(serviceUuids)) {
   //   throw new Error('Invalid group UUID or service list');

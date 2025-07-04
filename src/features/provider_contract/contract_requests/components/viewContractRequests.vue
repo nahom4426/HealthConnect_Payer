@@ -1,795 +1,400 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { getAllServices } from '@/features/service/api/serviceApi';
-import { getAllDrugs } from '@/features/service/api/drugApi';
-import { getAllProviders } from '@/features/providers/api/providerApi';
-import { getPayerContractById, updatePayerContract } from '../api/submitContractApi';
-import Select from '@/components/new_form_elements/Select.vue';
-import Input from '@/components/new_form_elements/Input.vue';
-import icons from '@/utils/icons';
-import { toasted } from '@/utils/utils';
-import { useApiRequest } from '@/composables/useApiRequest';
-import { useAuthStore } from '@/stores/auth';
-import DatePicker from '@/components/datePicker.vue';
-import Spinner from '@/components/Spinner.vue';
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import {
+  getPayerContractById,
+  updatePayerContract,
+} from "../api/contractRequestApi";
+import icons from "@/utils/icons";
+import { toasted } from "@/utils/utils";
+import { useAuthStore } from "@/stores/auth";
+import Spinner from "@/components/Spinner.vue";
+import Button from "@/components/Button.vue";
+import { openModal } from "@customizer/modal-x";
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const contractId = route.params.id;
-const selectedProvider = ref(null); // Will hold { value: uuid, label: name }
-const startDate = ref('');
-const endDate = ref('');
-const services = ref([]);
-const drugs = ref([]);
-const selectedItems = ref([]);
 const loadingContract = ref(true);
-// State management
-const payerUuid = computed(() => auth.auth.user?.payerUuid || '');
-const selectedItemsPage = ref(1);
-const selectedItemsPerPage = ref(10);
-const isNegotiating = ref(false);
-const discountPercentage = ref(0);
-const providers = ref([]);
-const submitAttempted = ref(false);
-const activeTab = ref('services');
-const selectedTab = ref('services');
- // Holds both selected services AND drugs
-const contractReq = useApiRequest();
-const searchQuery = ref('');
-const rowsPerPage = ref(5);
-const currentPage = ref(1);
-const fetchPending = ref(false); // For services/drugs fetching
-const error = ref(null);
-// For initial contract data loading
-const pending = ref(false); // For submit button loading state
+const activeTab = ref("services");
+const showInsured = ref(false);
 
-// Form data structure matching API response
+function handleApprove() {
+  openModal("acceptContract");
+}
+
+function handleReject() {
+  openModal("rejectContract");
+}
+
 const formData = ref({
-  contractHeaderUuid: '',
-  contractName: '',
-  contractDescription: '',
-  startDate: '',
-  endDate: '',
-  status: 'ACTIVE',
-  payerUuid: auth.auth.user?.payerUuid || '',
-  providerUuid: '',
+  contractHeaderUuid: "",
+  contractName: "",
+  contractDescription: "",
+  startDate: "",
+  endDate: "",
+  status: "ACTIVE",
   contractDetails: [],
-  insuredSummaries: []
+  insuredSummaries: [],
+  providerLogoBase64: "",
 });
 
-// Computed property for provider select options
-const providerOptions = computed(() => {
-  return providers.value.map(provider => ({
-    value: provider.providerUuid,
-    label: provider.providerName,
-  }));
+// Handle image loading errors
+const handleImageError = (event) => {
+  event.target.style.display = "none";
+  // Or use a placeholder:
+  // event.target.src = '/path/to/placeholder-image.png';
+};
+
+// Computed properties to separate services and drugs
+const services = computed(() => {
+  return formData.value.contractDetails.filter(
+    (item) => item.itemType === "SERVICE"
+  );
 });
 
-// Fetch contract data - CRITICAL FOR MAPPING EXISTING DATA
+const drugs = computed(() => {
+  return formData.value.contractDetails.filter(
+    (item) => item.itemType === "DRUG"
+  );
+});
+
+// Calculate percentage difference
+const calculateDifference = (negotiatedPrice, originalPrice) => {
+  if (!originalPrice || originalPrice === 0) return 0;
+  return ((negotiatedPrice - originalPrice) / originalPrice) * 100;
+};
+
 async function fetchContract() {
   try {
     loadingContract.value = true;
-
     const response = await getPayerContractById(contractId);
-    console.log('🏥 Full response:', response);
 
     if (response && response.data) {
-      const contract = response.data;
-      console.log('📦 Extracted contract:', contract);
-
-      Object.assign(formData.value, {
-        ...contract,
-        contractDetails: contract.contractDetails || [],
-        insuredSummaries: contract.insuredSummaries || [],
-      });
-
-      selectedProvider.value = contract.providerUuid;
-      startDate.value = contract.startDate;
-      endDate.value = contract.endDate;
-
-      if (contract.contractDetails) {
-        selectedItems.value = contract.contractDetails.map(item => {
-          const parsedItem = {
-            id: item.serviceUuid || item.drugUuid,
-            serviceUuid: item.serviceUuid,
-            drugUuid: item.drugUuid,
-            name: item.serviceName || item.drugName,
-            description: item.description || 'No description',
-            providerPrice: item.negotiatedPrice,
-            userPrice: item.negotiatedPrice,
-            assignedGroups: item.assignedGroups || [],
-            type: item.serviceUuid ? 'service' : (item.drugUuid ? 'drug' : 'unknown'),
-          };
-          console.log('🧩 Parsed item:', parsedItem);
-          return parsedItem;
-        });
-      }
-
-      console.log('✅ Final selectedItems:', selectedItems.value);
+      formData.value = response.data;
     } else {
-      throw new Error('Contract data not found in response');
+      throw new Error("Contract data not found in response");
     }
   } catch (err) {
-    console.error('❌ Error fetching contract:', err);
-    error.value = 'Failed to load contract data';
-    toasted(false, 'Failed to load contract data');
-    router.push('/payer-contracts');
+    console.error("Error fetching contract:", err);
+    toasted(false, "Failed to load contract data");
+    router.push("/contract_requests");
   } finally {
     loadingContract.value = false;
   }
 }
 
-async function fetchProviders() {
-  try {
-    fetchPending.value = true;
-    error.value = null;
-    const response = await getAllProviders({ page: 1, limit: 100 });
-
-    // Ensure providers are mapped correctly for the Select component
-    providers.value = response.data.content.map(item => ({
-      providerUuid: item.providerUuid,
-      providerName: item.providerName,
-      // ... other provider fields if needed
-    }));
-  } catch (err) {
-    console.error('Error fetching providers:', err);
-    error.value = 'Failed to load providers. Please try again.';
-  } finally {
-    fetchPending.value = false;
-  }
-}
-
-async function fetchServices() {
-  if (!selectedProvider.value) {
-    services.value = [];
-    return;
-  }
-
-  try {
-    fetchPending.value = true;
-    // Assuming getAllServices takes providerUuid as an argument for filtering
-    const response = await getAllServices(selectedProvider.value);
-
-    services.value = (Array.isArray(response) ? response : response.data?.content || response.content || [])
-      .map(service => ({
-        id: service.serviceUuid,
-        serviceUuid: service.serviceUuid,
-        name: service.serviceName,
-        description: service.serviceCategory || service.description || 'No description',
-        providerPrice: service.price || 0, // This is the base price from the provider's listing
-        userPrice: service.price || 0, // Default user price to provider price
-        assignedGroups: [],
-        type: 'service'
-      }));
-  } catch (err) {
-    console.error('Error fetching services:', err);
-    services.value = [];
-    error.value = 'Failed to load services. Please try again.';
-  } finally {
-    fetchPending.value = false;
-  }
-}
-
-async function fetchDrugs() {
-  if (!selectedProvider.value) {
-    drugs.value = [];
-    return;
-  }
-
-  try {
-    fetchPending.value = true;
-    const response = await getAllDrugs(selectedProvider.value);
-
-    drugs.value = (Array.isArray(response) ? response : response.data?.content || response.content || [])
-      .map(drug => ({
-        id: drug.drugUuid,
-        drugUuid: drug.drugUuid,
-        name: drug.drugName,
-        description: drug.description || 'No description',
-        providerPrice: drug.price || 0, // This is the base price from the provider's listing
-        userPrice: drug.price || 0, // Default user price to provider price
-        assignedGroups: [],
-        type: 'drug'
-      }));
-  } catch (err) {
-    console.error('Error fetching drugs:', err);
-    drugs.value = [];
-    error.value = 'Failed to load drugs. Please try again.';
-  } finally {
-    fetchPending.value = false;
-  }
-}
-
-// Watch for selectedProvider changes to fetch associated services/drugs
-// This ensures that when selectedProvider is set (either on initial load or by user),
-// the lists of available services/drugs are updated.
-watch(selectedProvider, async (newVal) => {
-  if (newVal) {
-    await fetchServices();
-    await fetchDrugs();
-  }
-}, { immediate: false }); // Do not run immediately on component mount, as onMounted handles initial fetches
-
-// Computed properties for filtering and pagination
-const currentItems = computed(() => activeTab.value === 'services' ? services.value : drugs.value);
-
-const filteredItems = computed(() => {
-  if (!searchQuery.value) {
-    return currentItems.value;
-  }
-  const query = searchQuery.value.toLowerCase();
-  return currentItems.value.filter(item =>
-    item.name.toLowerCase().includes(query) ||
-    item.description.toLowerCase().includes(query)
-  );
-});
-
-const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * rowsPerPage.value;
-  const end = start + rowsPerPage.value;
-  return filteredItems.value.slice(start, end);
-});
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredItems.value.length / rowsPerPage.value);
-});
-
-const areAllItemsSelected = computed(() => {
-  const currentTabItems = filteredItems.value;
-  if (currentTabItems.length === 0) return false;
-  return currentTabItems.every(item => selectedItems.value.some(sel => sel.id === item.id));
-});
-
-const paginatedSelectedItems = computed(() => {
-  const itemsToShow = selectedItems.value.filter(item =>
-    selectedTab.value === 'services' ? item.type === 'service' : item.type === 'drug'
-  );
-  const start = (selectedItemsPage.value - 1) * selectedItemsPerPage.value;
-  const end = start + selectedItemsPerPage.value;
-  return itemsToShow.slice(start, end);
-});
-
-const selectedItemsTotalPages = computed(() => {
-  const itemsToShow = selectedItems.value.filter(item =>
-    selectedTab.value === 'services' ? item.type === 'service' : item.type === 'drug'
-  );
-  return Math.ceil(itemsToShow.length / selectedItemsPerPage.value);
-});
-
-// Helper methods
-function nextPage() {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-  }
-}
-
-function prevPage() {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-  }
-}
-
-function toggleAllItems(event) {
-  const isChecked = event.target.checked;
-  const currentTabItems = filteredItems.value;
-
-  if (isChecked) {
-    currentTabItems.forEach(item => {
-      if (!selectedItems.value.some(sel => sel.id === item.id)) {
-        selectedItems.value.push({ ...item });
-      }
-    });
-  } else {
-    selectedItems.value = selectedItems.value.filter(item =>
-      !currentTabItems.some(curr => curr.id === item.id)
-    );
-  }
-}
-
-function removeItem(itemId) {
-  selectedItems.value = selectedItems.value.filter(item => item.id !== itemId);
-}
-
-function editPrices() {
-  isNegotiating.value = !isNegotiating.value;
-  if (!isNegotiating.value) {
-    discountPercentage.value = 0;
-  }
-}
-
-function applyPercentageDiscount() {
-  if (discountPercentage.value < 0) discountPercentage.value = 0;
-  if (discountPercentage.value > 100) discountPercentage.value = 100;
-
-  selectedItems.value.forEach(item => {
-    if (typeof item.providerPrice === 'number' && item.providerPrice >= 0) {
-      item.userPrice = item.providerPrice * (1 - discountPercentage.value / 100);
-      item.userPrice = parseFloat(item.userPrice.toFixed(2));
-    }
-  });
-}
-
-function updateItemPrice(item) {
-  if (typeof item.userPrice !== 'number' || isNaN(item.userPrice) || item.userPrice < 0) {
-    item.userPrice = 0;
-  }
-  item.userPrice = parseFloat(item.userPrice.toFixed(2));
-}
-
-// Submission Logic
-async function submit() {
-  submitAttempted.value = true;
-
-  if (!formData.value.contractName || !selectedProvider.value || !startDate.value || !endDate.value || selectedItems.value.length === 0) {
-    toasted(false, 'Please fill all required fields and select at least one service/drug');
-    return;
-  }
-
-  if (new Date(endDate.value) <= new Date(startDate.value)) {
-    toasted(false, 'End date must be after start date');
-    return;
-  }
-
-  try {
-    pending.value = true;
-
-    const contractDetailsPayload = selectedItems.value.map(item => {
-      const detail = {
-        negotiatedPrice: item.userPrice,
-        assignedGroups: item.assignedGroups || []
-      };
-      if (item.type === 'service') {
-        detail.serviceUuid = item.serviceUuid;
-        detail.serviceName = item.name;
-      } else if (item.type === 'drug') {
-        detail.drugUuid = item.drugUuid;
-        detail.drugName = item.name;
-      }
-      return detail;
-    });
-
-    const payload = {
-      ...formData.value,
-      providerUuid: selectedProvider.value, // Ensure the provider UUID is from the selected one
-      startDate: startDate.value,
-      endDate: endDate.value,
-      contractDetails: contractDetailsPayload,
-      totalServices: selectedItems.value.filter(item => item.type === 'service').length,
-      totalDrugs: selectedItems.value.filter(item => item.type === 'drug').length,
-      totalInsured: formData.value.insuredSummaries.length,
-      totalDependants: formData.value.insuredSummaries.reduce((sum, insured) =>
-        sum + (insured.dependants?.length || 0), 0)
-    };
-
-    payload.payerUuid = payerUuid.value; // Ensure payerUuid from auth store is always there
-
-    const response = await updatePayerContract(payload.contractHeaderUuid, payload);
-
-    if (response.success) {
-      toasted(true, 'Contract updated successfully');
-      router.push('/payer-contracts');
-    } else {
-      toasted(false, response.error || 'Failed to update contract');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    toasted(false, 'An error occurred while processing your request');
-  } finally {
-    pending.value = false;
-  }
-}
-
 onMounted(async () => {
-  await fetchProviders(); // Fetch providers first so `providerOptions` are available
-  await fetchContract();  // Then fetch the specific contract. This will set `selectedProvider.value`.
-  // The `watch(selectedProvider, ...)` will then trigger fetchServices and fetchDrugs automatically
-  // once `selectedProvider.value` is set by `fetchContract`.
+  await fetchContract();
 });
 </script>
-
 <template>
   <div v-if="loadingContract" class="flex justify-center items-center h-64">
     <Spinner size="lg" />
     <span class="ml-2 text-gray-700 font-medium">Loading contract data...</span>
   </div>
 
-  <Form v-else @submit.prevent="submit" :loading="pending" :id="'new-contract-form'" class="space-y-6">
+  <div v-else class="space-y-6">
+    <div class="flex gap-6">
+      <div>
+        <div class="bg-white w-full p-6 flex items-center">
+          <!-- Logo -->
+          <div
+            class="w-44 h-44 flex items-center justify-center bg-[#F6F7FA] rounded-lg mr-6 p-4"
+          >
+            <img
+              v-if="formData.providerLogoBase64"
+              :src="formData.providerLogoBase64"
+              alt="Provider Logo"
+              class="w-full h-full object-contain p-4"
+              @error="handleImageError"
+            />
+            <div
+              v-else
+              class="w-full h-full flex items-center justify-center text-gray-400"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-16 w-16"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+          </div>
+          <!-- Contract Info -->
+          <div class="bg-[#F6F7FA] rounded-xl p-4 w-[77rem]">
+            <!-- Title -->
+            <h2
+              class="text-lg font-semibold text-[#6B7280] mb-3 w-full flex justify-between"
+            >
+              <p>Contract Detail</p>
+              <p>{{ formData.contractName }}</p>
+            </h2>
+            <div class="border-t border-[#E5E7EB] mb-4"></div>
+
+            <!-- Grid layout with vertical divider -->
+            <div class="space-y-4 px-4">
+              <!-- First Row -->
+              <div
+                class="flex justify-between items-center pb-4 border-[#E5E7EB]"
+              >
+                <div
+                  class="flex items-center text-sm border-l border-[#E5E7EB] text-gray-600 w-1/2"
+                >
+                  <span class="font-medium w-40">Contract ID:</span>
+                  <span class="text-gray-800 font-semibold">{{
+                    formData.contractCode
+                  }}</span>
+                </div>
+                <div class="flex items-center text-sm text-gray-600 w-1/2 pl-8">
+                  <span class="font-medium w-40">Contract Status:</span>
+                  <span class="text-[#2C9984] font-semibold">{{
+                    formData.status
+                  }}</span>
+                </div>
+              </div>
+
+              <!-- Second Row -->
+              <div class="flex justify-between items-center pb-4">
+                <div
+                  class="flex items-center text-sm border-l border-red text-gray-600 w-1/2"
+                >
+                  <span class="font-medium border-l w-40">Contract From:</span>
+                  <span class="text-gray-800 font-semibold">{{
+                    formData.startDate
+                  }}</span>
+                </div>
+                <div class="flex items-center text-sm text-gray-600 w-1/2 pl-8">
+                  <span class="font-medium w-40">Contract To:</span>
+                  <span class="text-gray-800 font-semibold">{{
+                    formData.endDate
+                  }}</span>
+                </div>
+              </div>
+
+              <!-- Third Row -->
+              <div class="flex justify-between items-center">
+                <div class="flex items-center text-sm text-gray-600 w-1/2">
+                  <span class="font-medium w-40">Number of Employees:</span>
+                  <span class="text-gray-800 font-semibold">{{
+                    formData.contractEmployees
+                  }}</span>
+                </div>
+                <div class="flex items-center text-sm text-gray-600 w-1/2 pl-8">
+                  <span class="font-medium w-40">Employee Groups:</span>
+                  <span class="text-gray-800 font-semibold">{{
+                    formData.employeeGroups
+                  }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="bg-white rounded-md p-6 space-y-6 shadow-sm">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Input
-            label="Contract Name"
-            name="contractName"
-            v-model="formData.contractName"
-            required
-            :error="submitAttempted && !formData.contractName"
-            :error-message="submitAttempted && !formData.contractName ? 'Contract Name is required' : ''"
-          />
-        </div>
-        <div>
-          <Input
-            label="Contract Number"
-            name="contractNumber"
-            v-model="formData.contractNumber"
-          />
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="md:col-span-2">
-          <Select
-            :obj="true"
-            name="provider"
-            label="Provider"
-            :options="providerOptions"
-            :disabled="true"
-            v-model="selectedProvider"
-            required
-            :error="submitAttempted && !selectedProvider"
-            :error-message="submitAttempted && !selectedProvider ? 'Provider is required' : ''"
-          />
-        </div>
-
-        <div class="flex gap-4">
-          <div class="w-1/2">
-            <DatePicker
-              v-model="startDate"
-              label="Start date"
-              required
-              :error="!startDate && submitAttempted"
-              :error-message="!startDate && submitAttempted ? 'Start date is required' : ''"
-            />
-          </div>
-          <div class="w-1/2">
-            <DatePicker
-              v-model="endDate"
-              label="End date"
-              required
-              :error="(!endDate || new Date(endDate) <= new Date(startDate)) && submitAttempted"
-              :error-message="
-                !endDate && submitAttempted ? 'End date is required' :
-                (endDate && new Date(endDate) <= new Date(startDate) && submitAttempted ? 'End date must be after start date' : '')
-              "
-            />
+      <div class="bg-white rounded-md p-6 mt-6 shadow-sm">
+        <div
+          class="flex items-center p-4 justify-between border-b border-gray-200"
+        >
+          <h3 class="text-md text-[#75778B] font-semibold">Contract Items</h3>
+          <div class="flex border border-gray-300 rounded-md overflow-hidden">
+            <button
+              type="button"
+              @click="activeTab = 'services'"
+              :class="[
+                'px-4 py-2 text-sm font-medium transition-colors duration-200',
+                activeTab === 'services'
+                  ? 'bg-[#02676B] text-white'
+                  : 'text-[#75778B] hover:bg-gray-100',
+              ]"
+            >
+              Services ({{ services.length }})
+            </button>
+            <button
+              type="button"
+              @click="activeTab = 'drugs'"
+              :class="[
+                'px-4 py-2 text-sm font-medium transition-colors duration-200',
+                activeTab === 'drugs'
+                  ? 'bg-[#02676B] text-white'
+                  : 'text-[#75778B] hover:bg-gray-100',
+              ]"
+            >
+              Drugs ({{ drugs.length }})
+            </button>
           </div>
         </div>
-      </div>
 
-      <div v-if="error" class="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
-        {{ error }}
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-6">
-        <div class="md:col-span-2 bg-[#F6F7FA] rounded-lg shadow-sm">
-          <div class="flex items-center p-4 justify-between border-b border-gray-200">
-            <h3 class="text-md text-[#75778B] font-semibold">
-              Provider Services and Drugs
-            </h3>
-            <div class="flex border border-gray-300 rounded-md overflow-hidden">
-              <button
-                @click="activeTab = 'services'"
-                :class="[
-                  'px-4 py-2 text-sm font-medium transition-colors duration-200',
-                  activeTab === 'services' ? 'bg-[#02676B] text-white' : 'text-[#75778B] hover:bg-gray-100'
-                ]"
-              >
-                Services
-              </button>
-              <button
-                @click="activeTab = 'drugs'"
-                :class="[
-                  'px-4 py-2 text-sm font-medium transition-colors duration-200',
-                  activeTab === 'drugs' ? 'bg-[#02676B] text-white' : 'text-[#75778B] hover:bg-gray-100'
-                ]"
-              >
-                Drugs
-              </button>
-            </div>
-          </div>
-
-          <div v-if="fetchPending" class="p-8 text-center flex flex-col items-center justify-center">
-            <Spinner class="text-[#02676B]" size="md" />
-            <p class="mt-2 text-gray-600">Loading {{ activeTab }}...</p>
-          </div>
-          <template v-else>
-            <div class="p-3">
-              <div class="relative bg-white p-4 rounded-lg shadow-sm mb-4">
-                <div class="w-full bg-gray-100 h-[3.5rem] focus-within:border-[#02676B] flex items-center rounded-lg overflow-hidden border border-gray-200">
-                  <span
-                    class="w-10 h-full text-gray-500 grid place-items-center"
-                    v-html="icons.search"
-                  />
-                  <input
-                    v-model="searchQuery"
-                    :placeholder="`Search and Select ${activeTab === 'services' ? 'Services' : 'Drugs'}`"
-                    class="flex-1 bg-transparent px-4 py-2 h-full outline-none text-gray-800"
-                  />
-                </div>
-                <div class="text-center mt-4">
-                  <button
-                    class="text-sm px-4 py-2 rounded-lg transition-colors duration-200"
-                    :class="isNegotiating ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-[#75778B] text-white hover:bg-[#616373]'"
-                    @click="editPrices"
-                  >
-                    <template v-if="!isNegotiating">
-                      If you want to negotiate prices of services and drugs, <strong>Click here</strong>
-                    </template>
-                    <template v-else>
-                      <strong>Finish Negotiating</strong>
-                    </template>
-                  </button>
-                </div>
-              </div>
-              <table class="w-full bg-white table-auto text-sm rounded-lg overflow-hidden shadow-sm">
-                <thead>
-                  <tr class="text-left font-bold text-gray-700 bg-gray-50">
-                    <th class="p-3 w-12">
-                      <input
-                        type="checkbox"
-                        @change="toggleAllItems"
-                        :checked="areAllItemsSelected"
-                        class="h-4 w-4 text-[#02676B] focus:ring-[#02676B] border-gray-300 rounded"
-                      />
-                    </th>
-                    <th class="p-3 w-12">#</th>
-                    <th class="p-3">{{ activeTab === 'services' ? 'Service' : 'Drug' }} Name</th>
-                    <th class="p-3">Description</th>
-                    <th class="p-3">Provider Price</th>
-                    <th class="p-3">
-                      <div class="flex items-center gap-2">
-                        <span>Your Price</span>
-                        <div v-if="isNegotiating" class="flex items-center gap-1 text-xs">
-                          <input
-                            v-model.number="discountPercentage"
-                            type="number"
-                            min="0"
-                            max="100"
-                            class="w-16 p-2 rounded-md bg-gray-50 border border-gray-300 text-center"
-                            @change="applyPercentageDiscount"
-                          />
-                          <span>% off</span>
-                        </div>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(item, index) in paginatedItems"
-                    :key="item.id"
-                    class="border-b border-gray-100 hover:bg-gray-50"
-                  >
-                    <td class="p-3">
-                      <input
-                        type="checkbox"
-                        :checked="selectedItems.some(sel => sel.id === item.id)"
-                        @change="
-                          selectedItems.some(sel => sel.id === item.id)
-                            ? selectedItems = selectedItems.filter(sel => sel.id !== item.id)
-                            : selectedItems.push({ ...item }) // Push a deep copy to avoid reactivity issues with userPrice
-                        "
-                        class="h-4 w-4 text-[#02676B] focus:ring-[#02676B] border-gray-300 rounded"
-                      />
-                    </td>
-                    <td class="p-3">{{ (currentPage - 1) * rowsPerPage + index + 1 }}</td>
-                    <td class="p-3 font-medium text-gray-800">{{ item.name }}</td>
-                    <td class="p-3 text-gray-600">{{ item.description }}</td>
-                    <td class="p-3 text-gray-700">ETB {{ item.providerPrice?.toLocaleString('en-US') || '0.00' }}</td>
-                    <td class="p-3">
-                      <input
-                        v-if="isNegotiating"
-                        v-model.number="item.userPrice"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        class="w-28 p-2 rounded-md bg-gray-50 border border-gray-300 text-gray-800"
-                        @input="updateItemPrice(item)"
-                      />
-                      <span v-else class="text-gray-700">ETB {{ item.userPrice?.toLocaleString('en-US') || '0.00' }}</span>
-                    </td>
-                  </tr>
-                  <tr v-if="paginatedItems.length === 0">
-                    <td colspan="6" class="p-4 text-center text-gray-500">
-                      No {{ activeTab }} found.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="flex justify-between items-center p-3 text-sm border-t border-gray-200 bg-white rounded-b-lg">
-              <div>
-                Showing
-                <select
-                  v-model="rowsPerPage"
-                  class="border rounded px-2 py-1 mx-1 text-gray-700"
-                  @change="currentPage = 1"
-                >
-                  <option v-for="n in [5, 10, 20, 50]" :key="n" :value="n">{{ n }}</option>
-                </select>
-                <span>Showing {{ (currentPage - 1) * rowsPerPage + 1 }} to {{ Math.min(currentPage * rowsPerPage, filteredItems.length) }} out of {{ filteredItems.length }} records</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <button
-                  @click="prevPage"
-                  :disabled="currentPage === 1"
-                  class="px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  &lt;
-                </button>
-                <span v-for="n in totalPages" :key="n">
-                  <button
-                    :class="[
-                      'px-3 py-1 border rounded-md font-medium transition-colors duration-200',
-                      currentPage === n ? 'bg-[#02676B] text-white' : 'text-gray-700 hover:bg-gray-100'
-                    ]"
-                    @click="currentPage = n"
-                  >
-                    {{ n }}
-                  </button>
-                </span>
-                <button
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  class="px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  &gt;
-                </button>
-              </div>
-            </div>
-          </template>
-        </div>
-
-        <div class="bg-[#DFF1F1] h-auto p-4 rounded-md shadow-sm">
-          <div class="flex justify-between items-center mb-3 border-b border-[#02676B] pb-2">
-            <h3 class="text-[#02676B] text-base font-semibold">
-              Selected Services / Drugs
-            </h3>
-            <div class="flex rounded-md overflow-hidden border border-[#02676B]">
-              <button
-                @click="selectedTab = 'services'"
-                :class="[
-                  'px-3 py-1 rounded-l-md text-sm font-medium transition-colors duration-200',
-                  selectedTab === 'services' ? 'bg-[#02676B] text-white' : 'text-[#02676B] bg-white hover:bg-teal-50'
-                ]"
-              >
-                Services
-              </button>
-              <button
-                @click="selectedTab = 'drugs'"
-                :class="[
-                  'px-3 py-1 rounded-r-md text-sm font-medium transition-colors duration-200',
-                  selectedTab === 'drugs' ? 'bg-[#02676B] text-white' : 'text-[#02676B] bg-white hover:bg-teal-50'
-                ]"
-              >
-                Drugs
-              </button>
-            </div>
-          </div>
-
-          <table class="text-sm w-full bg-white rounded-md shadow-sm">
+        <div class="p-3">
+          <table
+            class="w-full bg-white table-auto text-sm rounded-lg overflow-hidden shadow-sm"
+          >
             <thead>
-              <tr class="border-b border-gray-100 bg-gray-50">
-                <th class="text-left p-2 font-bold text-gray-700">#</th>
-                <th class="text-left p-2 font-bold text-gray-700">Name</th>
-                <th class="text-left p-2 font-bold text-gray-700">Price</th>
-                <th class="text-left p-2 font-bold text-gray-700">Action</th>
+              <tr class="text-left font-bold text-gray-700 bg-gray-50">
+                <th class="p-3 w-12">#</th>
+                <th class="p-3">
+                  {{ activeTab === "services" ? "Service" : "Drug" }} Name
+                </th>
+                <th class="p-3">Original Price</th>
+                <th class="p-3">Negotiated Price</th>
+                <th class="p-3">Difference</th>
+                <th class="p-3">Groups</th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="(item, idx) in paginatedSelectedItems"
-                :key="item.id"
+                v-for="(item, index) in activeTab === 'services'
+                  ? services
+                  : drugs"
+                :key="item.contractDetailUuid"
                 class="border-b border-gray-100 hover:bg-gray-50"
               >
-                <td class="p-2">{{ idx + 1 + (selectedItemsPage - 1) * selectedItemsPerPage }}</td>
-                <td class="p-2 font-medium text-gray-800">{{ item.name }}</td>
-                <td class="p-2 text-gray-700">ETB {{ item.userPrice?.toLocaleString('en-US') || '0.00' }}</td>
-                <td class="p-2">
-                  <button
-                    @click="removeItem(item.id)"
-                    class="text-red-500 hover:text-red-700 transition-colors"
-                    title="Remove item"
+                <td class="p-3">{{ index + 1 }}</td>
+                <td class="p-3 font-medium text-gray-800">
+                  {{ item.serviceName || item.drugName }}
+                </td>
+                <td class="p-3 text-gray-700">
+                  ETB {{ item.price?.toLocaleString("en-US") || "0.00" }}
+                </td>
+                <td class="p-3 text-gray-700">
+                  ETB
+                  {{ item.negotiatedPrice?.toLocaleString("en-US") || "0.00" }}
+                </td>
+                <td class="p-3">
+                  <span
+                    :class="{
+                      'text-green-600':
+                        calculateDifference(item.negotiatedPrice, item.price) >=
+                        0,
+                      'text-red-600':
+                        calculateDifference(item.negotiatedPrice, item.price) <
+                        0,
+                    }"
                   >
-                    <i v-html="icons.trash" class="w-4 h-4 inline-block align-middle"></i>
-                  </button>
+                    {{
+                      calculateDifference(
+                        item.negotiatedPrice,
+                        item.price
+                      ).toFixed(2)
+                    }}%
+                  </span>
+                </td>
+                <td class="p-3">
+                  <span
+                    v-if="item.assignedGroups && item.assignedGroups.length > 0"
+                  >
+                    {{ item.assignedGroups.join(", ") }}
+                  </span>
+                  <span v-else class="text-gray-400">All groups</span>
                 </td>
               </tr>
-              <tr v-if="paginatedSelectedItems.length === 0">
-                <td colspan="4" class="p-4 text-center text-gray-500">
-                  No {{ selectedTab }} selected
+              <tr
+                v-if="
+                  (activeTab === 'services' ? services : drugs).length === 0
+                "
+              >
+                <td colspan="6" class="p-4 text-center text-gray-500">
+                  No {{ activeTab }} found in this contract.
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl p-6 mt-6 shadow-md">
+        <!-- Header and Toggle -->
+        <div class="flex justify-between items-center mb-4">
+          <h3
+            class="text-xl font-semibold text-[#02676B] flex items-center gap-2"
+          >
+            <i v-html="icons.people" class="w-5 h-5 text-[#02676B]"></i>
+            Insured Members
+          </h3>
+          <button
+            @click="showInsured = !showInsured"
+            class="text-sm text-[#02676B] border border-[#02676B] px-3 py-1 rounded-md hover:bg-[#02676B] hover:text-white transition-colors duration-200"
+          >
+            {{ showInsured ? "Hide" : "Show" }}
+          </button>
+        </div>
 
-          <div class="flex justify-between items-center mt-3 text-sm">
-            <div>
-              <span class="text-gray-700">Showing {{ (selectedItemsPage - 1) * selectedItemsPerPage + 1 }} to {{ Math.min(selectedItemsPage * selectedItemsPerPage, selectedItems.filter(item => selectedTab === 'services' ? item.type === 'service' : item.type === 'drug').length) }} of {{ selectedItems.filter(item => selectedTab === 'services' ? item.type === 'service' : item.type === 'drug').length }}</span>
-            </div>
-            <div class="flex items-center gap-1">
-              <button
-                @click="selectedItemsPage = Math.max(1, selectedItemsPage - 1)"
-                :disabled="selectedItemsPage === 1"
-                class="px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        <!-- Transitioned Table -->
+        <Transition name="dropdown" appear>
+          <div
+            v-if="showInsured"
+            class="overflow-x-auto rounded-lg border border-gray-200"
+          >
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+              <thead
+                class="bg-[#F1F5F9] text-gray-600 uppercase text-xs tracking-wider"
               >
-                &lt;
-              </button>
-              <span v-for="n in selectedItemsTotalPages" :key="n">
-                <button
-                  :class="[
-                    'px-3 py-1 border rounded-md font-medium transition-colors duration-200',
-                    selectedItemsPage === n ? 'bg-[#02676B] text-white' : 'text-gray-700 hover:bg-gray-100'
-                  ]"
-                  @click="selectedItemsPage = n"
+                <tr>
+                  <th class="px-6 py-3 text-left font-semibold">Name</th>
+                  <th class="px-6 py-3 text-left font-semibold">
+                    Membership #
+                  </th>
+                  <th class="px-6 py-3 text-left font-semibold">Dependants</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 bg-white">
+                <tr
+                  v-for="insured in formData.insuredSummaries"
+                  :key="insured.insuredUuid"
+                  class="hover:bg-gray-50 transition-colors"
                 >
-                  {{ n }}
-                </button>
-              </span>
-              <button
-                @click="selectedItemsPage = Math.min(selectedItemsTotalPages, selectedItemsPage + 1)"
-                :disabled="selectedItemsPage === selectedItemsTotalPages"
-                class="px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                &gt;
-              </button>
-            </div>
+                  <td
+                    class="px-6 py-4 text-gray-800 font-medium whitespace-nowrap"
+                  >
+                    {{ insured.fullName }}
+                  </td>
+                  <td class="px-6 py-4 text-gray-700 whitespace-nowrap">
+                    {{ insured.membershipNumber }}
+                  </td>
+                  <td class="px-6 py-4 text-gray-700">
+                    <div v-if="insured.dependants?.length">
+                      <ul class="list-disc pl-4 space-y-1 text-sm">
+                        <li
+                          v-for="dependant in insured.dependants"
+                          :key="dependant.dependantUuid"
+                        >
+                          {{ dependant.fullName }}
+                          <span class="text-gray-500"
+                            >({{ dependant.relationshipType }})</span
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                    <div v-else class="text-gray-400 italic">None</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
+        </Transition>
       </div>
-
-      <div class="bg-white rounded-md p-6 mt-6 shadow-sm" v-if="formData.insuredSummaries?.length">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Insured Members</h3>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Membership #</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dependants</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="insured in formData.insuredSummaries" :key="insured.insuredUuid">
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                  {{ insured.fullName }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                  {{ insured.membershipNumber }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                  <div v-for="dependant in insured.dependants" :key="dependant.dependantUuid" class="mb-1">
-                    {{ dependant.fullName }} ({{ dependant.relationshipType }})
-                  </div>
-                  <div v-if="!insured.dependants?.length" class="text-gray-400">None</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="text-right pt-6 border-t border-gray-200 mt-6">
-        <button
-          type="submit"
-          :disabled="pending"
-          class="bg-[#02676B] text-white px-8 py-3 rounded-md hover:bg-[#02494D] transition-colors duration-200 text-lg font-semibold"
+      <div class="flex justify-end gap-4 text-white">
+        <Button @click="handleReject" class="bg-[#DB2E48] py-2.5 px-6"
+          >Reject Contract</Button
         >
-          <span v-if="pending" class="flex items-center justify-center">
-            <Spinner size="sm" class="mr-2" /> Updating...
-          </span>
-          <span v-else>
-            Update Contract
-          </span>
-        </button>
+        <Button @click="handleApprove" class="bg-primary py-2.5 px-6"
+          >Accept Contract</Button
+        >
       </div>
     </div>
-  </Form>
+  </div>
 </template>
 
 <style scoped>
-/* Your existing styles remain the same, with minor adjustments for new elements/classes */
 .required-field {
   @apply border-l-2 border-[#02676B];
 }
@@ -802,15 +407,14 @@ onMounted(async () => {
   @apply text-red-500 text-xs mt-1;
 }
 
-/* Custom checkbox styles for a cleaner look */
 input[type="checkbox"] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
   width: 16px;
   height: 16px;
-  border: 1px solid #d1d5db; /* Light gray border */
-  border-radius: 0.25rem; /* Slightly rounded corners */
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
   outline: none;
   cursor: pointer;
   position: relative;
@@ -818,8 +422,8 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"]:checked {
-  background-color: #02676B; /* Teal background when checked */
-  border-color: #02676B;
+  background-color: #02676b;
+  border-color: #02676b;
 }
 
 input[type="checkbox"]:checked::after {
@@ -835,31 +439,19 @@ input[type="checkbox"]:checked::after {
 }
 
 input[type="checkbox"]:focus {
-  box-shadow: 0 0 0 2px rgba(2, 103, 107, 0.2); /* Focus ring */
+  box-shadow: 0 0 0 2px rgba(2, 103, 107, 0.2);
 }
 
-/* Make date inputs required visually */
 input[type="date"]:required {
-  border-left: 2px solid #02676B;
+  border-left: 2px solid #02676b;
 }
 
 select:focus {
   @apply border-[#02676B] ring-[#02676B];
 }
 
-/* Make headers bold */
 th {
   @apply font-bold;
-}
-
-/* Style for the discount percentage input */
-.discount-input {
-  @apply w-12 p-1 border border-gray-300 rounded text-sm;
-}
-
-/* Style for price input fields */
-.price-input {
-  @apply w-24 p-1 border border-gray-300 rounded text-sm;
 }
 
 button:disabled {
@@ -875,17 +467,24 @@ th {
 }
 
 td {
-  @apply py-4; /* Removed whitespace-nowrap for better responsiveness, added some vertical padding */
+  @apply py-4;
 }
-
-/* Style for remove button - ensure icons display correctly */
-.remove-btn i {
-    display: inline-block; /* Ensure the SVG icon respects width/height */
-    vertical-align: middle; /* Align with text if any */
+/* Slide-fade dropdown transition */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
-
-/* General button styles for consistent look */
-button {
-  transition: all 0.2s ease-in-out;
+.dropdown-enter-from,
+.dropdown-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: scaleY(0.95);
+}
+.dropdown-enter-to,
+.dropdown-leave-from {
+  max-height: 1000px;
+  opacity: 1;
+  transform: scaleY(1);
 }
 </style>

@@ -2,8 +2,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import DefaultPage from '@/components/DefaultPage.vue';
-import ProviderForm from '../components/PayerContractForm.vue';
-import ProviderFormDataProvider from '../components/payerContractFormDataProvider.vue';
+import ProviderForm from '../components/ProviderContractForm.vue';
+import ProviderFormDataProvider from '../components/providerContractFormDataProvider.vue';
 import { toasted } from '@/utils/utils';
 
 const router = useRouter();

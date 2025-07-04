@@ -6,7 +6,10 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import ProviderContractsDataProvider from "../components/providerContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
-import { changePayerContractStatus, deletePayerContract } from "../../active_payer_contracts/api/providerContractApi";
+import {
+  changePayerContractStatus,
+  deletePayerContract,
+} from "../../active_provider_contracts/api/providerContractApi";
 import { addToast } from "@/toast";
 import { useApiRequest } from "@/composables/useApiRequest";
 // import StatusRow from ".././active_payer_contracts/components/StatusRow.vue";
@@ -14,7 +17,6 @@ import { openModal } from "@customizer/modal-x";
 import { payerContracts } from "../store/payerContractStore";
 import icons from "@/utils/icons";
 import contractRequestStatusRow from "../components/contractRequestStatusRow.vue";
-
 
 const emit = defineEmits(["navigate"]);
 const router = useRouter();
@@ -66,7 +68,10 @@ function openEditModal(contract) {
 function handleContractUpdated(updatedContract) {
   console.log("Contract updated:", updatedContract);
   if (updatedContract?.contractHeaderUuid) {
-    payerContractsStore.update(updatedContract.contractHeaderUuid, updatedContract);
+    payerContractsStore.update(
+      updatedContract.contractHeaderUuid,
+      updatedContract
+    );
     refreshData();
     addToast({
       type: "success",
@@ -100,7 +105,11 @@ function handleStatusChange(id, newStatus) {
 }
 
 function handleDelete(id) {
-  if (confirm("Are you sure you want to delete this contract? This action cannot be undone.")) {
+  if (
+    confirm(
+      "Are you sure you want to delete this contract? This action cannot be undone."
+    )
+  ) {
     deleteReq.send(
       () => deletePayerContract(id),
       (res) => {
@@ -141,11 +150,10 @@ function handleAddContract() {
 }
 function handleEdit(contract) {
   router.push({
-    path: '/edit',
-    state: { contract } // Pass full object here
+    path: "/edit",
+    state: { contract }, // Pass full object here
   });
 }
-
 </script>
 
 <template>
@@ -158,8 +166,6 @@ function handleEdit(contract) {
         <p class="text-base">Filters</p>
       </button>
     </template>
-
-   
 
     <template #default="{ search }">
       <ProviderContractsDataProvider
@@ -177,16 +183,16 @@ function handleEdit(contract) {
               'Start Date',
               'End Date',
               'Status',
-              'Actions'
+              'Actions',
             ],
             row: [
-              'payerName', 
+              'payerName',
               'contractName',
               'contractCode',
               'startDate',
               'endDate',
-              'status'
-            ]
+              'status',
+            ],
           }"
           :rows="contracts"
           :rowCom="contractRequestStatusRow"
@@ -195,7 +201,7 @@ function handleEdit(contract) {
             itemsPerPage,
             totalPages,
             onPageChange: handlePageChange,
-            onLimitChange: handleLimitChange
+            onLimitChange: handleLimitChange,
           }"
         >
           <template #row>
@@ -208,7 +214,7 @@ function handleEdit(contract) {
                 'providerName',
                 'startDate',
                 'endDate',
-                'status'
+                'status',
               ]"
               :headKeys="[
                 'Contract Name',
@@ -218,7 +224,7 @@ function handleEdit(contract) {
                 'Start Date',
                 'End Date',
                 'Status',
-                'Actions'
+                'Actions',
               ]"
               :onView="viewDetails"
               :onEdit="handleEdit"

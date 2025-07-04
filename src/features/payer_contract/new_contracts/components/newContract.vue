@@ -404,8 +404,8 @@ onMounted(async () => {
   <!-- <Form @submit.prevent="submit" :loading="pending">
     <div class="bg-white rounded-md p-6 space-y-6">
       <div class="grid md:grid-cols-3 gap-6">
-        <div class="md:col-span-2">
-          <Select
+        <div class="md:col-span-2 ">
+          <Select     
             :obj="true"
             name="provider"
             label="Select Provider"
@@ -413,46 +413,36 @@ onMounted(async () => {
             :options="providerOptions"
             :disabled="fetchPending"
             :attributes="{
-              placeholder: 'Search and select provider',
+              placeholder: 'Search and select provider'
             }"
             v-model="selectedProvider"
           />
         </div>
 
-        <div class="flex gap-4">
-          <div class="w-1/2">
-            <DatePicker
-              v-model="startDate"
-              label="Start date"
-              required
-              :error="!startDate && submitAttempted"
-              :error-message="
-                !startDate && submitAttempted ? 'Start date is required' : ''
-              "
-            />
-          </div>
+   <div class="flex gap-4">
+  <div class="w-1/2">
+    <DatePicker
+      v-model="startDate"
+      label="Start date"
+      required
+      :error="!startDate && submitAttempted"
+      :error-message="!startDate && submitAttempted ? 'Start date is required' : ''"
+    />
+  </div>
+  <div class="w-1/2">
+    <DatePicker
+      v-model="endDate"
+      label="End date"
+      required
+      :error="(!endDate || new Date(endDate) <= new Date(startDate)) && submitAttempted"
+      :error-message="
+        !endDate && submitAttempted ? 'End date is required' : 
+        (endDate && new Date(endDate) <= new Date(startDate) && submitAttempted ? 'End date must be after start date' : '')
+      "
+    />
+  </div>
+</div>
 
-          <div class="w-1/2">
-            <DatePicker
-              v-model="endDate"
-              label="End date"
-              required
-              :error="
-                (!endDate || new Date(endDate) <= new Date(startDate)) &&
-                submitAttempted
-              "
-              :error-message="
-                !endDate && submitAttempted
-                  ? 'End date is required'
-                  : endDate &&
-                    new Date(endDate) <= new Date(startDate) &&
-                    submitAttempted
-                  ? 'End date must be after start date'
-                  : ''
-              "
-            />
-          </div>
-        </div>
       </div>
 
       <div v-if="error" class="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
@@ -794,39 +784,73 @@ onMounted(async () => {
 
           <table class="text-sm w-full bg-white rounded-md">
             <thead>
-              <tr class="border-b">
-                <th class="text-left p-2">#</th>
-                <th class="text-left p-2">Name</th>
-                <th class="text-left p-2">Price</th>
-                <th class="text-left p-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(item, idx) in paginatedSelectedItems"
-                :key="item.id"
-                class="border-b"
-              >
-                <td class="p-2">
-                  {{ idx + 1 + (selectedItemsPage - 1) * selectedItemsPerPage }}
-                </td>
-                <td class="p-2">{{ item.name }}</td>
-                <td class="p-2">ETB {{ item.userPrice.toLocaleString() }}</td>
-                <td class="p-2">
-                  <button @click="removeItem(item.id)" class="remove-btn">
-                    <i
-                      v-html="icons.trash"
-                      class="text-red-500 text-center items-center"
-                    ></i>
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="paginatedSelectedItems.length === 0">
-                <td colspan="4" class="p-4 text-center text-gray-500">
-                  No {{ selectedTab }} selected
-                </td>
-              </tr>
-            </tbody>
+  <tr class="text-left font-bold text-gray-600">
+    <th class="p-3">
+      <input
+        type="checkbox"
+        @change="toggleAllItems"
+        :checked="areAllItemsSelected"
+        class="h-4 w-4 text-[#02676B] focus:ring-[#02676B] border-gray-300 rounded"
+      />
+    </th>
+    <th class="p-3">#</th>
+    <th class="p-3 font-bold">{{ activeTab === 'services' ? 'Service' : 'Drug' }} Name</th>
+    <th class="p-3 font-bold">Description</th>
+    <th class="p-3 font-bold">Provider Price</th>
+    <th class="p-3 font-bold">
+      <div class="flex items-center gap-2">
+        <span>Your Price</span>
+        <div v-if="isNegotiating" class="flex items-center gap-1 text-xs">
+          <input
+            v-model.number="discountPercentage"
+            type="number"
+            min="0"
+            max="100"
+            class="w-12 p-2 rounded bg-[#F9F9FD]"
+            @change="applyPercentageDiscount"
+          />
+          <span>% off</span>
+        </div>
+      </div>
+    </th>
+  </tr>
+</thead>
+           <tbody>
+ <tr
+  v-for="(item, index) in paginatedItems"
+  :key="item.id"
+  class="border-b hover:bg-gray-50"
+>
+    <td class="p-3">
+      <input
+        type="checkbox"
+        :checked="selectedItems.some(sel => sel.id === item.id)"
+        @change="
+          selectedItems.some(sel => sel.id === item.id)
+            ? selectedItems = selectedItems.filter(sel => sel.id !== item.id)
+            : selectedItems.push(item)
+        "
+        class="h-4 w-4 text-[#02676B] focus:ring-[#02676B] border-gray-300 rounded"
+      />
+    </td>
+    <td class="p-3">{{ index + 1 }}</td>
+    <td class="p-3">{{ item.name }}</td>
+    <td class="p-3">{{ item.description }}</td>
+    <td class="p-3">ETB {{ item.providerPrice.toLocaleString() }}</td>
+    <td class="p-3">
+  <input
+    v-if="isNegotiating"
+    v-model.number="item.userPrice"
+    type="number"
+    min="0"
+    step="0.01"
+    class="w-24 p-2 rounded bg-[#F9F9FD]"
+    @input="updateItemPrice(item)"
+  />
+  <span v-else>ETB {{ item.userPrice.toLocaleString() }}</span>
+</td>
+  </tr>
+</tbody>
           </table>
 
           <div class="flex justify-between items-center mt-3 text-sm">
@@ -856,40 +880,36 @@ onMounted(async () => {
             </div>
             <div class="flex items-center gap-1">
               <button
-                @click="selectedItemsPage = Math.max(1, selectedItemsPage - 1)"
-                :disabled="selectedItemsPage === 1"
+                type="button"
+                @click="prevPage"
+                :disabled="currentPage === 1"
                 class="px-3 py-1 border rounded"
               >
                 &lt;
               </button>
-              <span v-for="n in selectedItemsTotalPages" :key="n">
+              <span v-for="n in totalPages" :key="n">
                 <button
+                type="button"
                   :class="[
                     'px-3 py-1 border rounded',
-                    selectedItemsPage === n
-                      ? 'bg-[#75778B] text-white'
-                      : 'hover:bg-gray-100',
+                    currentPage === n ? 'bg-[#75778B] text-white' : 'hover:bg-gray-100'
                   ]"
-                  @click="selectedItemsPage = n"
+                  @click="currentPage = n"
                 >
                   {{ n }}
                 </button>
               </span>
               <button
-                @click="
-                  selectedItemsPage = Math.min(
-                    selectedItemsTotalPages,
-                    selectedItemsPage + 1
-                  )
-                "
-                :disabled="selectedItemsPage === selectedItemsTotalPages"
+              type="button"
+                @click="nextPage"
+                :disabled="currentPage === totalPages"
                 class="px-3 py-1 border rounded"
               >
                 &gt;
               </button>
             </div>
           </div>
-        </div>
+        </template>
       </div>
 
    <div class="bg-[#DFF1F1] h-auto p-4 rounded-md">
@@ -1044,8 +1064,8 @@ input[type="checkbox"]:checked {
 input[type="checkbox"]:checked::after {
   content: "";
   position: absolute;
-  left: 6px;
-  top: 2px;
+  left: 5px;
+  top: 1px;
   width: 4px;
   height: 8px;
   border: solid white;

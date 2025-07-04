@@ -9,9 +9,17 @@ export function getProviderContracts(query = {}) {
   });
 }
 
+
 export function getProviderContractById(id) {
-  return api.addAuthenticationHeader().get(`${basePath}/${id}`);
+  return api
+    .addAuthenticationHeader()
+    .get(`${basePath}/${id}`, {
+      params: {
+        userType: 'provider',
+      },
+    });
 }
+
 
 export function createProviderContract(data) {
   console.log("Creating provider contract with data:", data);

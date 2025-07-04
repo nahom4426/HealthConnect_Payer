@@ -24,8 +24,15 @@ export function getPayerContracts(query = {}) {
 }
 
 export function getPayerContractById(id) {
-  return api.addAuthenticationHeader().get(`${basePath}/${id}`);
+  return api
+    .addAuthenticationHeader()
+    .get(`${basePath}/${id}`, {
+      params: {
+        userType: 'payer',
+      },
+    });
 }
+
 
 export function createPayerContract(formData) {
   return api.addAuthenticationHeader().post(basePath, formData, {

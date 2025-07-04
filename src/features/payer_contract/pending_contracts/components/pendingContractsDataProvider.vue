@@ -1,14 +1,14 @@
-<script setup lang="ts">
+<script setup>
 import { usePagination } from "@/composables/usePagination";
 import { payerContracts } from "../store/payerContractStore";
 import { watch } from "vue";
 import { removeUndefined } from "@/utils/utils";
-import { getPayerContracts } from "../api/payerContractApi";
+import { getPayerContracts } from "../api/pendingPayerContractApi";
 
 const props = defineProps({
   auto: {
     type: Boolean,
-    default: true
+    default: true,
   },
   status: {
     type: String,
@@ -16,22 +16,22 @@ const props = defineProps({
   },
   search: {
     type: String,
-    default: ""
-  }
+    default: "",
+  },
 });
 
 const store = payerContracts();
 
 const pagination = usePagination({
   store,
-  cb: (data) => 
+  cb: (data) =>
     getPayerContracts(
       removeUndefined({
         ...data,
         status: props.status,
-        search: props.search.trim()
+        search: props.search.trim(),
       })
-    )
+    ),
 });
 
 watch(

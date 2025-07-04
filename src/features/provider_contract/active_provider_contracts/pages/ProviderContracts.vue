@@ -9,7 +9,7 @@ import { Status } from "@/types/interface";
 import { changePayerContractStatus, deletePayerContract } from "../api/providerContractApi";
 import { addToast } from "@/toast";
 import { useApiRequest } from "@/composables/useApiRequest";
-import StatusRow from "../components/contractStatusRow.vue";
+import StatusRow from "../components/providerContractStatusRow.vue";
 import { openModal } from "@customizer/modal-x";
 import { payerContracts } from "../store/payerContractStore";
 import icons from "@/utils/icons";

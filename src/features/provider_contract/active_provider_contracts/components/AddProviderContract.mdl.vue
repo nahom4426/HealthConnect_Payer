@@ -1,8 +1,8 @@
 <script setup>
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
-import ProviderForm from "./PayerContractForm.vue";
-import ProviderFormDataProvider from "./payerContractFormDataProvider.vue";
+import ProviderForm from "./ProviderContractForm.vue";
+import ProviderFormDataProvider from "./providerContractFormDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { useRouter } from "vue-router";
 import { closeModal } from "@customizer/modal-x";
