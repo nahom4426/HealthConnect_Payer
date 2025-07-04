@@ -54,7 +54,7 @@ const acceptContract = async () => {
           toasted(true, "Contract approved successfully");
           closeModal();
         } else {
-          toasted(false, req.response.value?.message || "Failed to approve contract");
+          toasted(false,"", req.response.value?.message || "Failed to approve contract");
         }
       }
     );
