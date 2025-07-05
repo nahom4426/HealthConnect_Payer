@@ -5,7 +5,7 @@ import InputPassword from '@/components/new_form_elements/InputPassword.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Form from '@/components/new_form_builder/Form.vue';
 import { getAllRole } from '../../role/Api/RoleApi';
-import Spinner from '@/components/Spinner.vue';
+import Spinner from '@/components/spinner.vue';
 import InputLayout from '@/components/new_form_elements/NewInputLayout.vue';
 const props = defineProps({
   initialData: {

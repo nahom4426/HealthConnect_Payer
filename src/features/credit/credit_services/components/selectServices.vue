@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { PropType } from 'vue';
-import Spinner from '@/components/Spinner.vue';
+import Spinner from '@/components/spinner.vue';
 import icons from "@/utils/icons";
 
 interface Service {

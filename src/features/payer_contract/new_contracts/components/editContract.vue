@@ -12,7 +12,7 @@ import { toasted } from '@/utils/utils';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { useAuthStore } from '@/stores/auth';
 import DatePicker from '@/components/datePicker.vue';
-import Spinner from '@/components/Spinner.vue';
+import Spinner from '@/components/spinner.vue';
 
 const route = useRoute();
 const router = useRouter();
