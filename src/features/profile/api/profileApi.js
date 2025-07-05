@@ -1,16 +1,14 @@
 import ApiService from "@/service/ApiService";
 
 const api = new ApiService();
-const basePath = "/profile";
+const basePath = "/users";
 
-// ✅ Get personal details
 export function getPersonalDetails(userId) {
   return api
     .addAuthenticationHeader()
     .get(`${basePath}/${userId}/details`);
 }
 
-// ✅ Upload profile picture
 export function uploadProfilePicture(userId, file) {
   const formData = new FormData();
   formData.append("file", file);
@@ -24,9 +22,13 @@ export function uploadProfilePicture(userId, file) {
     });
 }
 
-// ✅ Change password (JS version)
-export function changePassword(data) {
+export function changePassword(id,data) {
   return api
     .addAuthenticationHeader()
-    .post(`/auth/change-password`, data);
+    .post(`${basePath}/changePassword/${id}`, data);
+}
+export function updateProfileData(id,data) {
+  return api
+    .addAuthenticationHeader()
+    .post(`${basePath}/${id}`, data);
 }

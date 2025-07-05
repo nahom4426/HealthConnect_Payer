@@ -99,7 +99,7 @@ onMounted(() => {
 });
 </script>
 <template>
-  <div class="flex flex-col gap-6 w-full overflow-x-hidden scrollbar-hide">
+  <div class="flex flex-col gap-6 w-full  overflow-x-hidden scrollbar-hide">
     <CardDashboard />
     <div class="grid grid-cols-5 gap-5">
       <div
@@ -108,7 +108,7 @@ onMounted(() => {
         <div class="flex items-center justify-between">
           <div class="flex flex-col gap-2">
             <p class="font-semibold">Total Report</p>
-            <p class="text-xs">Sales Summery</p>
+            <p class="text-xs">Sales Summary</p>
           </div>
           <Button class="border flex gap-2 font-medium items-center" type="">
             <i v-html="icons.export"></i>

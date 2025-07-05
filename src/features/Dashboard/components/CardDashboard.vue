@@ -47,7 +47,7 @@ processProfilePicture();
         class="bg-white relative flex items-center justify-center mt-8 mr-8 w-[251px] h-f rounded-ss-[7.75rem] rounded-se-[7.75rem] h-[262px]"
       >
         <img
-          class="absolute top- h-[11.5rem]"
+          class="absolute w-[9rem] top- h-[10rem]"
           :src="profilePicture"
           alt="Logo"
         />

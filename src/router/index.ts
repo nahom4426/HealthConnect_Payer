@@ -16,7 +16,7 @@ import payerContractRoutes from "./payerContract.routes";
 import creditServicesRoutes from "./credit_services.routes";
 import submitClaimsRoutes from "./submit_claims.routes";
 import authorizationRoutes from "./authorization.routes";
-import Profile from "@/features/admin/profile/pages/profile.vue";
+import Profile from "@/features/profile/pages/profile.vue";
 const router = createRouter({
   history: createWebHistory(),
   routes: [

@@ -5,9 +5,11 @@ import { useAuthStore } from "@/stores/auth";
 import { ref, computed } from "vue";
 import { convertBase64Image } from "@/utils/utils";
 const authStore = useAuthStore();
+const imageSrc = "/src/assets/img/profile.png";
 
+const profilePicture=ref(authStore.auth?.user?.profilePicture)
 async function processProfilePicture() {
-  if (!profilePicture.value.startsWith("data:image/")) {
+  if (profilePicture.value!=null&&!profilePicture.value.startsWith("data:image/") ) {
     profilePicture.value = `data:image/png;base64,${authStore.auth?.user?.profilePicture}`;
   }
   try {
@@ -25,7 +27,6 @@ async function processProfilePicture() {
 processProfilePicture();
 
 const imageLoaded = ref(true);
-const imageSrc = "/src/assets/img/profile.png";
 
 const userInitial = computed(() => {
   return authStore.user?.firstName?.charAt(0) || "U";
