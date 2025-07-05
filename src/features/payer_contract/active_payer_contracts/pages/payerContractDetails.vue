@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPayerContractById } from '../api/payerContractApi';
 import { toasted } from '@/utils/utils';
 import { openModal } from "@customizer/modal-x";
 import icons from '@/utils/icons';
 import FamilyGroup from '../components/EmployeePayerGroup.vue';
+
 const router = useRouter();
 const route = useRoute();
 const contractId = route.params.contractHeaderUuid;
@@ -37,6 +38,7 @@ const activeTab = ref('employees');
 const employeeSearch = ref('');
 const employeeCurrentPage = ref(1);
 const employeeRowsPerPage = ref(10);
+const updating = ref(false);
 
 const filteredEmployees = computed(() => {
   if (!contractData.value.insuredSummaries) return [];
@@ -106,9 +108,9 @@ async function fetchContract() {
     if (response && response.data) {
       contractData.value = {
         ...response.data,
-        providerAddress: response.data.providerAddress || 'Arada, Around Semen City Hall, Addis Ababa', // Default if not provided
-        contactPersonName: response.data.contactPersonName || 'Birhane Araya', // Default if not provided
-        contactPersonNumber: response.data.contactPersonNumber || '+251 945065432', // Default if not provided
+        providerAddress: response.data.providerAddress || 'Arada, Around Semen City Hall, Addis Ababa',
+        contactPersonName: response.data.contactPersonName || 'Birhane Araya',
+        contactPersonNumber: response.data.contactPersonNumber || '+251 945065432',
         contractDetails: response.data.contractDetails || [],
         insuredSummaries: response.data.insuredSummaries || [],
         employeeGroups: response.data.employeeGroups || [],
@@ -120,39 +122,42 @@ async function fetchContract() {
     console.error('Error fetching contract:', err);
     error.value = 'Failed to load contract data';
     toasted(false, 'Failed to load contract data');
-    // router.push('/payer_contracts');
   } finally {
     loadingContract.value = false;
   }
 }
 
-onMounted(async () => {
-  await fetchContract();
-});
+const handleMembersAdded = async (newData) => {
+  updating.value = true;
+  try {
+    // Create new arrays to ensure reactivity
+    const newInsuredSummaries = [
+      ...contractData.value.insuredSummaries,
+      ...newData.insuredSummaries.map(m => ({...m}))
+    ];
+    
+    // Update the reactive object
+    contractData.value = {
+      ...contractData.value,
+      insuredSummaries: newInsuredSummaries,
+      totalInsured: contractData.value.totalInsured + newData.totalInsured,
+      totalDependants: contractData.value.totalDependants + newData.totalDependants
+    };
 
-const handleMembersAdded = (newData) => {
-  // Create a deep copy of the current data
-  const updatedData = JSON.parse(JSON.stringify(contractData.value));
-  
-  // Add new members to the insuredSummaries array
-  newData.insuredSummaries.forEach(newMember => {
-    if (!updatedData.insuredSummaries.some(m => m.insuredUuid === newMember.insuredUuid)) {
-      updatedData.insuredSummaries.push(newMember);
-    }
-  });
-
-  // Update the totals
-  updatedData.totalInsured += newData.totalInsured;
-  updatedData.totalDependants += newData.totalDependants;
-
-  // Reactively update the contract data
-  contractData.value = updatedData;
-  
-  // Force recomputation of filtered/paginated employees
-  employeeCurrentPage.value = 1;
+    // Reset pagination
+    employeeCurrentPage.value = 1;
+    
+    // Optional: refetch data from server to ensure consistency
+    await fetchContract();
+    
+    toasted(true, 'Members added successfully');
+  } catch (error) {
+    console.error('Error updating members:', error);
+    toasted(false, 'Failed to update members list');
+  } finally {
+    updating.value = false;
+  }
 };
-
-// Update the modal opening function
 
 function handleOpenModal() {
   if (activeTab.value === 'groups') {
@@ -161,23 +166,23 @@ function handleOpenModal() {
     });
   } else if (activeTab.value === 'employees') {
     openModal('AddEmployeeModal', {
-      onMembersAdded: handleMembersAdded // Pass the handler
+      onMembersAdded: handleMembersAdded
     });
   }
 }
+
 function handleAddDependant(row) {
   if (row.insuredUuid) {
     openModal('AddDependant', { 
       insuredUuid: row.insuredUuid, 
       user: row,
       onUpdated: (updatedUser) => {
-        usersStore.update(updatedUser.insuredUuid, updatedUser);
+        // Handle updated user if needed
       }
     });
-  } else if (typeof props.onEdit === 'function') {
-    props.onEdit(row);
   }
 }
+
 function handleAddDependantsWithClose(row) {
   console.log('Add Dependants:', row);
 }
@@ -193,10 +198,10 @@ function handleActivateWithClose(id) {
 function handleDeactivateWithClose(id) {
   console.log('Deactivate:', id);
 }
+
 const toggleDropdown = (event, id) => {
   const dropdown = document.getElementById(`dropdown-${id}`);
   if (dropdown) {
-    // Close all other dropdowns first
     document.querySelectorAll('.dropdown-menu').forEach(el => {
       if (el.id !== `dropdown-${id}`) {
         el.classList.add('hidden');
@@ -206,7 +211,6 @@ const toggleDropdown = (event, id) => {
   }
 };
 
-// Close dropdowns when clicking outside
 onMounted(() => {
   document.addEventListener('click', (event) => {
     if (!event.target.closest('.dropdown-container')) {
@@ -216,6 +220,15 @@ onMounted(() => {
     }
   });
 });
+
+onMounted(async () => {
+  await fetchContract();
+});
+
+// Debugging watches
+watch(contractData, (newVal) => {
+  console.log('Contract data updated:', newVal);
+}, { deep: true });
 </script>
 
 <template>
@@ -224,10 +237,31 @@ onMounted(() => {
     <span class="ml-2 text-gray-700 font-medium">Loading contract data...</span>
   </div>
 
+  <!-- Updating overlay -->
+  <div v-if="updating" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
+      <p class="mt-4 text-center">Updating member list...</p>
+    </div>
+  </div>
+
   <div v-else class="p-6 space-y-6 bg-white rounded-lg">
     <!-- Header -->
     <div class="flex items-center justify-between rounded-lg bg-primary p-6 text-white">
       <div class="flex items-center gap-4">
+         <div class="w-20 h-20 flex items-center justify-center  rounded-lg ">
+  <img 
+    v-if="contractData.payerLogoBase64" 
+    :src="contractData.payerLogoBase64" 
+    alt="Provider Logo" 
+    class="w-full h-full object-contain p-4"
+  />
+  <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  </div>
+</div>
         <div>
           <h1 class="text-xl font-semibold">{{ contractData.providerName || 'N/A Provider' }}</h1>
           <p class="text-sm">Pharmacy</p>
@@ -332,7 +366,6 @@ onMounted(() => {
             ]"
           >
             Employee Groups
-             <!-- ({{ contractData.employeeGroups?.length }}) -->
           </button>
           <button
             @click="activeTab = 'services'"
@@ -523,44 +556,7 @@ onMounted(() => {
       </div>
 
       <div v-if="activeTab === 'groups'" class="bg-white p-6 rounded-lg shadow-sm">
-        <!-- <h3 class="text-lg font-semibold mb-4">Employee Groups for this Contract</h3>
-        <p class="text-gray-600">
-          Currently, there are {{ contractData.employeeGroups?.length ?? 0 }} employee groups.
-        </p> -->
         <FamilyGroup />
-        <!-- <div v-if="contractData.employeeGroups?.length > 0">
-          <table class="w-full table-auto text-sm mt-4">
-            <thead class="text-[#75778B] text-left border-b">
-              <tr>
-                <th class="py-3">#</th>
-                <th class="py-3">Group Name</th>
-                <th class="py-3">Employees in Group</th>
-                <th class="py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody class="text-[#373946]">
-              <tr v-for="(group, gIndex) in contractData.employeeGroups" :key="group.uuid || gIndex" class="border-b hover:bg-gray-50">
-                <td class="py-3">{{ gIndex + 1 }}</td>
-                <td class="py-3">{{ group.name || 'N/A' }}</td>
-                <td class="py-3">{{ group.employeeCount ?? 0 }}</td>
-                <td class="py-3">
-                  <span
-                    :class="[
-                      'px-3 py-1 rounded-md text-xs font-medium',
-                      {
-                        'bg-[#D6F3EF] text-[#007E73]': group.status === 'Active',
-                        'bg-red-100 text-red-700': group.status === 'Inactive'
-                      }
-                    ]"
-                  >
-                    {{ group.status || 'N/A' }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div v-else class="py-3 text-center text-gray-500">No employee groups found.</div> -->
       </div>
 
       <div v-if="activeTab === 'services'" class="bg-white p-6 rounded-lg shadow-sm">

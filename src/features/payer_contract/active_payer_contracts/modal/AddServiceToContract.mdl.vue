@@ -61,35 +61,57 @@ async function fetchServices() {
       return;
     }
 
-    // Fetch existing services and drugs in the contract for this group
+    // Fetch existing services and drugs already assigned to this group
     const existingResponse = await getContractDetailsByGroup(groupUuid.value, contractHeaderUuid.value);
-    existingServices.value = existingResponse.data?.map(item => ({
-      ...item,
-      isExisting: true // Mark as existing
-    })) || [];
+    const existingContractItems = existingResponse.data || [];
 
-    // Fetch all available services and drugs for the contract
+    // Store existing items keyed by contractDetailUuid for quick lookup
+    const existingItemsMap = new Map();
+    existingContractItems.forEach(item => {
+      existingItemsMap.set(item.contractDetailUuid, { ...item, isExisting: true });
+    });
+
+    // Fetch all available services and drugs for the contract (from the contract header)
     const allResponse = await getPayerContractById(contractHeaderUuid.value);
-    const allItems = allResponse.data?.contractDetails || [];
+    const contractDetailsFromHeader = allResponse.data?.contractDetails || [];
 
-    // Filter out items that are already in the contract for this group
-    allServices.value = allItems.filter(item => {
+    const servicesFromHeader = [];
+    const drugsFromHeader = [];
+
+    contractDetailsFromHeader.forEach(item => {
+      // Check if this item (by contractDetailUuid) is already existing for this group
+      const existingItem = existingItemsMap.get(item.contractDetailUuid);
+
       if (item.itemType === 'SERVICE') {
-        return !existingServices.value.some(existing => 
-          existing.contractDetailUuid === item.contractDetailUuid
-        );
+        if (existingItem) {
+          // If it exists, use the existing item with the isExisting flag
+          // and potentially richer data from the contract header (like serviceName)
+          servicesFromHeader.push({ ...item, isExisting: true });
+        } else {
+          // If it's not existing for this group, add as a new available service
+          servicesFromHeader.push({ ...item, isExisting: false });
+        }
+      } else if (item.itemType === 'DRUG') {
+        if (existingItem) {
+          // If it exists, use the existing item with the isExisting flag
+          // and potentially richer data from the contract header (like drugName)
+          drugsFromHeader.push({ ...item, isExisting: true });
+        } else {
+          // If it's not existing for this group, add as a new available drug
+          drugsFromHeader.push({ ...item, isExisting: false });
+        }
       }
-      return false;
     });
 
-    allDrugs.value = allItems.filter(item => {
-      if (item.itemType === 'DRUG') {
-        return !existingDrugs.value.some(existing => 
-          existing.contractDetailUuid === item.contractDetailUuid
-        );
-      }
-      return false;
-    });
+    // Now, assign these processed lists to your refs
+    allServices.value = servicesFromHeader;
+    allDrugs.value = drugsFromHeader;
+
+    // Filter services and drugs to only include those that are truly existing
+    // This is useful for the `selectedServices` and `selectedDrugs` initialization
+    existingServices.value = allServices.value.filter(s => s.isExisting);
+    existingDrugs.value = allDrugs.value.filter(d => d.isExisting);
+
 
     // Automatically select existing items (they can't be unselected)
     selectedServices.value = [...existingServices.value];
@@ -102,41 +124,43 @@ async function fetchServices() {
     loading.value = false;
   }
 }
+
+// Rest of your component code remains the same...
+
 const combinedServices = computed(() => {
-  return [
-    ...existingServices.value,
-    ...allServices.value
-  ];
+  // This computed property is now simpler as allServices.value already contains existing ones marked
+  return allServices.value;
 });
 
 // Combined list of drugs (existing + available)
 const combinedDrugs = computed(() => {
-  return [
-    ...existingDrugs.value,
-    ...allDrugs.value
-  ];
+  // This computed property is now simpler as allDrugs.value already contains existing ones marked
+  return allDrugs.value;
 });
+
 // Toggle select all available services/drugs
 function toggleSelectAll() {
   if (activeTab.value === 0) {
     if (selectAll.value) {
-      // Add all available services (excluding existing ones which are already selected)
-      const newServices = allServices.value.filter(service => 
-        !selectedServices.value.some(s => s.contractDetailUuid === service.contractDetailUuid));
-      selectedServices.value = [...selectedServices.value, ...newServices];
+      // Select all services that are not already existing
+      selectedServices.value = [
+        ...existingServices.value, // Keep existing ones
+        ...allServices.value.filter(service => !service.isExisting) // Add new available ones
+      ];
     } else {
-      // Remove all available services (keep existing ones)
-      selectedServices.value = selectedServices.value.filter(s => s.isExisting);
+      // Deselect only newly selected services, keep existing ones
+      selectedServices.value = existingServices.value;
     }
   } else {
     if (selectAll.value) {
-      // Add all available drugs
-      const newDrugs = allDrugs.value.filter(drug => 
-        !selectedDrugs.value.some(d => d.contractDetailUuid === drug.contractDetailUuid));
-      selectedDrugs.value = [...selectedDrugs.value, ...newDrugs];
+      // Select all drugs that are not already existing
+      selectedDrugs.value = [
+        ...existingDrugs.value, // Keep existing ones
+        ...allDrugs.value.filter(drug => !drug.isExisting) // Add new available ones
+      ];
     } else {
-      // Remove all available drugs (keep existing ones)
-      selectedDrugs.value = selectedDrugs.value.filter(d => d.isExisting);
+      // Deselect only newly selected drugs, keep existing ones
+      selectedDrugs.value = existingDrugs.value;
     }
   }
 }
@@ -146,7 +170,7 @@ const filteredServices = computed(() => {
   if (!searchTerm.value) return combinedServices.value;
 
   const term = searchTerm.value.toLowerCase();
-  return combinedServices.value.filter(service => 
+  return combinedServices.value.filter(service =>
     (service.serviceName || '').toLowerCase().includes(term)
   );
 });
@@ -156,7 +180,7 @@ const filteredDrugs = computed(() => {
   if (!searchTerm.value) return combinedDrugs.value;
 
   const term = searchTerm.value.toLowerCase();
-  return combinedDrugs.value.filter(drug => 
+  return combinedDrugs.value.filter(drug =>
     (drug.drugName || '').toLowerCase().includes(term)
   );
 });
@@ -269,7 +293,6 @@ onMounted(() => {
       subtitle="Select services or drugs to add to this contract"
     >
       <div class="space-y-4">
-        <!-- Tab navigation -->
         <div class="grid grid-cols-2 border border-base-clr rounded w-full">
           <div
             v-for="tab in tabs"
@@ -288,7 +311,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Search input -->
         <div class="relative">
           <Input
             v-model="searchTerm"
@@ -303,92 +325,89 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Loading state -->
         <div v-if="loading" class="flex justify-center items-center h-40">
           <Spinner size="lg" />
         </div>
 
-        <!-- Services table (shown when activeTab === 0) -->
-            <div v-else-if="activeTab === 0" class="overflow-y-auto max-h-96">
-    <div class="flex justify-between items-center mb-2">
-      <h3 class="font-medium">Services</h3>
-      <div class="flex items-center" v-if="allServices.length > 0">
-        <input
-          type="checkbox"
-          id="selectAllServices"
-          v-model="selectAll"
-          @change="toggleSelectAll"
-          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-        />
-        <label for="selectAllServices" class="ml-2 text-sm text-gray-700">Select All Available</label>
-      </div>
-    </div>
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Select
-          </th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Service Name
-          </th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Price (ETB)
-          </th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Status
-          </th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        <tr
-          v-for="service in filteredServices"
-          :key="service.contractDetailUuid"
-          :class="{
-            'bg-blue-50': service.isExisting,
-            'hover:bg-gray-50': !service.isExisting
-          }"
-        >
-          <td class="px-6 py-4 whitespace-nowrap">
-            <input
-              type="checkbox"
-              :checked="isServiceSelected(service)"
-              @change="toggleServiceSelection(service)"
-              :disabled="service.isExisting"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-            {{ service.serviceName || 'N/A' }}
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {{ service.negotiatedPrice?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00' }}
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm">
-            <span
-              v-if="service.isExisting"
-              class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
-            >
-              Already in contract
-            </span>
-            <span
-              v-else
-              class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
-            >
-              Available
-            </span>
-          </td>
-        </tr>
-        <tr v-if="filteredServices.length === 0">
-          <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-            No services found matching your search
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+        <div v-else-if="activeTab === 0" class="overflow-y-auto max-h-96">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-medium">Services</h3>
+            <div class="flex items-center" v-if="allServices.length > 0">
+              <input
+                type="checkbox"
+                id="selectAllServices"
+                v-model="selectAll"
+                @change="toggleSelectAll"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label for="selectAllServices" class="ml-2 text-sm text-gray-700">Select All Available</label>
+            </div>
+          </div>
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Select
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Service Name
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Price (ETB)
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr
+                v-for="service in filteredServices"
+                :key="service.contractDetailUuid"
+                :class="{
+                  'bg-blue-50': service.isExisting,
+                  'hover:bg-gray-50': !service.isExisting
+                }"
+              >
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    :checked="isServiceSelected(service)"
+                    @change="toggleServiceSelection(service)"
+                    :disabled="service.isExisting"
+                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ service.serviceName || 'N/A' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ service.negotiatedPrice?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <span
+                    v-if="service.isExisting"
+                    class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+                  >
+                    Already in contract
+                  </span>
+                  <span
+                    v-else
+                    class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
+                  >
+                    Available
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="filteredServices.length === 0">
+                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                  No services found matching your search
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <!-- Drugs table (shown when activeTab === 1) -->
         <div v-else class="overflow-y-auto max-h-96">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -455,7 +474,6 @@ onMounted(() => {
           </table>
         </div>
 
-        <!-- Action buttons -->
         <div class="flex justify-end gap-4 pt-8">
           <Button @click="closeModal" variant="outline">
             Cancel
@@ -465,7 +483,7 @@ onMounted(() => {
             :pending="api.pending.value"
             class="text-white py-4 bg-primary"
             :disabled="(selectedServices.length === 0 || selectedServices.every(s => s.isExisting)) &&
-                       (selectedDrugs.length === 0 || selectedDrugs.every(d => d.isExisting))"
+                        (selectedDrugs.length === 0 || selectedDrugs.every(d => d.isExisting))"
           >
             Add Selected {{ activeTab === 0 ? 'Services' : 'Drugs' }}
           </Button>

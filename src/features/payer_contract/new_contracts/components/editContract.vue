@@ -336,41 +336,29 @@ async function submit() {
   try {
     pending.value = true;
 
-    const contractDetailsPayload = selectedItems.value.map(item => {
-      const detail = {
-        negotiatedPrice: item.userPrice,
-        assignedGroups: item.assignedGroups || []
+    const contractItemsPayload = selectedItems.value.map(item => {
+      return {
+        itemUuid: item.id,
+        itemType: item.type === 'service' ? 'SERVICE' : 'DRUG',
+        negotiatedPrice: item.userPrice
       };
-      if (item.type === 'service') {
-        detail.serviceUuid = item.serviceUuid;
-        detail.serviceName = item.name;
-      } else if (item.type === 'drug') {
-        detail.drugUuid = item.drugUuid;
-        detail.drugName = item.name;
-      }
-      return detail;
     });
 
     const payload = {
-      ...formData.value,
-      providerUuid: selectedProvider.value, // Ensure the provider UUID is from the selected one
+      providerUuid: selectedProvider.value,
+      description: formData.value.contractDescription || formData.value.contractName,
+      payerUuid: payerUuid.value,
+      status: 'ACTIVE',
       beginDate: beginDate.value,
       endDate: endDate.value,
-      contractDetails: contractDetailsPayload,
-      totalServices: selectedItems.value.filter(item => item.type === 'service').length,
-      totalDrugs: selectedItems.value.filter(item => item.type === 'drug').length,
-      totalInsured: formData.value.insuredSummaries.length,
-      totalDependants: formData.value.insuredSummaries.reduce((sum, insured) =>
-        sum + (insured.dependants?.length || 0), 0)
+      contractItems: contractItemsPayload
     };
 
-    payload.payerUuid = payerUuid.value; // Ensure payerUuid from auth store is always there
-
-    const response = await updatePayerContract(payload.contractHeaderUuid, payload);
+    const response = await updatePayerContract(formData.value.contractHeaderUuid, payload);
 
     if (response.success) {
       toasted(true, 'Contract updated successfully');
-      router.push('/contract_requests');
+      router.push('/new_contract');
     } else {
       toasted(false, response.error || 'Failed to update contract');
     }
@@ -381,7 +369,6 @@ async function submit() {
     pending.value = false;
   }
 }
-
 onMounted(async () => {
   await fetchProviders(); // Fetch providers first so `providerOptions` are available
   await fetchContract();  // Then fetch the specific contract. This will set `selectedProvider.value`.

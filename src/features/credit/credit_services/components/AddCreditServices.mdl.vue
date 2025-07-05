@@ -38,6 +38,7 @@ async function handleSubmit(formValues: any) {
       providerUuid: auth.auth?.user?.providerUuid || "",
       payerUuid: formValues.payerUuid,
       insuredUuid: formValues.insuredUuid,
+      contractHeaderUuid: formValues.contractHeaderUuid,
       dependantUuid: formValues.dependantUuid,
       phone: formValues.phone,
       patientName: formValues.patientName || `${formValues.employeeId} - ${formValues.phone}`,
@@ -48,7 +49,7 @@ async function handleSubmit(formValues: any) {
       primaryDiagnosis: formValues.primaryDiagnosis || '',
       secondaryDiagnosis: formValues.secondaryDiagnosis || '',
       medicationItems: formValues.medicationItems.map((item: any) => ({
-        contractDetailUuid: item.contractHeaderUuid || '',
+        contractDetailUuid: item.contractDetailUuid || '',
         itemType: item.itemType,
         remark: item.remark || '',
         price: item.price || 

@@ -92,6 +92,23 @@ export function getPayerbyPayerUuid(id: string, query = {}, config = {}) {
     throw error;
   });
 }
+// Get eligible services by contractHeaderUuid and insuredUuid
+// In your api file (creditServicesApi.ts)
+export function getEligibleServicesAndDrugs(
+  contractHeaderUuid: string,
+  uuid: string,                // insuredUuid or dependantUuid
+  isDependant: boolean = false,
+  searchKey?: string
+): Promise<AsyncResponse<any>> {
+  return api.addAuthenticationHeader().get(`/payer-provider-contract/eligible-services`, {
+    params: {
+      contractHeaderUuid,
+      ...(isDependant ? { dependantUuid: uuid } : { insuredUuid: uuid }),
+      ...(searchKey ? { searchKey } : {})
+    }
+  });
+}
+
 
 // Batch Operations
 export function createBatchCreditClaims(claims: any[]): Promise<AsyncResponse<any>> {

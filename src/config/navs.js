@@ -46,7 +46,7 @@ export default [
     //  category: "Payers",
     navs: [
         {
-      path: "/payer_contracts",
+      path: "/provider_contracts",
       name: "Active Contracts",
       icon: icons.active_contracts,
       privilege: ["Create Services"],
