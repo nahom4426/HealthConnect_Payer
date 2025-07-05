@@ -2,6 +2,7 @@ import ApiService from "@/service/ApiService";
 import type { AsyncResponse } from "@/types/interface";
 import type { ActiveInstitution } from "../store/InstitutionsStore";
 import axios from "axios";
+import { useAuthStore } from "@/stores/auth";
 
 const api = new ApiService();
 const basePath = '/payer'; // Corrected base path
@@ -25,6 +26,27 @@ export function registerInstitution(formData: FormData): Promise<AsyncResponse<A
   });
 }
 
+// In your institution-related or contract-related API file
+// adjust path if needed
+
+export function getPayersWithContractForLoggedInProvider(
+  params: {
+    page: number;
+    size: number;
+    sortBy?: string;
+    sortDir?: 'asc' | 'desc';
+  }
+): Promise<AsyncResponse<any>> {
+  const auth = useAuthStore();
+  const providerUuid = auth.auth?.user?.providerUuid;
+
+  if (!providerUuid) {
+    return Promise.reject(new Error("Provider UUID not found in auth store"));
+  }
+
+  const url = `/provider/providers/${providerUuid}/payers-with-contract`;
+  return api.addAuthenticationHeader().get(url, { params });
+}
 
 
 export async function updateInstitution(uuid: string, formData: FormData) {

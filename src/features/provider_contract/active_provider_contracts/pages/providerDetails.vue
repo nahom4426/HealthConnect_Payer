@@ -27,6 +27,7 @@ const contractData = ref({
   totalDependants: 0,
   contractDetails: [],
   insuredSummaries: [],
+   providerLogoBase64: '',
   employeeGroups: [],
 });
 
@@ -153,33 +154,6 @@ const handleMembersAdded = (newData) => {
 
 // Update the modal opening function
 
-function handleOpenModal() {
-  if (activeTab.value === 'groups') {
-    openModal('AddGroupModal', {
-      // onSaved: handleGroupSaved,
-    });
-  } else if (activeTab.value === 'employees') {
-    openModal('AddEmployeeModal', {
-      onMembersAdded: handleMembersAdded // Pass the handler
-    });
-  }
-}
-function handleAddDependant(row) {
-  if (row.insuredUuid) {
-    openModal('AddDependant', { 
-      insuredUuid: row.insuredUuid, 
-      user: row,
-      onUpdated: (updatedUser) => {
-        usersStore.update(updatedUser.insuredUuid, updatedUser);
-      }
-    });
-  } else if (typeof props.onEdit === 'function') {
-    props.onEdit(row);
-  }
-}
-function handleAddDependantsWithClose(row) {
-  console.log('Add Dependants:', row);
-}
 
 function handleRemoveWithClose(id) {
   console.log('Remove:', id);
@@ -227,6 +201,20 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex items-center justify-between rounded-lg bg-primary p-6 text-white">
       <div class="flex items-center gap-4">
+         <div class="w-20 h-20 flex items-center justify-center  rounded-lg ">
+  <img 
+    v-if="contractData.providerLogoBase64" 
+    :src="contractData.providerLogoBase64" 
+    alt="Provider Logo" 
+    class="w-full h-full object-contain p-4"
+    @error="handleImageError"
+  />
+  <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  </div>
+</div>
         <div>
           <h1 class="text-xl font-semibold">{{ contractData.providerName || 'N/A Provider' }}</h1>
           <p class="text-sm">Pharmacy</p>
@@ -265,9 +253,12 @@ onMounted(() => {
       <div class="bg-white rounded-lg p-6 text-[#373946] space-y-4 shadow-sm">
         <h2 class="text-[#75778B] font-semibold text-lg border-b pb-4">Contract Detail</h2>
 
-        <div class="grid grid-cols-4 gap-2 text-sm border-b pb-4">
-          <span class="text-[#75778B]">Contract ID:</span>
+        <div class="grid grid-cols-2 gap-4 text-sm border- pb-4">
+          <div class="flex justify-between border-r pr-2">
+            <span class="text-[#75778B]">Contract ID:</span>
           <span class="font-medium col-span-1">{{ contractData.contractCode || 'N/A' }}</span>
+          </div>
+          <div class="flex justify-between">
           <span class="text-[#75778B]">Contract Status:</span>
           <span
             :class="[
@@ -282,9 +273,10 @@ onMounted(() => {
             {{ contractData.status || 'N/A' }}
           </span>
         </div>
+        </div>
 
-        <div class="grid grid-cols-2 gap-4 text-sm border-b pb-4">
-          <div class="flex justify-between">
+        <div class="grid grid-cols-2 gap-4 text-sm  pb-4">
+          <div class="flex justify-between border-r pr-2">
             <span class="text-[#75778B]">Contract From:</span>
             <span class="font-medium">{{ formatDate(contractData.startDate) }}</span>
           </div>
@@ -299,10 +291,10 @@ onMounted(() => {
             <span class="text-[#75778B]">Number of Employees:</span>
             <span class="font-medium">{{ contractData.totalInsured ?? 0 }}</span>
           </div>
-          <div class="flex justify-between">
+          <!-- <div class="flex justify-between">
             <span class="text-[#75778B]">Employee Groups:</span>
             <span class="font-medium">{{ contractData.employeeGroups?.length ?? 0 }}</span> 
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
@@ -321,7 +313,7 @@ onMounted(() => {
           >
             Employees ({{ contractData.totalInsured ?? 0 }})
           </button>
-          <button
+          <!-- <button
             @click="activeTab = 'groups'"
             :class="[
               'px-6 py-3 text-sm font-medium',
@@ -331,7 +323,7 @@ onMounted(() => {
             ]"
           >
             Employee Groups ({{ contractData.employeeGroups?.length ?? 0 }})
-          </button>
+          </button> -->
           <button
             @click="activeTab = 'services'"
             :class="[
@@ -345,12 +337,7 @@ onMounted(() => {
           </button>
         </div>
 
-     <button
-  class="bg-[#007E73] hover:bg-[#005f58] text-white px-5 py-2 rounded-md text-sm"
-  @click="handleOpenModal"
->
-  {{ activeTab === 'groups' ? 'Add Group' : 'Add Employee' }}
-</button>
+   
 
 
       </div>
@@ -525,7 +512,7 @@ onMounted(() => {
         <p class="text-gray-600">
           Currently, there are {{ contractData.employeeGroups?.length ?? 0 }} employee groups.
         </p> -->
-        <FamilyGroup />
+        <!-- <FamilyGroup /> -->
         <!-- <div v-if="contractData.employeeGroups?.length > 0">
           <table class="w-full table-auto text-sm mt-4">
             <thead class="text-[#75778B] text-left border-b">

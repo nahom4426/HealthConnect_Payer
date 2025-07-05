@@ -12,6 +12,7 @@ const props = defineProps({
   },
   status: {
     type: String,
+    default: "PENDING" 
   },
   search: {
     type: String,

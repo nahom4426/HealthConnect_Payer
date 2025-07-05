@@ -58,7 +58,7 @@ const emit = defineEmits(["user"]);
   <NewFormLayout v-slot="{ submit }" id="login-form">
     <div class="space-y-6">
       <div class="flex flex-col items-center justify-center gap-4">
-        <h1 class="font-semibold text-xl">Nice to see you again 👋</h1>
+        <!-- <h1 class="font-semibold text-xl">Nice to see you again 👋</h1> -->
         <h2 class="w-[332px] text-center">
           Upon successful authentication, access your role-specific dashboard
           within the platform.
@@ -90,6 +90,8 @@ const emit = defineEmits(["user"]);
           />
         </div>
       </div>
+       <p class="justify-center text-center text-primary"> © 2025 MedcoTech Solutions. All rights reserved. </p>
+
     </div>
   </NewFormLayout>
 </template>

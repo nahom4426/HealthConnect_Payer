@@ -11,10 +11,6 @@ const props = defineProps({
   },
   searchQuery: String,
   pending: Boolean,
-  availableItems: {
-    type: Array,
-    default: () => []
-  },
   addedItems: {
     type: Array,
     default: () => []
@@ -24,7 +20,9 @@ const props = defineProps({
   remarks: {
     type: Object,
     default: () => ({})
-  }
+  },
+  insuredUuid: String,
+  contractHeaderUuid: String
 });
 
 const emit = defineEmits([
@@ -43,16 +41,25 @@ const localSearchQuery = ref(props.searchQuery);
 const localPrimaryDiagnosis = ref(props.primaryDiagnosis);
 const localSecondaryDiagnosis = ref(props.secondaryDiagnosis);
 const localRemarks = ref(props.remarks || {});
+const availableItems = ref([]); // Now managed internally
 
 function changeTab(tab) {
   emit('update:activeTab', tab);
   localSearchQuery.value = '';
+  availableItems.value = []; // Clear search results when changing tabs
 }
 
 watch(localSearchQuery, (newValue) => {
   emit('update:searchQuery', newValue);
-  if (newValue.length > 0) {
-    emit('search-items', { type: props.activeTab, query: newValue });
+  if (newValue.length > 0 && props.insuredUuid && props.contractHeaderUuid) {
+    emit('search-items', { 
+      type: props.activeTab, 
+      query: newValue,
+      insuredUuid: props.insuredUuid,
+      contractHeaderUuid: props.contractHeaderUuid
+    });
+  } else {
+    availableItems.value = []; // Clear results if search query is empty
   }
 });
 
@@ -63,32 +70,106 @@ watch(localPrimaryDiagnosis, (newValue) => {
 watch(localSecondaryDiagnosis, (newValue) => {
   emit('update:secondaryDiagnosis', newValue);
 });
+watch(availableItems, (newItems) => {
+  newItems.forEach(item => {
+    if (props.activeTab === 'services' && !item.serviceName) {
+      console.warn('Service item missing name:', item);
+    }
+    if (props.activeTab === 'drugs' && !item.drugName) {
+      console.warn('Drug item missing name:', item);
+    }
+  });
+}, { deep: true });
+// This function should be called by the parent component when search results arrive
+function setSearchResults(items) {
+  if (!items) {
+    availableItems.value = [];
+    return;
+  }
+
+  availableItems.value = items.map(item => {
+    // Determine if it's a service or drug
+    const isService = item.serviceUuid !== null && item.serviceUuid !== undefined && item.serviceName !== "N/A";
+    const isDrug = item.drugUuid !== null && item.drugUuid !== undefined && item.drugName !== "N/A";
+
+    // Create the base item structure
+    const mappedItem = {
+      id: item.contractDetailUuid,
+      contractDetailUuid: item.contractDetailUuid,
+      price: item.negotiatedPrice || 0,
+      paymentAmount: `ETB ${(item.negotiatedPrice || 0).toFixed(2)}`,
+      status: item.status || 'UNKNOWN',
+      itemType: isService ? 'SERVICE' : 'DRUG'
+    };
+
+    // Add service or drug specific fields
+    if (isService) {
+      Object.assign(mappedItem, {
+        serviceUuid: item.serviceUuid,
+        serviceName: item.serviceName,
+        serviceCode: item.serviceCode,
+        drugUuid: null,
+        drugName: null,
+        drugCode: null
+      });
+    } else if (isDrug) {
+      Object.assign(mappedItem, {
+        drugUuid: item.drugUuid,
+        drugName: item.drugName,
+        drugCode: item.drugCode || 'N/A', // Fallback if drugCode is missing
+        serviceUuid: null,
+        serviceName: null,
+        serviceCode: null
+      });
+    }
+
+    return mappedItem;
+  }).filter(item => {
+    // Filter based on active tab
+    if (props.activeTab === 'services') {
+      return item.itemType === 'SERVICE';
+    } else if (props.activeTab === 'drugs') {
+      return item.itemType === 'DRUG';
+    }
+    return false;
+  });
+
+  console.log('Mapped and filtered items:', availableItems.value);
+}
+
 
 const isItemAdded = (itemId) => {
-  return props.addedItems.some(item => item.id === itemId);
+  return props.addedItems.some(item => item.contractDetailUuid === itemId);
 };
 
 const filteredItems = computed(() => {
-  if (!localSearchQuery.value || !props.availableItems) return [];
-  
+  if (!localSearchQuery.value || availableItems.value.length === 0) {
+    return [];
+  }
+
   const searchTerm = localSearchQuery.value.toLowerCase();
-  return props.availableItems.filter(item => {
-    const name = item.serviceName || item.drugName;
-    const code = item.serviceCode || item.drugCode;
-      
+  return availableItems.value.filter(item => {
+    // Get the appropriate name and code based on item type
+    const name = props.activeTab === 'services' 
+      ? item.serviceName 
+      : item.drugName;
+    const code = props.activeTab === 'services' 
+      ? item.serviceCode 
+      : item.drugCode;
+
     return (
       name.toLowerCase().includes(searchTerm) ||
       code.toLowerCase().includes(searchTerm)
-   ) && !isItemAdded(item.id);
+    ) && !isItemAdded(item.id);
   });
 });
-
 function handleAddItem(item) {
   if (isItemAdded(item.id)) return;
   
   const newItem = { 
     ...item,
     itemType: props.activeTab === 'services' ? 'SERVICE' : 'DRUG',
+    contractDetailUuid: item.contractDetailUuid, // Include contractDetailUuid
     ...(props.activeTab === 'drugs' ? {
       quantity: 1,
       totalCost: item.price * 1,
@@ -119,17 +200,14 @@ function handleRemoveItem(index) {
 }
 
 function handleUpdateItem(index, field, value) {
-  // Create a copy of the current item
   const currentItem = { ...props.addedItems[index] };
   const updatedItem = { [field]: value };
 
-  // If updating quantity for a drug, calculate totalCost
   if (field === 'quantity' && 'price' in currentItem) {
     const quantity = Number(value) || 0;
     updatedItem.totalCost = currentItem.price * quantity;
   }
 
-  // Merge the updates with the current item
   const fullUpdate = { ...currentItem, ...updatedItem };
   
   emit('update-item', { 
@@ -138,17 +216,27 @@ function handleUpdateItem(index, field, value) {
   });
 }
 
-// Filter added items by current tab for display purposes
 const displayedItems = computed(() => {
   return props.addedItems.filter(item => 
     props.activeTab === 'services' ? item.itemType === 'SERVICE' : item.itemType === 'DRUG'
   );
 });
+
+// Expose the setSearchResults function to parent
+defineExpose({ setSearchResults });
 </script>
 
 <template>
   <div class="bg-[#F6F7FA] p-4">
     <!-- Tab Navigation -->
+     <div class="debug-section" style="display: none;">
+  <h3>Debug Info:</h3>
+  <p>Search Query: {{ localSearchQuery }}</p>
+  <p>Available Items Count: {{ availableItems.length }}</p>
+  <p>Filtered Items Count: {{ filteredItems.length }}</p>
+  <pre>Available Items: {{ JSON.stringify(availableItems, null, 2) }}</pre>
+  <pre>Filtered Items: {{ JSON.stringify(filteredItems, null, 2) }}</pre>
+</div>
     <div class="flex items-center mb-6">
       <div class="flex border border-gray-300 rounded w-fit">
         <button
@@ -184,7 +272,12 @@ const displayedItems = computed(() => {
             v-model="localSearchQuery"
             :placeholder="`Search ${activeTab}...`"
             class="w-full p-4 rounded-md focus:ring-teal-500 focus:border-teal-500"
-            @keyup.enter="$emit('search-items', { type: activeTab, query: localSearchQuery })"
+            @keyup.enter="$emit('search-items', { 
+              type: activeTab, 
+              query: localSearchQuery,
+              insuredUuid,
+              contractHeaderUuid 
+            })"
           />
           
           <!-- Loading State -->
@@ -217,10 +310,7 @@ const displayedItems = computed(() => {
                   </div>
                 </div>
                 <span class="text-sm font-medium">
-                  {{ item.serviceName 
-                    ? item.paymentAmount 
-                    : `ETB ${item.price?.toFixed(2) || '0.00'}` 
-                  }}
+                  {{ item.paymentAmount }}
                 </span>
               </li>
             </ul>
@@ -255,7 +345,7 @@ const displayedItems = computed(() => {
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="(item, index) in displayedItems" :key="item.id">
+          <tr v-for="(item, index) in displayedItems" :key="item.contractDetailUuid">
             <td class="px-1 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
             <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
               {{ item.serviceCode || item.drugCode }}
@@ -265,10 +355,7 @@ const displayedItems = computed(() => {
             </td>
             <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
               <div class="bg-[#DFF1F1] px-2 py-1 font-bold text-primary">
-                {{ item.serviceName 
-                  ? item.paymentAmount 
-                  : `ETB ${item.price?.toFixed(2) || '0.00'}` 
-                }}
+                {{ item.paymentAmount }}
               </div>
             </td>
             
@@ -276,8 +363,8 @@ const displayedItems = computed(() => {
             <td v-if="activeTab === 'services'" class="px-3 py-4 whitespace-nowrap">
               <input
                 type="text"
-                :value="localRemarks[item.id]"
-                @input="handleUpdateRemark(index, item.id, $event.target.value)"
+                :value="localRemarks[item.contractDetailUuid]"
+                @input="handleUpdateRemark(index, item.contractDetailUuid, $event.target.value)"
                 class="w-full px-3 py-3 bg-[#F6F7FA]"
                 placeholder="Service remark"
               />
@@ -326,7 +413,7 @@ const displayedItems = computed(() => {
         </tbody>
       </table>
 
-      <!-- Diagnosis Fields (only shown for services and when items exist) -->
+      <!-- Diagnosis Fields -->
       <div v-if="activeTab === 'services' && displayedItems.length > 0" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Primary Diagnosis</label>

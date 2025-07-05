@@ -11,10 +11,13 @@
 // import Pending_contracts from "@/features/payer_contract/pending_contracts/pages/pending_contracts.vue";
 
 // import Details from "@/features/provider_contract/active_payer_contracts/pages/providerDetails.vue";
+import ActiveProviderIndex from "@/features/provider_contract/active_provider_contracts/pages/ActiveProviderIndex.vue";
+import ProviderContracts from "@/features/provider_contract/active_provider_contracts/pages/ProviderContracts.vue";
 import ProviderDetails from "@/features/provider_contract/active_provider_contracts/pages/providerDetails.vue";
 import ViewContractRequests from "@/features/provider_contract/contract_requests/components/viewContractRequests.vue";
 import ContractRequests from "@/features/provider_contract/contract_requests/pages/contractRequests.vue";
 import ProviderContractIndex from "@/features/provider_contract/contract_requests/pages/ProviderContractIndex.vue";
+
 
 export default [
 	{
@@ -44,25 +47,25 @@ export default [
 	  component: ViewContractRequests,
 	}
 		]
+	},
+	{
+		path: '/provider_contracts',
+		name: 'Provider Contract',
+		component: ActiveProviderIndex,
+		children: [
+			{
+				path: '',
+				name: 'Provider Contracts List',
+				component: ProviderContracts,
+			},
+			{
+				path: 'detail/:contractHeaderUuid',
+				name: 'Provider Contract Details',
+				component: ProviderDetails,
+				props: true,
+			}
+		]
 	}
-	// {
-	// 	path: '/payer_contracts',
-	// 	name: 'Payer Contract',
-	// 	component: PayerIndex,
-	// 	children: [
-	// 		{
-	// 			path: '',
-	// 			name: 'Payer Contracts List',
-	// 			component: PayerContracts,
-	// 		},
-	// 		{
-	// 			path: 'detail/:contractHeaderUuid',
-	// 			name: 'Payer Contract Details',
-	// 			component: Details,
-	// 			props: true,
-	// 		}
-	// 	]
-	// },
 	// {
 	// 	path: '/pending_contracts',
 	// 	name: 'Pending Contracts',

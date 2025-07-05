@@ -3,7 +3,7 @@ import { ref, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import PayerContractsDataProvider from "../components/PayerContractsDataProvider.vue";
+import PayerContractsDataProvider from "../components/ProviderContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
 import { changePayerContractStatus, deletePayerContract } from "../api/providerContractApi";
@@ -180,20 +180,18 @@ function handleAddContract() {
           :pending="pending"
           :headers="{
             head: [
-              'Contract Name',
+             'Payer name', 
+             'Contract Name',
               'Contract Number',
-              'Payer',
-              'Provider',
               'Start Date',
               'End Date',
               'Status',
               'Actions'
             ],
             row: [
+               'payerName',
               'contractName',
-              'contractNumber',
-              'payerName',
-              'providerName',
+              'contractCode',
               'startDate',
               'endDate',
               'status'
@@ -213,18 +211,18 @@ function handleAddContract() {
             <StatusRow
               :rowData="contracts"
               :rowKeys="[
-                'contractName',
-                'contractNumber',
-                'payerName',
+               'payerName', 
+               'contractName',
+                'contractCode',
                 'providerName',
                 'startDate',
                 'endDate',
                 'status'
               ]"
               :headKeys="[
+               'Payer Name',
                 'Contract Name',
                 'Contract Number',
-                'Payer',
                 'Provider',
                 'Start Date',
                 'End Date',

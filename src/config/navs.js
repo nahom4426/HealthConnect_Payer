@@ -42,13 +42,13 @@ export default [
     privilege: ["Create Services"],
     //  category: "Payers",
     navs: [
-      {
-        path: "/payer_contracts",
-        name: "Active Contracts",
-        icon: icons.active_contracts,
-        privilege: ["Create Services"],
-        // category: "Admin",
-      },
+        {
+      path: "/provider_contracts",
+      name: "Active Contracts",
+      icon: icons.active_contracts,
+      privilege: ["Create Services"],
+      // category: "Admin",
+    },
       {
         path: "/contract_requests",
         name: "Contracts Requests",

@@ -13,14 +13,13 @@ import { useApiRequest } from '@/composables/useApiRequest';
 import { useAuthStore } from '@/stores/auth';
 import DatePicker from '@/components/datePicker.vue';
 import Spinner from '@/components/Spinner.vue';
-import ButtonSpinner from '@/components/buttonSpinner.vue';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const contractId = route.params.id;
 const selectedProvider = ref(null); // Will hold { value: uuid, label: name }
-const beginDate = ref('');
+const startDate = ref('');
 const endDate = ref('');
 const services = ref([]);
 const drugs = ref([]);
@@ -51,7 +50,7 @@ const formData = ref({
   contractHeaderUuid: '',
   contractName: '',
   contractDescription: '',
-  beginDate: '',
+  startDate: '',
   endDate: '',
   status: 'ACTIVE',
   payerUuid: auth.auth.user?.payerUuid || '',
@@ -87,7 +86,7 @@ async function fetchContract() {
       });
 
       selectedProvider.value = contract.providerUuid;
-      beginDate.value = contract.startDate;
+      startDate.value = contract.startDate;
       endDate.value = contract.endDate;
 
       if (contract.contractDetails) {
@@ -103,7 +102,7 @@ async function fetchContract() {
             assignedGroups: item.assignedGroups || [],
             type: item.serviceUuid ? 'service' : (item.drugUuid ? 'drug' : 'unknown'),
           };
-          console.log('🧩 Parsed items:', parsedItem);
+          console.log('🧩 Parsed item:', parsedItem);
           return parsedItem;
         });
       }
@@ -116,7 +115,7 @@ async function fetchContract() {
     console.error('❌ Error fetching contract:', err);
     error.value = 'Failed to load contract data';
     toasted(false, 'Failed to load contract data');
-    router.push('/payer_contracts');
+    router.push('/payer-contracts');
   } finally {
     loadingContract.value = false;
   }
@@ -323,12 +322,12 @@ function updateItemPrice(item) {
 async function submit() {
   submitAttempted.value = true;
 
-  if (!formData.value.contractName || !selectedProvider.value || !beginDate.value || !endDate.value || selectedItems.value.length === 0) {
+  if (!formData.value.contractName || !selectedProvider.value || !startDate.value || !endDate.value || selectedItems.value.length === 0) {
     toasted(false, 'Please fill all required fields and select at least one service/drug');
     return;
   }
 
-  if (new Date(endDate.value) <= new Date(beginDate.value)) {
+  if (new Date(endDate.value) <= new Date(startDate.value)) {
     toasted(false, 'End date must be after start date');
     return;
   }
@@ -336,29 +335,41 @@ async function submit() {
   try {
     pending.value = true;
 
-    const contractItemsPayload = selectedItems.value.map(item => {
-      return {
-        itemUuid: item.id,
-        itemType: item.type === 'service' ? 'SERVICE' : 'DRUG',
-        negotiatedPrice: item.userPrice
+    const contractDetailsPayload = selectedItems.value.map(item => {
+      const detail = {
+        negotiatedPrice: item.userPrice,
+        assignedGroups: item.assignedGroups || []
       };
+      if (item.type === 'service') {
+        detail.serviceUuid = item.serviceUuid;
+        detail.serviceName = item.name;
+      } else if (item.type === 'drug') {
+        detail.drugUuid = item.drugUuid;
+        detail.drugName = item.name;
+      }
+      return detail;
     });
 
     const payload = {
-      providerUuid: selectedProvider.value,
-      description: formData.value.contractDescription || formData.value.contractName,
-      payerUuid: payerUuid.value,
-      status: 'ACTIVE',
-      beginDate: beginDate.value,
+      ...formData.value,
+      providerUuid: selectedProvider.value, // Ensure the provider UUID is from the selected one
+      startDate: startDate.value,
       endDate: endDate.value,
-      contractItems: contractItemsPayload
+      contractDetails: contractDetailsPayload,
+      totalServices: selectedItems.value.filter(item => item.type === 'service').length,
+      totalDrugs: selectedItems.value.filter(item => item.type === 'drug').length,
+      totalInsured: formData.value.insuredSummaries.length,
+      totalDependants: formData.value.insuredSummaries.reduce((sum, insured) =>
+        sum + (insured.dependants?.length || 0), 0)
     };
 
-    const response = await updatePayerContract(formData.value.contractHeaderUuid, payload);
+    payload.payerUuid = payerUuid.value; // Ensure payerUuid from auth store is always there
+
+    const response = await updatePayerContract(payload.contractHeaderUuid, payload);
 
     if (response.success) {
       toasted(true, 'Contract updated successfully');
-      router.push('/new_contract');
+      router.push('/payer-contracts');
     } else {
       toasted(false, response.error || 'Failed to update contract');
     }
@@ -369,6 +380,7 @@ async function submit() {
     pending.value = false;
   }
 }
+
 onMounted(async () => {
   await fetchProviders(); // Fetch providers first so `providerOptions` are available
   await fetchContract();  // Then fetch the specific contract. This will set `selectedProvider.value`.
@@ -380,7 +392,7 @@ onMounted(async () => {
 <template>
   <div v-if="loadingContract" class="flex justify-center items-center h-64">
     <Spinner size="lg" />
-    
+    <span class="ml-2 text-gray-700 font-medium">Loading contract data...</span>
   </div>
 
   <Form v-else @submit.prevent="submit" :loading="pending" :id="'new-contract-form'" class="space-y-6">
@@ -423,11 +435,11 @@ onMounted(async () => {
         <div class="flex gap-4">
           <div class="w-1/2">
             <DatePicker
-              v-model="beginDate"
+              v-model="startDate"
               label="Start date"
               required
-              :error="!beginDate && submitAttempted"
-              :error-message="!beginDate && submitAttempted ? 'Start date is required' : ''"
+              :error="!startDate && submitAttempted"
+              :error-message="!startDate && submitAttempted ? 'Start date is required' : ''"
             />
           </div>
           <div class="w-1/2">
@@ -435,10 +447,10 @@ onMounted(async () => {
               v-model="endDate"
               label="End date"
               required
-              :error="(!endDate || new Date(endDate) <= new Date(beginDate)) && submitAttempted"
+              :error="(!endDate || new Date(endDate) <= new Date(startDate)) && submitAttempted"
               :error-message="
                 !endDate && submitAttempted ? 'End date is required' :
-                (endDate && new Date(endDate) <= new Date(beginDate) && submitAttempted ? 'End date must be after start date' : '')
+                (endDate && new Date(endDate) <= new Date(startDate) && submitAttempted ? 'End date must be after start date' : '')
               "
             />
           </div>
@@ -457,7 +469,6 @@ onMounted(async () => {
             </h3>
             <div class="flex border border-gray-300 rounded-md overflow-hidden">
               <button
-              type="button"
                 @click="activeTab = 'services'"
                 :class="[
                   'px-4 py-2 text-sm font-medium transition-colors duration-200',
@@ -467,7 +478,6 @@ onMounted(async () => {
                 Services
               </button>
               <button
-              type="button"
                 @click="activeTab = 'drugs'"
                 :class="[
                   'px-4 py-2 text-sm font-medium transition-colors duration-200',
@@ -499,7 +509,6 @@ onMounted(async () => {
                 </div>
                 <div class="text-center mt-4">
                   <button
-                  type="button"
                     class="text-sm px-4 py-2 rounded-lg transition-colors duration-200"
                     :class="isNegotiating ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-[#75778B] text-white hover:bg-[#616373]'"
                     @click="editPrices"
@@ -548,7 +557,7 @@ onMounted(async () => {
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(item, index) in paginatedItems "
+                    v-for="(item, index) in paginatedItems"
                     :key="item.id"
                     class="border-b border-gray-100 hover:bg-gray-50"
                   >
@@ -571,7 +580,7 @@ onMounted(async () => {
                     <td class="p-3">
                       <input
                         v-if="isNegotiating"
-                        v-model="item.userPrice"
+                        v-model.number="item.userPrice"
                         type="number"
                         min="0"
                         step="0.01"
@@ -603,7 +612,6 @@ onMounted(async () => {
               </div>
               <div class="flex items-center gap-1">
                 <button
-                type="button"
                   @click="prevPage"
                   :disabled="currentPage === 1"
                   class="px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -612,7 +620,6 @@ onMounted(async () => {
                 </button>
                 <span v-for="n in totalPages" :key="n">
                   <button
-                  type="button"
                     :class="[
                       'px-3 py-1 border rounded-md font-medium transition-colors duration-200',
                       currentPage === n ? 'bg-[#02676B] text-white' : 'text-gray-700 hover:bg-gray-100'
@@ -623,7 +630,6 @@ onMounted(async () => {
                   </button>
                 </span>
                 <button
-                type="button"
                   @click="nextPage"
                   :disabled="currentPage === totalPages"
                   class="px-3 py-1 border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -642,7 +648,6 @@ onMounted(async () => {
             </h3>
             <div class="flex rounded-md overflow-hidden border border-[#02676B]">
               <button
-              type="button"
                 @click="selectedTab = 'services'"
                 :class="[
                   'px-3 py-1 rounded-l-md text-sm font-medium transition-colors duration-200',
@@ -652,7 +657,6 @@ onMounted(async () => {
                 Services
               </button>
               <button
-              type="button"
                 @click="selectedTab = 'drugs'"
                 :class="[
                   'px-3 py-1 rounded-r-md text-sm font-medium transition-colors duration-200',
@@ -770,10 +774,10 @@ onMounted(async () => {
         <button
           type="submit"
           :disabled="pending"
-          class="bg-[#02676B] text-white px-8 py-3 rounded-md hover:bg-[#02494D] transition-colors duration-200 "
+          class="bg-[#02676B] text-white px-8 py-3 rounded-md hover:bg-[#02494D] transition-colors duration-200 text-lg font-semibold"
         >
           <span v-if="pending" class="flex items-center justify-center">
-            <ButtonSpinner size="xs" class="mr-2" /> Updating...
+            <Spinner size="sm" class="mr-2" /> Updating...
           </span>
           <span v-else>
             Update Contract

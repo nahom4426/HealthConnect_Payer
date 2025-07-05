@@ -1,58 +1,28 @@
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { searchInsuredByInstitution, addInsuredToContract } from '../api/payerContractApi';
 import { toasted } from '@/utils/utils';
-import { closeModal } from '@customizer/modal-x';
+import { closeModal } from "@customizer/modal-x";
 import { useAuthStore } from "@/stores/auth";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 
-interface Employee {
-  insuredUuid: string;
-  fullName: string;
-  firstName?: string;
-  fatherName?: string;
-  grandfatherName?: string;
-  membershipNumber: string;
-  idNumber?: string;
-  phone?: string;
-  position?: string;
-  eligible?: boolean;
-  isDependant?: boolean;
-  dependants?: Dependant[];
-  relationshipType?: string;
-  profilePictureBase64?: string;
-  photoBase64?: string;
-  photoUrl?: string;
-  photoPath?: string;
-}
-
-interface Dependant {
-  dependantUuid: string;
-  fullName: string;
-  dependantFirstName?: string;
-  dependantFatherName?: string;
-  dependantGrandFatherName?: string;
-  relationshipType: string;
-  dependantStatus?: string;
-  profilePictureBase64?: string;
-}
 const emit = defineEmits(['membersAdded']);
 const auth = useAuthStore();
 const route = useRoute();
 const contractHeaderUuid = route.params.contractHeaderUuid;
-const payerUuid = ref(auth.auth?.user?.payerUuid || "");
+const payerUuid = ref(auth.auth?.user?.payerUuid || '');
 
 // Search and table state
 const searchQuery = ref('');
 const loading = ref(false);
-const insuredMembers = ref<Employee[]>([]);
-const selectedMembers = ref<Employee[]>([]);
-const selectedDependents = ref<Record<string, Dependant[]>>({});
+const insuredMembers = ref([]);
+const selectedMembers = ref([]);
+const selectedDependents = ref({});
 
-function handleImageError(event: Event) {
-  const target = event.target as HTMLImageElement;
+function handleImageError(event) {
+  const target = event.target;
   target.src = '/assets/placeholder-profile.png';
 }
 
@@ -60,17 +30,16 @@ function getBaseUrl() {
   return import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 }
 
-// Fetch insured members
 const fetchInsuredMembers = async () => {
   if (!payerUuid.value) {
-    console.error('Error: payerUuid is not provided to AddMembersToContractModal.');
-    toasted(false, "",'Failed to load insured members: Payer information missing.');
+    console.error('Missing payerUuid.');
+    toasted(false, '', 'Payer information missing.');
     return;
   }
 
   if (!contractHeaderUuid) {
-    console.error('Error: contractHeaderUuid is missing.');
-    toasted(false, "", 'Failed to load insured members: Contract information missing.');
+    console.error('Missing contractHeaderUuid.');
+    toasted(false, '', 'Contract information missing.');
     return;
   }
 
@@ -80,25 +49,23 @@ const fetchInsuredMembers = async () => {
       payerUuid.value,
       {
         search: searchQuery.value,
-        contractUuid: contractHeaderUuid, // ✅ use value from route params
+        contractUuid: contractHeaderUuid,
         page: 1,
         size: 10
       }
     );
+
     if (!responseData || !responseData.content) {
-      throw new Error('Invalid API response structure: Missing content array.');
+      throw new Error('Invalid API response structure');
     }
 
-    const members = responseData.content.map((employee: any) => {
-      const fullName = employee.fullName || 
+    const members = responseData.content.map(employee => {
+      const fullName = employee.fullName ||
         `${employee.firstName || ''} ${employee.fatherName || ''} ${employee.grandfatherName || ''}`.trim();
 
-      const mainEmployee: Employee = {
+      const mainEmployee = {
         insuredUuid: employee.insuredUuid,
         fullName,
-        firstName: employee.firstName,
-        fatherName: employee.fatherName,
-        grandfatherName: employee.grandfatherName,
         membershipNumber: employee.membershipNumber || employee.idNumber || 'N/A',
         idNumber: employee.idNumber,
         phone: employee.phone,
@@ -112,17 +79,14 @@ const fetchInsuredMembers = async () => {
         photoPath: employee.photoPath
       };
 
-      if (employee.dependants && employee.dependants.length > 0) {
-        mainEmployee.dependants = employee.dependants.map((dependant: any) => {
-          const dependantFullName = dependant.fullName || 
+      if (employee.dependants?.length) {
+        mainEmployee.dependants = employee.dependants.map(dependant => {
+          const dependantFullName = dependant.fullName ||
             `${dependant.dependantFirstName || ''} ${dependant.dependantFatherName || ''} ${dependant.dependantGrandFatherName || ''}`.trim();
 
           return {
             dependantUuid: dependant.dependantUuid,
             fullName: dependantFullName,
-            dependantFirstName: dependant.dependantFirstName,
-            dependantFatherName: dependant.dependantFatherName,
-            dependantGrandFatherName: dependant.dependantGrandFatherName,
             relationshipType: dependant.relationship,
             dependantStatus: dependant.dependantStatus,
             profilePictureBase64: dependant.profilePictureBase64
@@ -133,84 +97,70 @@ const fetchInsuredMembers = async () => {
       return mainEmployee;
     });
 
-    console.log('👥 Transformed insured members:', members);
     insuredMembers.value = members;
   } catch (error) {
-    console.error('❌ Error fetching insured members:', error);
-    // toasted(false, "", 'Failed to load insured members');
+    console.error('Fetch error:', error);
     insuredMembers.value = [];
   } finally {
     loading.value = false;
   }
 };
 
-let searchTimeout: ReturnType<typeof setTimeout>;
+let searchTimeout;
 watch(searchQuery, (newVal) => {
   clearTimeout(searchTimeout);
   if (newVal.length > 2 || newVal.length === 0) {
     searchTimeout = setTimeout(fetchInsuredMembers, 500);
   }
 });
-// Toggle member selection
-const toggleMemberSelection = (member: Employee) => {
+
+const toggleMemberSelection = (member) => {
   const index = selectedMembers.value.findIndex(m => m.insuredUuid === member.insuredUuid);
   if (index === -1) {
     selectedMembers.value.push(member);
   } else {
     selectedMembers.value.splice(index, 1);
-    // Remove any selected dependents for this member
     delete selectedDependents.value[member.insuredUuid];
   }
 };
 
-// Toggle dependent selection
-const toggleDependentSelection = (member: Employee, dependent: Dependant) => {
+const toggleDependentSelection = (member, dependent) => {
   if (!selectedDependents.value[member.insuredUuid]) {
     selectedDependents.value[member.insuredUuid] = [];
   }
 
-  const index = selectedDependents.value[member.insuredUuid].findIndex(
-    d => d.dependantUuid === dependent.dependantUuid
-  );
+  const list = selectedDependents.value[member.insuredUuid];
+  const index = list.findIndex(d => d.dependantUuid === dependent.dependantUuid);
 
   if (index === -1) {
-    selectedDependents.value[member.insuredUuid].push(dependent);
+    list.push(dependent);
   } else {
-    selectedDependents.value[member.insuredUuid].splice(index, 1);
-    // If no more dependents selected, remove the array
-    if (selectedDependents.value[member.insuredUuid].length === 0) {
+    list.splice(index, 1);
+    if (list.length === 0) {
       delete selectedDependents.value[member.insuredUuid];
     }
   }
 };
 
-// Check if member is selected
-const isMemberSelected = (member: Employee) => {
+const isMemberSelected = (member) => {
   return selectedMembers.value.some(m => m.insuredUuid === member.insuredUuid);
 };
 
-// Check if dependent is selected
-const isDependentSelected = (member: Employee, dependent: Dependant) => {
+const isDependentSelected = (member, dependent) => {
   return selectedDependents.value[member.insuredUuid]?.some(
     d => d.dependantUuid === dependent.dependantUuid
   );
 };
 
-// Submit selected members to contract
-
-// Submit selected members to contract
 const submitSelectedMembers = async () => {
   if (selectedMembers.value.length === 0) {
-    toasted(false, 'Please select at least one member');
+    toasted(false, "",'Please select at least one member');
     return;
   }
 
-  const confirmed = confirm(`Add ${selectedMembers.value.length} member(s) to contract?`);
-  if (!confirmed) return;
-
   try {
     loading.value = true;
-    
+
     const payload = {
       insuredUuids: selectedMembers.value.map(m => m.insuredUuid),
       dependants: []
@@ -218,20 +168,16 @@ const submitSelectedMembers = async () => {
 
     for (const [insuredUuid, dependents] of Object.entries(selectedDependents.value)) {
       for (const dependent of dependents) {
-        payload.dependants.push({
-          insuredUuid,
-          dependantUuid: dependent.dependantUuid
-        });
+        payload.dependants.push({ insuredUuid, dependantUuid: dependent.dependantUuid });
       }
     }
 
     const response = await addInsuredToContract(contractHeaderUuid, payload);
-    
+
     if (response.success) {
       toasted(true, 'Members added successfully');
-      
-      // Emit the actual API response data if available, or our local data
-      emit('membersAdded', {
+
+      const addedData = {
         insuredSummaries: selectedMembers.value.map(member => ({
           ...member,
           dependants: selectedDependents.value[member.insuredUuid] || [],
@@ -239,14 +185,24 @@ const submitSelectedMembers = async () => {
         })),
         totalInsured: selectedMembers.value.length,
         totalDependants: Object.values(selectedDependents.value).flat().length
-      });
+      };
+
+      // Emit the event with the new data
+      emit('membersAdded', addedData);
+      
+      // Reset selections
+      selectedMembers.value = [];
+      selectedDependents.value = {};
+      
+      // Refresh the member list
+      await fetchInsuredMembers();
       
       closeModal();
     } else {
       throw new Error(response.message || 'Failed to add members');
     }
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Submit error:', error);
     toasted(false, error.message || 'Failed to add members');
   } finally {
     loading.value = false;

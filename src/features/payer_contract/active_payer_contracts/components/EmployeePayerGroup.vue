@@ -63,7 +63,18 @@ const institutionId = ref(auth.auth?.user?.payerUuid || "");
               <i v-html="icons.edits" />
               <span>Add Service</span>
             </button>
-
+ <button
+               @click="openModal('RemoveServiceToContract', {
+  data: {  // Wrap props in data object
+    groupUuid: row?.groupUuid,
+    contractHeaderUuid: route.params.contractHeaderUuid
+  }
+});"
+              class="p-2 flex text-base-clr items-center gap-2 rounded-lg  hover:bg-red-600 hover:text-white"
+            >
+              <i v-html="icons.trash" />
+              <span>Remove Services</span>
+            </button>
             <!-- <button
               @click="
                 $router.push(`/insured_list/group-insured/${row?.groupUuid}`)
