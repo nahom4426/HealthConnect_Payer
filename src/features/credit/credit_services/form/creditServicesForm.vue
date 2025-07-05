@@ -8,7 +8,7 @@ import { getPayersWithContractForLoggedInProvider } from '@/features/instution_s
 import { useAuthStore } from '@/stores/auth';
 import { openModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
-import Spinner from '@/components/spinner.vue';
+import Spinner from '@/components/Spinner.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import { getEligibleServicesAndDrugs } from '../api/creditServicesApi';

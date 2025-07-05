@@ -9,7 +9,7 @@ import { searchInsuredByInstitution } from '@/features/insured_persons/api/insur
 import { useAuthStore } from '@/stores/auth';
 import { openModal, closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
-import Spinner from '@/components/spinner.vue';
+import Spinner from '@/components/Spinner.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import { getAllServices } from '@/features/service/api/serviceApi';
