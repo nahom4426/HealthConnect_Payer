@@ -80,30 +80,57 @@ const acceptContract = async () => {
             </p>
           </div>
 
-          <div class="mb-6">
-            <h3 class="font-medium text-gray-700 mb-2">Terms and Conditions</h3>
-            <div class="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto text-sm text-gray-600">
-              <p class="mb-4">
-                Lorem ipsum dolor sit amet consectetur. Enim eget aliquam aliquet nisi cursus leo non orci. 
-                Sodales aliquam dui et eget pulvinar. Sed praesent arcu felis sed purus in nulla cras turpis. 
-                Diam aliquam et sit nisi lectus vestibulum cursus non.
-              </p>
-              
-              <ul class="list-disc pl-5 space-y-2 mb-4">
-                <li>Massa fames volutpat facilisis pellentesque nunc eu ut cras.</li>
-                <li>Vitae diam ultrices quam non porta vitae metus felis dignissim.</li>
-                <li>Eu pharetra massa consequat sed enim condimentum egestas.</li>
-                <li>Eu ut ligula vestibulum nibh aliquet eu.</li>
-              </ul>
+       <div class="p-6 w-full">
+  <div class="mb-6">
+    <p class="text-sm text-gray-600">
+      By accepting this contract, you agree to all terms and conditions.
+    </p>
+  </div>
 
-              <p>
-                Nec lobortis viverra pretium arcu sed. Congue porta augue id massa eget tempus ipsum etiam. 
-                In quam massa dapibus auctor in in id. Faudibus nibh nunc sit vitae venenatis egestas lobortis. 
-                Quam tincidunt tellus quis sed.
-              </p>
-            </div>
-          </div>
+  <div class="mb-6">
+    <h3 class="font-medium text-gray-700 mb-2">Terms and Conditions</h3>
+    <div class="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto text-sm text-gray-600">
+      <p class="mb-4">
+        This agreement outlines the terms under which services are provided by Medco. By agreeing to these terms, you acknowledge understanding and acceptance of all conditions stated herein.
+      </p>
+      
+      <ul class="list-disc pl-5 space-y-2 mb-4">
+        <li>Services will be provided as per the agreed schedule.</li>
+        <li>Payment is due within 30 days of receipt of the invoice.</li>
+        <li>Confidentiality of all client information is maintained.</li>
+        <li>Any disputes will be resolved through mediation.</li>
+      </ul>
 
+      <p>
+        Medco reserves the right to modify these terms with prior notice. Clients will be informed of any significant changes or updates to the terms and conditions.
+      </p>
+    </div>
+  </div>
+
+  <div class="flex items-start mb-6">
+    <input
+      id="accept-terms"
+      v-model="termsAccepted"
+      type="checkbox"
+      class="mt-1 h-4 w-4 text-Primary rounded border-gray-300 focus:ring-Primary"
+    />
+    <label for="accept-terms" class="ml-2 block text-sm text-gray-700">
+      We agree to the terms and policies
+    </label>
+  </div>
+
+  <div class="mb-4">
+    <Textarea
+      id="remark"
+      v-model="remark"
+      label="Remark (Optional)"
+      rows="4"
+      :attributes="{
+        placeholder: 'Write your remarks here...',
+      }"
+    />
+  </div>
+</div>
           <div class="flex items-start mb-6">
             <input
               id="accept-terms"
