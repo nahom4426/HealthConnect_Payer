@@ -1,105 +1,105 @@
 <script setup>
-import icons from "@/utils/icons";
-import { ref } from "vue";
-import Cards from "../components/Cards.vue";
-import Button from "@/components/Button.vue";
-import ChartCard from "@/components/charts/ChartCard.vue";
-import { onMounted } from "vue";
-import { useChartData } from "@/composables/useChartData";
-import BarChart from "@/components/charts/BarChart.vue";
-import LoopChart from "@/components/charts/LoopChart.vue";
-import Table from "@/components/Table.vue";
-import Progress_row from "../components/Progress_row.vue";
-import StackedBarChart from "@/components/charts/StackedBarChart.vue";
-import CardDashboard from "../components/CardDashboard.vue";
+// import icons from "@/utils/icons";
+// import { ref } from "vue";
+// import Cards from "../components/Cards.vue";
+// import Button from "@/components/Button.vue";
+// import ChartCard from "@/components/charts/ChartCard.vue";
+// import { onMounted } from "vue";
+// import { useChartData } from "@/composables/useChartData";
+// import BarChart from "@/components/charts/BarChart.vue";
+// import LoopChart from "@/components/charts/LoopChart.vue";
+// import Table from "@/components/Table.vue";
+// import Progress_row from "../components/Progress_row.vue";
+// import StackedBarChart from "@/components/charts/StackedBarChart.vue";
+// import CardDashboard from "../components/CardDashboard.vue";
 
-const claimStatuses = ref([
-  {
-    status: "Home Decor Range",
-    count: 45,
-    total: 7,
-    percentage: 85,
-    color: "#02676B",
-  },
-  {
-    status: "Disney Princess Pink Bag 18'",
-    count: 32,
-    total: 7,
-    percentage: 65,
-    color: "#02676B",
-  },
-  {
-    status: "Bathroom Essentials",
-    count: 28,
-    total: 7,
-    percentage: 45,
-    color: "#02676B",
-  },
-  {
-    status: "Apple Smartwatches",
-    count: 25,
-    total: 7,
-    percentage: 35,
-    color: "#02676B",
-  },
-]);
+// const claimStatuses = ref([
+//   {
+//     status: "Home Decor Range",
+//     count: 45,
+//     total: 7,
+//     percentage: 85,
+//     color: "#02676B",
+//   },
+//   {
+//     status: "Disney Princess Pink Bag 18'",
+//     count: 32,
+//     total: 7,
+//     percentage: 65,
+//     color: "#02676B",
+//   },
+//   {
+//     status: "Bathroom Essentials",
+//     count: 28,
+//     total: 7,
+//     percentage: 45,
+//     color: "#02676B",
+//   },
+//   {
+//     status: "Apple Smartwatches",
+//     count: 25,
+//     total: 7,
+//     percentage: 35,
+//     color: "#02676B",
+//   },
+// ]);
 
-const data = ref([
-  {
-    title: "Number of Employee",
-    Image: icons.no_emolpoyee,
-    amount: "450",
-    today: icons.no_emolpoyee,
-    percent: "8.5%",
-    customClass: "bg-[#FFE2E5]",
-  },
-  {
-    title: "Group of Employee",
-    Image: icons.product_sold,
-    amount: "3",
-    today: icons.product_sold,
-    percent: "8.5%",
-    customClass: "bg-[#D2FFDA]",
-  },
-  {
-    title: "Payers",
-    Image: icons.policy2,
-    amount: "12",
-    today: icons.new_customer,
-    percent: "8.5%",
-    customClass: "bg-[#F3E8FF]",
-  },
-]);
-const barChartOptions = {
-  scales: {
-    y: {
-      beginAtZero: true,
-      title: {
-        display: true,
-        text: "Count",
-      },
-    },
-    x: {
-      grid: {
-        display: false,
-      },
-    },
-  },
-  plugins: {
-    legend: {
-      position: "top",
-    },
-  },
-};
+// const data = ref([
+//   {
+//     title: "Number of Employee",
+//     Image: icons.no_emolpoyee,
+//     amount: "450",
+//     today: icons.no_emolpoyee,
+//     percent: "8.5%",
+//     customClass: "bg-[#FFE2E5]",
+//   },
+//   {
+//     title: "Group of Employee",
+//     Image: icons.product_sold,
+//     amount: "3",
+//     today: icons.product_sold,
+//     percent: "8.5%",
+//     customClass: "bg-[#D2FFDA]",
+//   },
+//   {
+//     title: "Payers",
+//     Image: icons.policy2,
+//     amount: "12",
+//     today: icons.new_customer,
+//     percent: "8.5%",
+//     customClass: "bg-[#F3E8FF]",
+//   },
+// ]);
+// const barChartOptions = {
+//   scales: {
+//     y: {
+//       beginAtZero: true,
+//       title: {
+//         display: true,
+//         text: "Count",
+//       },
+//     },
+//     x: {
+//       grid: {
+//         display: false,
+//       },
+//     },
+//   },
+//   plugins: {
+//     legend: {
+//       position: "top",
+//     },
+//   },
+// };
 
-const { policyVsClaimData, revenueChartData, fetchChartData } = useChartData();
+// const { policyVsClaimData, revenueChartData, fetchChartData } = useChartData();
 
-onMounted(() => {
-  fetchChartData();
-});
+// onMounted(() => {
+//   fetchChartData();
+// });
 </script>
 <template>
-  <div class="flex flex-col gap-6 w-full  overflow-x-hidden scrollbar-hide">
+  <!-- <div class="flex flex-col gap-6 w-full  overflow-x-hidden scrollbar-hide">
     <CardDashboard />
     <div class="grid grid-cols-5 gap-5">
       <div
@@ -239,5 +239,5 @@ onMounted(() => {
         />
       </div>
     </div>
-  </div>
+  </div> -->
 </template>
