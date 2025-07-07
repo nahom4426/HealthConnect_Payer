@@ -7,10 +7,10 @@ import { convertBase64Image } from "@/utils/utils";
 const authStore = useAuthStore();
 const imageSrc = "/src/assets/img/profile.png";
 
-const profilePicture=ref(authStore.auth?.user?.profilePicture)
+const profilePicture=ref(authStore.auth?.user?.imageData)
 async function processProfilePicture() {
   if (profilePicture.value!=null&&!profilePicture.value.startsWith("data:image/") ) {
-    profilePicture.value = `data:image/png;base64,${authStore.auth?.user?.profilePicture}`;
+    profilePicture.value = `data:image/png;base64,${authStore.auth?.user?.imageData}`;
   }
   try {
     if (profilePicture.value.startsWith("data:image/jpeg")) {
@@ -28,9 +28,7 @@ processProfilePicture();
 
 const imageLoaded = ref(true);
 
-const userInitial = computed(() => {
-  return authStore.user?.firstName?.charAt(0) || "U";
-});
+
 
 function handleImageError() {
   imageLoaded.value = false;
@@ -42,30 +40,9 @@ function logout() {
 const props = defineProps({
   breadcrumbs: Object,
 });
-function getUserType(user) {
-  const hasPayer = !!user.payerUuid;
-  const hasProvider = !!user.providerUuid;
 
-  if (hasPayer && !hasProvider) return "Payer";
-  if (!hasPayer && hasProvider) return "Provider";
-  if (!hasPayer && !hasProvider) return "Admin";
-  if (hasPayer && hasProvider) return "Payer and Provider";
-}
 
-function getTypeStyle(type) {
-  switch (type) {
-    case "Payer":
-      return "bg-blue-100 text-blue-800";
-    case "Provider":
-      return "bg-green-100 text-green-800";
-    case "Admin":
-      return "bg-yellow-100 text-yellow-800";
-    case "Payer and Provider":
-      return "bg-purple-100 text-purple-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
+
 </script>
 <template>
   <div
@@ -73,7 +50,7 @@ function getTypeStyle(type) {
   >
     <div class="flex items-center gap-4">
       <div class="cursor-pointer" @click="$router.back">
-        <i v-html="icons.back"></i>
+        <i v-html="icons.chevron_left"></i>
       </div>
 
       <div class="flex flex-col">
@@ -118,27 +95,21 @@ function getTypeStyle(type) {
               class="w-full h-full object-cover"
               @error="handleImageError"
             />
-            <span v-if="!imageLoaded" class="font-bold text-black">
-              {{ authStore.user?.firstName?.charAt(0) || "U" }}
-            </span>
+         
           </div>
           <div class="flex flex-col">
             <span class="text-sm font-normal">{{
               authStore.auth.user?.firstName +
                 " " +
-                authStore.auth.user?.fatherName || "Birhane Araya"
+                authStore.auth.user?.fatherName || ""
             }}</span>
             <span
               v-if="authStore.auth.user"
               class="text-xs px-2.5 py-1 rounded-full font-medium"
             >
-              {{ getUserType(authStore.auth.user) }}
+              {{ authStore.auth?.user?.companyName || ''}}
             </span>
-            <span
-              v-else
-              class="text-xs bg-gray-100 text-gray-800 px-2.5 py-1 rounded-full font-medium"
-              >N/A</span
-            >
+            
           </div>
           <button>
             <i v-html="icons.chevron_down"></i>

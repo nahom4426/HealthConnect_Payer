@@ -5,13 +5,14 @@ import ProfileForm from "../components/ProfileForm.vue";
 import SecurityForm from "../components/SecurityForm.vue";
 import Button from "@/components/Button.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { updateProfileData } from "../api/profileApi";
+import { updateProfileData, uploadProfilePicture } from "../api/profileApi";
 import { toasted } from "@/utils/utils";
 import { useForm } from "@/components/new_form_builder/useForm";
+import icons from "@/utils/icons";
 
 const auth = useAuthStore();
 
-const profilePicture = ref(auth.auth?.user?.profilePicture || null);
+const profilePicture = ref(auth.auth?.imageData || null);
 const imageSrc = "/src/assets/img/profile.png";
 
 async function processProfilePicture() {
@@ -37,21 +38,59 @@ async function processProfilePicture() {
 processProfilePicture();
 
 const fileInput = ref(null);
-
+const api=useApiRequest()
+const profileApi=useApiRequest()
 const triggerFileInput = () => {
   fileInput.value?.click();
 };
 
 const handleFileChange = (event) => {
   const file = event.target.files[0];
-  if (file && file.type.startsWith("image/")) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      profilePicture.value = e.target.result;
-    };
-    reader.readAsDataURL(file);
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    toasted(false, "Please select a valid image file.");
+    return;
   }
+
+  const formData = new FormData();
+  formData.append("profilePicture", file);
+
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    const base64Image = e.target.result;
+
+    profileApi.send(
+      () => uploadProfilePicture(formData),
+      (res) => {
+        if (res.success) {
+          profilePicture.value = base64Image;
+          authStore.setProfile(base64Image);
+
+          localStorage.setItem(
+            "userDetail",
+            JSON.stringify(authStore.auth)
+          );
+
+          toasted(true, "Profile picture updated successfully!");
+        } else {
+          toasted(false, res.error || "Failed to update profile picture.");
+        }
+      }
+    );
+  };
+
+  reader.onerror = () => {
+    toasted(false, "Error reading image file.");
+  };
+
+  reader.readAsDataURL(file); // Trigger FileReader to get base64
 };
+
+
+
 const active = ref(0);
 
 const setActive = (item) => {
@@ -69,10 +108,8 @@ const components = [
 ];
 const {submit}=useForm('ProfileForm');
 
-const api=useApiRequest();
 const authStore=useAuthStore();
 function handleUpdateProfile({values}){
-  console.log(values);
   
   
   api.send(()=>updateProfileData(authStore.auth?.user?.userUuid,values),res=>{
@@ -110,7 +147,9 @@ function handleUpdateProfile({values}){
             size="xs"
             type="primary"
           >
-            Change Photo
+          <i v-if="profileApi.pending.value" v-html="icons.spinner"/>
+          <p v-else>Change Photo</p>
+            
           </button>
         </div>
         <div class="bg-white w-full space-y-14 p-6 rounded-2xl">
@@ -132,10 +171,9 @@ function handleUpdateProfile({values}){
               {{ item.name }}
             </div>
           </div>
-          <Button :pending="api.pending.value" @click.prevent="submit(handleUpdateProfile)" class=" bg-[#FFD665]  font-medium leading-5" type="">Edit</Button>
+          <Button v-if="active===0" :pending="api.pending.value" @click.prevent="submit(handleUpdateProfile)" class=" bg-[#FFD665]  font-medium leading-5" type="">Edit</Button>
          </div>
           <component
-            :search="search"
             :is="components[active].component"
           ></component>
         </div>

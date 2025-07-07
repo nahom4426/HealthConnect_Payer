@@ -5,19 +5,14 @@ import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import authorizationDataProvider from "../components/authorizationDataProvider.vue";
 import Button from "@/components/Button.vue";
-import { Status } from "@/types/interface";
 
 import {
   authorizeClaims,
-  changeInsuredStatus,
-  deleteInsured,
-  getPayerbyPayerUuid,
 } from "../api/authorizationApi";
 import { addToast } from "@/toast";
 
 import { useApiRequest } from "@/composables/useApiRequest";
 import StatusRow from "../components/authorizationStatusRow.vue";
-import { openModal } from "@customizer/modal-x";
 import { authorizationStore } from "../store/authorizationStore";
 import icons from "@/utils/icons";
 import { useAuthStore } from "@/stores/auth";
@@ -31,10 +26,9 @@ const statusReq = useApiRequest();
 const deleteReq = useApiRequest();
 const auth = useAuthStore();
 const providerUuid = ref(
-  auth.auth?.user?.providerUuid || "" // fallback if not available
+  auth.auth?.user?.providerUuid || "" 
 );
 const selectedClaims = ref([]);
-const selectAll = ref(false);
 const api = useApiRequest();
 const authorizeSelected = async () => {
   api.send(

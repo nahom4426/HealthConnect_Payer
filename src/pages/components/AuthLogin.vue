@@ -10,6 +10,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { login } from "../api/LoginApi";
 import { toasted } from "@/utils/utils";
+import { openModal } from "@customizer/modal-x";
 
 const router = useRouter();
 const route = useRoute();
@@ -43,12 +44,16 @@ function handleLogin({ values }) {
       if (res.success) {
         auth.setAuth({
           user: res.data,
+          imageData:res.data?.imageData,
           accessToken: res.data?.token,
         });
+        if(!auth.auth?.user?.firstTimeLogin){
+          openModal('ChangePassword')
+        }
         localStorage.setItem("userDetail", JSON.stringify(res.data));
         reRoute();
       }
-      toasted(res.success, "Successfully Loggedin", res.error);
+      toasted(res.success, "Successfully Logged In", res.error);
     }
   );
 }
@@ -58,7 +63,7 @@ const emit = defineEmits(["user"]);
   <NewFormLayout v-slot="{ submit }" id="login-form">
     <div class="space-y-6">
       <div class="flex flex-col items-center justify-center gap-4">
-        <!-- <h1 class="font-semibold text-xl">Nice to see you again 👋</h1> -->
+        <h1 class="font-semibold text-xl">Nice to see you again 👋</h1>
         <h2 class="w-[332px] text-center">
           Upon successful authentication, access your role-specific dashboard
           within the platform.
@@ -90,8 +95,6 @@ const emit = defineEmits(["user"]);
           />
         </div>
       </div>
-       <p class="justify-center text-center text-primary"> © 2025 MedcoTech Solutions. All rights reserved. </p>
-
     </div>
   </NewFormLayout>
 </template>

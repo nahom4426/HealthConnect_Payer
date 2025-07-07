@@ -12,6 +12,8 @@ import Table from "@/components/Table.vue";
 import Progress_row from "../components/Progress_row.vue";
 import StackedBarChart from "@/components/charts/StackedBarChart.vue";
 import CardDashboard from "../components/CardDashboard.vue";
+import { useAuthStore } from "@/stores/auth";
+
 
 const claimStatuses = ref([
   {
@@ -218,17 +220,17 @@ onMounted(() => {
       </div>
       <div class="col-span-2">
         <StackedBarChart
-          :labels="['Q1', 'Q2', 'Q3', 'Q4']"
+          :labels="['Jan', 'Feb', 'Mar', 'Apr']"
           :datasets="[
             {
               label: 'Volume',
-              data: [5000, 6000, 5500, 7000],
+              data: [100, 600, 500, 800],
               backgroundColor: '#FFD665',
               borderRadius: 1,
             },
             {
               label: 'Services',
-              data: [3000, 3500, 3200, 3800],
+              data: [300, 350, 320, 380],
               backgroundColor: '#02676B',
               borderRadius: 1,
             },

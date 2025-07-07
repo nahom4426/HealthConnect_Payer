@@ -17,6 +17,9 @@ const authStore = useAuthStore();
           validation="required"
           :value="authStore.auth?.user?.firstName"
           name="firstName"
+           :attributes="{
+          placeholder: 'Enter your First Name',
+        }"
           
         />
         <Input
@@ -24,11 +27,17 @@ const authStore = useAuthStore();
           :value="authStore.auth?.user?.fatherName"
           validation="required"
           name="fatherName"
+           :attributes="{
+          placeholder: 'Enter your Father’s Name',
+        }"
         /><Input
           label="Grandfather’s Name"
           :value="authStore.auth?.user?.grandFatherName"
           validation="required"
           name="grandFatherName"
+           :attributes="{
+          placeholder: 'Enter your Grandfather’s Name',
+        }"
         />
         <Select label="Gender"
             name="gender"
@@ -49,12 +58,18 @@ const authStore = useAuthStore();
           :value="authStore.auth?.user?.mobilePhone"
           validation="required"
           name="phone"
+           :attributes="{
+          placeholder: 'Enter your phone number',
+        }"
         />
         <Input
           label="Email"
           :value="authStore.auth?.user?.email"
           validation="required"
-          name="birthDate"
+          name="email"
+           :attributes="{
+          placeholder: 'Enter your email',
+        }"
         />
       </div>
     </Form>
