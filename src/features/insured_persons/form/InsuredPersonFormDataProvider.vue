@@ -37,12 +37,7 @@ function register(formData) {
       'payerUuid',
       'firstName',
       'fatherName',
-  
-      'gender',
-      'position',
-      'birthDate',
       'idNumber',
-      'phone'
     ];
 
     const missingFields = requiredInsuredFields.filter((field) => {
