@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import Button from "@/components/Button.vue";
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
@@ -9,6 +9,7 @@ import { toast } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { importInsuredPersons } from "../api/insuredPersonsApi";
 import { insuredMembers } from "../store/insuredPersonsStore";
+import * as XLSX from 'xlsx'; // You'll need to install this: npm install xlsx
 
 const props = defineProps({
   data: String,
@@ -26,6 +27,14 @@ const progress = ref(0);
 const message = ref({ type: null, text: null });
 const wasSuccessful = ref(false);
 
+// For Excel preview
+const previewData = ref([]);
+const previewHeaders = ref([]);
+const showPreview = ref(false);
+const previewLoading = ref(false);
+const maxPreviewRows = 3; // Changed to show 3 rows initially
+const maxPreviewHeight = "200px"; // Height for the scrollable container
+
 const reset = () => {
   progress.value = 0;
   importing.value = false;
@@ -33,9 +42,56 @@ const reset = () => {
   fileName.value = "";
   message.value = { type: null, text: null };
   wasSuccessful.value = false;
+  previewData.value = [];
+  previewHeaders.value = [];
+  showPreview.value = false;
   if (fileInput.value) fileInput.value.value = "";
 };
 
+// Parse Excel/CSV file for preview
+const parseFileForPreview = async (file) => {
+  if (!file) return;
+  
+  previewLoading.value = true;
+  
+  try {
+    const data = await readFileAsync(file);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    
+    // Convert to JSON with headers
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    
+    if (jsonData.length > 0) {
+      // First row is headers
+      previewHeaders.value = jsonData[0];
+      
+      // Get all data rows (not just the first few)
+      previewData.value = jsonData.slice(1);
+      
+      showPreview.value = true;
+    }
+  } catch (error) {
+    console.error('Error parsing file:', error);
+    message.value = { 
+      type: "error", 
+      text: "Could not parse file for preview. Please ensure it's a valid Excel/CSV file."
+    };
+  } finally {
+    previewLoading.value = false;
+  }
+};
+
+// Helper function to read file as ArrayBuffer
+const readFileAsync = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = (e) => reject(e);
+    reader.readAsArrayBuffer(file);
+  });
+};
 
 const importFile = () => {
   if (!selectedFile.value) {
@@ -49,58 +105,61 @@ const importFile = () => {
 
   const fd = new FormData();
   fd.append("file", selectedFile.value);
-res.send(
-  () => importInsuredPersons({ payerUuid: auth }, fd, {
-    onUploadProgress: (e) => {
-      progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
-    }
-  }),
-  (res) => {
-    importing.value = false;
-
-    if (res.success) {
-      const hasErrors = res?.data?.errors?.length > 0;
-      message.value = { 
-        type: "success", 
-        text: `Successfully imported ${res.data.successfulImports || 0} records`
-      };
-      wasSuccessful.value = true;
-      
-      // Update store with the importedInsured array merged with existing data
-      if (res.data?.importedInsured && Array.isArray(res.data.importedInsured)) {
-        console.log('Adding imported data to store:', res.data.importedInsured);
-        
-        // Get current data from store
-        const currentData = insuredStore.getAll();
-        
-        // Merge and remove duplicates
-        const mergedData = [
-          ...res.data.importedInsured,
-          ...currentData.filter(
-            item => !res.data.importedInsured.some(
-              newItem => newItem.insuredUuid === item.insuredUuid
-            )
-          )
-        ];
-        
-        insuredStore.setAll(mergedData);
+  
+  res.send(
+    () => importInsuredPersons({ payerUuid: auth }, fd, {
+      onUploadProgress: (e) => {
+        progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
       }
-      
-      setTimeout(() => {
-        if (wasSuccessful.value) {
-          closeModal();
-          reset();
+    }),
+    (res) => {
+      importing.value = false;
+
+      if (res.success) {
+        const hasErrors = res?.data?.errors?.length > 0;
+        message.value = { 
+          type: "success", 
+          text: `Successfully imported ${res.data.successfulImports || 0} records`
+        };
+        wasSuccessful.value = true;
+        
+        // Update store with the importedInsured array merged with existing data
+        if (res.data?.importedInsured && Array.isArray(res.data.importedInsured)) {
+          console.log('Adding imported data to store:', res.data.importedInsured);
+          
+          // Get current data from store
+          const currentData = insuredStore.getAll();
+          
+          // Merge and remove duplicates
+          const mergedData = [
+            ...res.data.importedInsured,
+            ...currentData.filter(
+              item => !res.data.importedInsured.some(
+                newItem => newItem.insuredUuid === item.insuredUuid
+              )
+            )
+          ];
+          
+          insuredStore.setAll(mergedData);
         }
-      }, 3500);
-    } else {
-      message.value = {
-        type: "error",
-        text: res.error || res.message || "Import failed"
-      };
-      console.log('Full API response:', res);
+        
+        setTimeout(() => {
+          if (wasSuccessful.value) {
+            closeModal();
+            reset();
+          }
+        }, 3500);
+      } else {
+        message.value = {
+          type: "error",
+          text: res.error || res.message || "Import failed"
+        };
+        console.log('Full API response:', res);
+      }
     }
-  }
-);}
+  );
+};
+
 const handleFile = (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -119,6 +178,9 @@ const handleFile = (e) => {
   selectedFile.value = file;
   fileName.value = file.name;
   message.value = { type: null, text: null };
+  
+  // Generate preview when file is selected
+  parseFileForPreview(file);
 };
 
 const triggerFileInput = () => {
@@ -182,6 +244,45 @@ const title = props.data === "dependant" ? "Import Dependant Data" : "Import Emp
             />
           </div>
 
+          <!-- File Preview Section -->
+          <div v-if="previewLoading" class="my-4 text-center">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+            <p class="mt-2 text-sm text-gray-600">Loading preview...</p>
+          </div>
+
+          <div v-if="showPreview && previewData.length > 0" class="my-4 border rounded-lg">
+            <div class="text-sm font-medium text-gray-700 p-3 bg-gray-50 border-b flex justify-between items-center">
+              <span>File Preview ({{ previewData.length }} rows)</span>
+              <span class="text-xs text-gray-500">Scroll to see more rows and columns</span>
+            </div>
+            <div class="overflow-auto custom-scrollbar" :style="`max-height: ${maxPreviewHeight}`">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th 
+                      v-for="(header, idx) in previewHeaders" 
+                      :key="idx"
+                      class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                    >
+                      {{ header }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="(row, rowIdx) in previewData" :key="rowIdx">
+                    <td 
+                      v-for="(cell, cellIdx) in row" 
+                      :key="cellIdx"
+                      class="px-3 py-2 whitespace-nowrap text-xs text-gray-500"
+                    >
+                      {{ cell }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div v-if="message.text" class="mb-4 p-3 rounded-md text-sm" :class="{
             'bg-red-50 text-red-700': message.type === 'error',
             'bg-green-50 text-green-700': message.type === 'success',
@@ -239,3 +340,25 @@ const title = props.data === "dependant" ? "Import Dependant Data" : "Import Emp
     </ModalParent>
   </div>
 </template>
+
+<style scoped>
+/* Custom scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+</style>

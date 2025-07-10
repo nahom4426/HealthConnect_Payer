@@ -20,7 +20,7 @@ const props = defineProps({
   },
   status: {
     type: String as PropType<Status>,
-    default: Status.ACTIVE,
+    // default: Status.ACTIVE,
   },
   search: {
     type: String,
