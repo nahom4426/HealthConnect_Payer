@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/stores/auth";
 
-function checkPrivilage(el, { value, modifiers }) {
+function checkPrivilege(el, { value, modifiers }) {
   if (!value && !modifiers) return;
 
   const authStore = useAuthStore();
@@ -14,8 +14,8 @@ function checkPrivilage(el, { value, modifiers }) {
   }
 
   if (
-    user?.privileges.includes("All Privileges") ||
-    user.roleName === "Super Admin"
+    user?.authorities.includes("All Privileges") ||
+    user.roleName === "ADMIN"
   )
     return;
 
@@ -27,10 +27,10 @@ function checkPrivilage(el, { value, modifiers }) {
   }
 
   if (value instanceof Array) {
-    let privileges = user?.privileges;
+    let privileges = user?.authorities;
 
-    const found = value?.find((privilage) => {
-      return privileges?.includes(`ROLE_${privilage}`);
+    const found = value?.find((privilege) => {
+      return privileges?.includes(`ROLE_${privilege}`);
     });
 
     if (!found) {
@@ -39,9 +39,9 @@ function checkPrivilage(el, { value, modifiers }) {
   }
 }
 
-const vPrivilage = {
-  mounted: checkPrivilage,
-  updated: checkPrivilage,
+const vPrivilege = {
+  mounted: checkPrivilege,
+  updated: checkPrivilege,
 };
 
-export default vPrivilage;
+export default vPrivilege;

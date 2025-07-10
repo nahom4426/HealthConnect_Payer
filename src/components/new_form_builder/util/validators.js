@@ -64,6 +64,8 @@ function max(value, maxValue = 0, _, message) {
 }
 
 function maxnum(value, maxValue = 0, _, message) {
+  console.log(value, maxValue);
+  
   if (value < maxValue) return [true];
 
   return [false, message || `must be less than ${maxValue}`];
@@ -99,95 +101,6 @@ function email(value, _, __, message) {
   return [false, message || `not a valid email`];
 }
 
-// let emailAbortController
-// async function emailExists(email) {
-// 	if(emailAbortController) emailAbortController.abort()
-
-// 	emailAbortController = new AbortController()
-
-// 	try {
-// 		const response = await axios.get(`${URL}users/exists/email/${email}`, {
-// 			signal: emailAbortController.signal
-// 		})
-
-// 		if(!response) return [true]
-
-// 		return [false, `email already exists`]
-
-// 	} catch (err) {
-// 		if(err?.response?.status == 404) {
-// 			return [true]
-// 		}
-// 		return [false, '']
-// 	}
-// }
-
-// let shopAbortController
-// async function shopExists(shop) {
-// 	if(shopAbortController) shopAbortController.abort()
-
-// 	shopAbortController = new AbortController()
-
-// 	try {
-// 		const response = await axios.get(`${URL}shops/exists/${shop}`, {
-// 			signal: shopAbortController.signal
-// 		})
-
-// 		if(!response) return [true]
-
-// 		return [false, `shop already exists`]
-
-// 	} catch (err) {
-// 		if(err?.response?.status == 404) {
-// 			return [true]
-// 		}
-// 		return [false, '']
-// 	}
-// }
-
-// let telegramAbortController
-// async function telegramExists(telegram) {
-// 	if(telegramAbortController) telegramAbortController.abort()
-
-// 	telegramAbortController = new AbortController()
-
-// 	try {
-// 		const response = await axios.get(`${URL}shops/exists/telegram${telegram}`, {
-// 			signal: telegramAbortController.signal
-// 		})
-
-// 		if(!response) return [true]
-
-// 		return [false, `telegram already exists`]
-
-// 	} catch (err) {
-// 		if(err?.response?.status == 404) {
-// 			return [true]
-// 		}
-// 		return [false, '']
-// 	}
-// }
-
-// let phoneAbortController
-// async function phoneExists(phone) {
-// 	if(phoneAbortController) phoneAbortController.abort()
-
-// 	phoneAbortController = new AbortController()
-
-// 	try {
-// 		const response = await axios.get(`${URL}users/exists/phone/${phone}`, {
-// 			signal: phoneAbortController.signal
-// 		})
-
-// 		if(!response) return [true]
-
-// 		return [false, `phone already exists`]
-// 	} catch (err) {
-// 		if(err?.response?.status == 404) return [true]
-
-// 		return [false, '']
-// 	}
-// }
 
 function num(value, limit, _, message) {
   let regex = /^[0-9]+$/;

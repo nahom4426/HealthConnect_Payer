@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Table from '@/components/Table.vue';
@@ -12,10 +12,11 @@ import { openModal } from '@customizer/modal-x';
 import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
 import DefaultPage from "@/components/DefaultPage.vue";
   import icons from "@/utils/icons";
+import { useAuthStore } from '@/stores/auth';
   
 const router = useRouter();
 const usersStore = useUserStore();
-
+const authStore=useAuthStore();
 // Pagination state
 const pagination = usePagination({
   store: usersStore,
@@ -24,7 +25,7 @@ const pagination = usePagination({
 
 // API request for removing a user
 const removeReq = useApiRequest();
-const remove = (id: string) => {
+const remove = (id) => {
   openModal('Confirmation', {
     title: 'Remove User',
     message: 'Are you sure you want to delete this user?'
@@ -41,7 +42,7 @@ const remove = (id: string) => {
 };
 
 // Handle edit user navigation
-const editUser = (userUuid: string) => {
+const editUser = (userUuid) => {
   router.push(`/edit_user/${userUuid}`);
 };
 

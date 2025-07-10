@@ -65,7 +65,7 @@ function createFireworks() {
     for (let i = 0; i < props.particleCount; i++) {
       setTimeout(() => {
         const firework = document.createElement("div");
-        firework.className = "absolute rounded-tl-lg rounden-br-lg ";
+        firework.className = "absolute rounded-tl-lg round-br-lg ";
         firework.style.width = `${props.width}px`;
         firework.style.height = `${props.height}px`;
         firework.style.backgroundColor =

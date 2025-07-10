@@ -4,20 +4,21 @@ import InputPassword from "@/components/new_form_elements/InputPassword.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useAuthStore } from "@/stores/auth";
 import { changePassword } from "../api/profileApi";
-import { toasted } from "@/utils/utils";
 import Form from "@/components/new_form_builder/Form.vue";
+import { closeModal } from "@customizer/modal-x";
+import { toasted } from "@/utils/utils";
 
 const api = useApiRequest();
 const authStore = useAuthStore();
 function handleChangePassword({ values }) {
-console.log('gggg');
 
   api.send(
     () => changePassword(authStore.auth?.user?.userUuid, values),
     (res) => {
       if (res.success) {
+        toasted(res.success, "Password Changed Successfully", res.error);
+        closeModal();
       }
-      toasted(res.success, "Password Changed Successfully", res.error);
     }
   );
 }

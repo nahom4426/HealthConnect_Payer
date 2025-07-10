@@ -197,7 +197,7 @@ function handleRowSelection(payerUuid) {
       </select>
     </div>
     <div class="text-base-clr">
-      Showing {{ totalElements }} out of {{ selectedValue }} records
+      Showing {{ rows?.length }} out of {{ totalElements }} records
     </div>
     <div class="flex gap-6 items-center justify-between">
       <div @click="previousPage" class="cursor-pointer">

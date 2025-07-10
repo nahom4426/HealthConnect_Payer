@@ -1,7 +1,9 @@
 <script setup>
 import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
+import Select from "@/components/new_form_elements/Select.vue";
 import { ref, watch, onMounted } from 'vue';
+import vPrivilege from "@/directives/vPrivilage";
 
 const props = defineProps({
   privilege: {
@@ -10,78 +12,79 @@ const props = defineProps({
   }
 });
 
-// Define emits for form field updates
-const emit = defineEmits([
-  'update:privilegeName',
-  'update:privilegeDescription',
-  'update:privilegeCategory'
-]);
+const privilegeType=ref([{
+  label:'For All',
+  value:'FOR_ALL'
+},
+{
+  label:'Admin',
+  value:'FOR_SYSTEM_ADMIN'
+},
+{
+  label:'Provider',
+  value:'FOR_PROVIDER'
+},
+{
+  label:'Payer',
+  value:'FOR_PAYER'
+}
+])
 
-// Create local refs for form values
-const privilegeName = ref(props.privilege?.privilegeName || '');
-const privilegeDescription = ref(props.privilege?.privilegeDescription || '');
-const privilegeCategory = ref(props.privilege?.privilegeCategory || '');
 
-// Watch for changes in props.privilege
-watch(() => props.privilege, (newVal) => {
-  if (newVal) {
-    privilegeName.value = newVal.privilegeName || '';
-    privilegeDescription.value = newVal.privilegeDescription || '';
-    privilegeCategory.value = newVal.privilegeCategory || '';
-  }
-}, { deep: true, immediate: true });
 
-// Watch for local changes and emit them
-watch(privilegeName, (val) => emit('update:privilegeName', val));
-watch(privilegeDescription, (val) => emit('update:privilegeDescription', val));
-watch(privilegeCategory, (val) => emit('update:privilegeCategory', val));
 
-// Emit initial values on mount
-onMounted(() => {
-  emit('update:privilegeName', privilegeName.value);
-  emit('update:privilegeDescription', privilegeDescription.value);
-  emit('update:privilegeCategory', privilegeCategory.value);
-});
 </script>
 <template>
   <Form
-    class="grid grid-cols-4 gap-4 grid-rows-3"
+    class="grid grid-cols-2 gap-x-20 gap-y-4"
     :inner="false"
     id="privilegeForm"
   >
     <Input
       name="privilegeName"
-      validation="required|min:3|max:50"
+      validation="required"
       label="Privilege Name"
-      v-model="privilegeName"
+      :value="props.privilege?.privilegeName || ''"
       :attributes="{
-        placeholder: 'Enter Privilege (3-50 characters)',
-        minlength: 3,
-        maxlength: 50
+        placeholder: 'Enter Privilege',
+       
       }"
     />
     <Input
-      validation="required|min:3|max:255"
+      validation="required"
       class="col-span-2"
       name="privilegeDescription"
-      v-model="privilegeDescription"
+      :value="props.privilege?.privilegeDescription || ''"
+
       label="Privilege Description"
       :attributes="{
-        placeholder: 'Enter Privilege description (3-255 characters)',
-        minlength: 3,
-        maxlength: 255
+        placeholder: 'Enter Privilege description',
+        
       }"
     />
     <Input
-      v-model="privilegeCategory"
+      :value="props.privilege?.privilegeCategory || ''"
       name="privilegeCategory"
       label="Privilege Category"
-      validation="required|min:3|max:50"
+      validation="required"
       :attributes="{
-        placeholder: 'Enter Privilege Category (3-50 characters)',
-        minlength: 3,
-        maxlength: 50
+        placeholder: 'Enter Privilege Category',
+       
       }"
     />
+    <div v-privilege.role="'ADMIN'">
+   <Select
+   :obj="true"
+  :value="props.privilege?.privilegeType"
+  name="privilegeType"
+  label="Privilege Type"
+  :options="privilegeType"
+  :attributes="{
+    placeholder: 'Enter Privilege Type',
+  }"
+/>
+    </div>
+
+
   </Form>
 </template>

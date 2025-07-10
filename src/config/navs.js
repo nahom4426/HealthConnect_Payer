@@ -150,13 +150,13 @@ export default [
       // },
       {
         path: "/clinical_approval",
-        name: "Clinical Approval",
+        name: "Audit",
         category: "Pages",
         privilege: ["Create Employees"],
       },
       {
         path: "/financial_approval",
-        name: "Financial Approval",
+        name: "Approval",
         category: "Pages",
         privilege: ["Create Employees"],
       },
@@ -181,7 +181,7 @@ export default [
   },
   {
     path: "/privileges",
-    name: "Privilage",
+    name: "Privilege",
     icon: icons.privilege,
   },
   {
