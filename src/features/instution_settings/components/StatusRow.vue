@@ -191,13 +191,13 @@ async function handleDeactivateWithClose(payerUuid) {
           alt="Payer Logo" 
           class="h-10 w-10 object-contain rounded-full border border-gray-200"
         />
-        <img 
+        <!-- <img 
           v-else-if="row.logoPath" 
           :src="`${getBaseUrl()}/payer/logo/${row.logoPath}`" 
           alt="Payer Logo" 
           class="h-10 w-10 object-contain rounded-full border border-gray-200"
           @error="handleImageError"
-        />
+        /> -->
         <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
           <span class="text-gray-500 text-xs">No Logo</span>
         </div>
