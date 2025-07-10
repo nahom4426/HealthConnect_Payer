@@ -38,8 +38,7 @@ const dataProvider = ref();
         :search="search"
         v-slot="{ privileges, pending,  }"
       >
-      {{ console.log(privileges)
-       }}
+      
         <Table
           :pending="pending"
           :headers="{

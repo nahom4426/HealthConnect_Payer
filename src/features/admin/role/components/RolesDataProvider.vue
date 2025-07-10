@@ -1,9 +1,9 @@
 <script setup>
-import { usePagination } from "@/composables/usePaginationcontent";
-import { getAllRoles } from "../api/rolesApi";
-import { useRoles } from "../store/rolesStore";
 import { watch } from "vue";
 import { removeUndefined } from "@/utils/utils.js";
+import { getAllRole } from "../Api/RoleApi";
+import { useRoles } from "../store/roleStore";
+import { usePagination } from "@/composables/usePagination";
 
 const props = defineProps({
   search: String,
@@ -14,7 +14,7 @@ const roles = useRoles();
 const pagination = usePagination({
   store: roles,
   cb: (data) =>
-    getAllRoles({ ...data, ...removeUndefined({ search: props.search }) }),
+    getAllRole({ ...data, ...removeUndefined({ search: props.search }) }),
   auto: false,
 });
 

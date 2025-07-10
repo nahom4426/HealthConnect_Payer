@@ -18,8 +18,8 @@ const pagination = usePagination({
   auto: false,
   perPage: props.prePage,
   store: privilegesStore,
-  cb: ()=> getAllPrivilege(removeUndefined({
-    search:props.search
+  cb: (data)=> getAllPrivilege(removeUndefined({
+    search:props.search,...data
   })),
 });
 
