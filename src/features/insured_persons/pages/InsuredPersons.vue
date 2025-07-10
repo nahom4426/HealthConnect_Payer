@@ -36,11 +36,11 @@ const institutionId = ref(
           'Full Name',
           'ID Number',
           'Phone',
-          'Position',
+          
           'Status',
           'Actions',
         ],
-        row: ['fullName', 'idNumber', 'phone', 'position', 'status'],
+        row: ['fullName', 'idNumber', 'phone',  'status'],
       }"
       :rows="insuredMembers"
       :rowCom="StatusRow"

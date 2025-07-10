@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, toRaw, onMounted } from "vue";
+import { ref, onMounted, computed, toRaw } from 'vue';
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import Button from "@/components/Button.vue";
+import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmitButton.vue";
 import { addToast } from "@/toast";
 import { openModal } from "@customizer/modal-x";
 import { useApiRequest } from "@/composables/useApiRequest";
@@ -224,16 +225,13 @@ function handleAddInstitution() {
 
     <template #add-action>
       <div class="flex gap-4">
-        <Button
-          @click.prevent="createContracts"
-          class="btn flex justify-center items-center text-center gap-2 rounded-lg h-14 px-8 bg-green-600 text-white hover:bg-green-700"
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 5.8V12.2M12.2 9H5.8M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" 
-                  stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <p class="text-base">Create Contracts ({{ selectedCount }})</p>
-        </Button>
+        <ModalFormSubmitButton
+          :pending="false"
+          :btn-text="`Create Contracts (${selectedCount})`"
+          @click="createContracts"
+          class="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
+          :disabled="selectedCount === 0"
+        />
         
         <Button
           @click.prevent="handleAddInstitution"
@@ -287,10 +285,9 @@ function handleAddInstitution() {
           }"
           :rows="institutions"
           :rowCom="contractRequestStatusRow"
-        :row-props="{
-    selectedPayers: selectedPayers,
-    onSelect: (payerUuid) => togglePayerSelection(payerUuid) // Explicitly pass the function
-  }"
+          :row-props="{
+            selectedPayers
+          }"
           :cells="{
             selection: (_, row) => row.payerUuid,
             index: (_, idx) => idx + 1
@@ -302,6 +299,7 @@ function handleAddInstitution() {
             onPageChange: handlePageChange,
             onLimitChange: handleLimitChange
           }"
+          @select-payer="togglePayerSelection"
         >
           <template #header-selection>
             <input
