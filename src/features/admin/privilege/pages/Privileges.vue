@@ -12,7 +12,7 @@ const dataProvider = ref();
 </script>
 
 <template>
-  <DefaultPage placeholder="Search Privileges">
+  <DefaultPage  placeholder="Search Privileges">
     <template #filter>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
