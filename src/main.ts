@@ -7,7 +7,7 @@ import App from './App.vue'
 import router from './router'
 import modal from '@customizer/modal-x'
 import vFocus from '@/directives/vFocus'
-import vPrivilage from '@/directives/vPrivilage'
+import vPrivilege from '@/directives/vPrivilage'
 import vRipple from '@/directives/vRipple'
 import toast from '@/toast'
 const app = createApp(App)
@@ -17,6 +17,6 @@ app.use(router)
 app.use(modal)
 app.use(toast)
 app.directive('focus', vFocus)
-app.directive('privilage', vPrivilage)
+app.directive('privilege', vPrivilege)
 app.directive('ripple', vRipple)
 app.mount('#app')

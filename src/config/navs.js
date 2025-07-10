@@ -174,7 +174,7 @@ export default [
   },
   {
     path: "/privileges",
-    name: "Privilage",
+    name: "Privilege",
     icon: icons.privilege,
   },
   {

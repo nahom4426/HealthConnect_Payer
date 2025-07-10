@@ -1,142 +1,14 @@
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import PrivilegesDataProvider from "../components/PrivilegesDataProvider.vue";
-import Button from "@/components/Button.vue";
-import { Status } from "@/types/interface";
-import { changePrivilegeStatus, deletePrivilege } from "../Api/PrivilegeApi";
-import { addToast } from "@/toast";
-import { useApiRequest } from "@/composables/useApiRequest";
 import StatusRow from "../components/PrivilegeStatusRow.vue";
-import { openModal } from "@customizer/modal-x";
-import { usePrivilege } from "../store/privilegeStore";
 import icons from "@/utils/icons";
 
-const router = useRouter();
 const dataProvider = ref();
-const privilegeStore = usePrivilege();
-const statusReq = useApiRequest();
-const deleteReq = useApiRequest();
 
-function refreshData() {
-  if (dataProvider.value) {
-    dataProvider.value.refresh();
-  }
-}
 
-function handlePageChange(page) {
-  if (dataProvider.value) {
-    dataProvider.value.setPage(page);
-  }
-}
-
-function handleLimitChange(limit) {
-  if (dataProvider.value) {
-    dataProvider.value.setLimit(limit);
-  }
-}
-
-function viewDetails(id) {
-  router.push(`/privileges/${id}`);
-}
-
-function openEditModal(privilege) {
-  if (!privilege || !privilege.privilegeUuid) {
-    return;
-  }
-
-  openModal("EditPrivilege", {
-    privilegeUuid: privilege.privilegeUuid,
-    privilege: privilege,
-    onUpdated: handlePrivilegeUpdated,
-  });
-}
-
-function handlePrivilegeUpdated(updatedPrivilege) {
-  if (updatedPrivilege && updatedPrivilege.privilegeUuid) {
-    privilegeStore.update(updatedPrivilege.privilegeUuid, updatedPrivilege);
-    refreshData();
-    addToast({
-      type: "success",
-      title: "Privilege Updated",
-      message: `Privilege "${updatedPrivilege.privilegeName}" has been updated successfully`,
-    });
-  }
-}
-
-function handleStatusChange(id, newStatus) {
-  statusReq.send(
-    () => changePrivilegeStatus(id, newStatus),
-    (res) => {
-      if (res.success) {
-        privilegeStore.update(id, { status: newStatus });
-        addToast({
-          type: "success",
-          title: "Status Updated",
-          message: `Privilege status has been updated to ${newStatus}`,
-        });
-        refreshData();
-      } else {
-        addToast({
-          type: "error",
-          title: "Update Failed",
-          message: res.error || "Failed to update privilege status",
-        });
-      }
-    }
-  );
-}
-
-function handleDelete(id) {
-  openModal(
-    "Confirmation",
-    {
-      title: "Delete Privilege",
-      message:
-        "Are you sure you want to delete this privilege? This action cannot be undone.",
-    },
-    (confirmed) => {
-      if (confirmed) {
-        deleteReq.send(
-          () => deletePrivilege(id),
-          (res) => {
-            if (res.success) {
-              privilegeStore.remove(id);
-              addToast({
-                type: "success",
-                title: "Privilege Deleted",
-                message: "Privilege has been successfully deleted",
-              });
-              refreshData();
-            } else {
-              addToast({
-                type: "error",
-                title: "Delete Failed",
-                message: res.error || "Failed to delete privilege",
-              });
-            }
-          }
-        );
-      }
-    }
-  );
-}
-
-function handleActivate(id) {
-  handleStatusChange(id, "ACTIVE");
-}
-
-function handleDeactivate(id) {
-  handleStatusChange(id, "INACTIVE");
-}
-
-function handleAddPrivilege() {
-  const openAddRoleModal = () => {
-    router.push("/create-role");
-  };
-}
 </script>
 
 <template>
@@ -164,8 +36,10 @@ function handleAddPrivilege() {
       <PrivilegesDataProvider
         ref="dataProvider"
         :search="search"
-        v-slot="{ privileges, pending, currentPage, itemsPerPage, totalPages }"
+        v-slot="{ privileges, pending,  }"
       >
+      {{ console.log(privileges)
+       }}
         <Table
           :pending="pending"
           :headers="{
@@ -174,37 +48,9 @@ function handleAddPrivilege() {
           }"
           :rows="privileges"
           :rowCom="StatusRow"
-          :pagination="{
-            currentPage,
-            itemsPerPage,
-            totalPages,
-            onPageChange: handlePageChange,
-            onLimitChange: handleLimitChange,
-          }"
+        
         >
-          <template #row>
-            <StatusRow
-              :rowData="privileges"
-              :rowKeys="[
-                'privilegeName',
-                'privilegeDescription',
-                'privilegeCategory',
-              ]"
-              :headKeys="[
-                'Privilege Name',
-                'Description',
-                'Category',
-
-                'Actions',
-              ]"
-              :onView="viewDetails"
-              :onEdit="openEditModal"
-              :onActivate="handleActivate"
-              :onDeactivate="handleDeactivate"
-              :onDelete="handleDelete"
-              :onRowClick="(row) => {}"
-            />
-          </template>
+         
         </Table>
       </PrivilegesDataProvider>
     </template>
