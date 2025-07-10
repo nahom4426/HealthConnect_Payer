@@ -10,12 +10,12 @@ import FamilyGroup from "./FamilyGroup.vue";
 const active = ref(0);
 
 const setActive = (item) => {
-  active.value = item;
+  active.value = item;  
 };
 const components = [
   {
     name: "Employee",
-    component: InsuredPersons,
+    component: InsuredPersons,  
   },
   {
     name: "Employee / Family Group",

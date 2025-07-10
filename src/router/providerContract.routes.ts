@@ -14,6 +14,8 @@
 import ActiveProviderIndex from "@/features/provider_contract/active_provider_contracts/pages/ActiveProviderIndex.vue";
 import ProviderContracts from "@/features/provider_contract/active_provider_contracts/pages/ProviderContracts.vue";
 import ProviderDetails from "@/features/provider_contract/active_provider_contracts/pages/providerDetails.vue";
+import AddContractForKenema from "@/features/provider_contract/add_contracts_for_kenema/pages/addContractForKenema.vue";
+import AddProviderContractIndex from "@/features/provider_contract/add_contracts_for_kenema/pages/addProviderContractIndex.vue";
 import ViewContractRequests from "@/features/provider_contract/contract_requests/components/viewContractRequests.vue";
 import ContractRequests from "@/features/provider_contract/contract_requests/pages/contractRequests.vue";
 import ProviderContractIndex from "@/features/provider_contract/contract_requests/pages/ProviderContractIndex.vue";
@@ -65,7 +67,20 @@ export default [
 				props: true,
 			}
 		]
-	}
+	},
+		{
+		path: '/create_contracts',
+		name: 'Create Contract',
+		component: AddProviderContractIndex,
+		children: [
+			{
+				path: '',
+				name: 'Provider Contracts List',
+				component: AddContractForKenema,
+			}
+		]
+	},
+
 	// {
 	// 	path: '/pending_contracts',
 	// 	name: 'Pending Contracts',

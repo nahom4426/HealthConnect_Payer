@@ -73,10 +73,43 @@ export const insuredMembers = defineStore("insuredStore", () => {
   }
 
   // Alias for set
-  function setAll(data: Insured[]): void {
-    console.log("Setting insured members with setAll:", data);
-    set(data);
+function setAll(data: any[] | { content: any[] }): void {
+  console.log("Setting insured members with setAll:", data);
+  
+  // Handle both direct array and paginated response
+  const dataArray = Array.isArray(data) 
+    ? data 
+    : data?.content || [];
+  
+  if (!dataArray.length) {
+    console.error("No valid data provided to setAll");
+    return;
   }
+  
+  // Map the API response to your Insured interface
+  const mappedData = dataArray.map(item => ({
+    insuredUuid: item.insuredUuid || item.insuredPersonUuid || '',
+    email: item.email || '',
+    firstName: item.firstName || '',
+    fatherName: item.fatherName || '',
+    grandFatherName: item.grandFatherName || item.grandfatherName || '',
+    birthDate: item.birthDate || null,
+    phone: item.phone || '',
+    address: item.address || item.address1 || '',
+    state: item.state || null,
+    country: item.country || null,
+    idNumber: item.idNumber || item.insuranceId || '',
+    position: item.position || null,
+    gender: item.gender || '',
+    status: item.status || 'ACTIVE',
+    photoUrl: item.photoBase64 || item.profilePictureBase64 || null,
+    photoPath: item.profilePicturePath || null,
+    dependants: item.dependants || []
+  }));
+  
+  console.log("Mapped insured members data:", mappedData);
+  insuredMembers.value = mappedData;
+}
 
   function add(data: Insured): void {
     console.log("Adding insured member to store:", data);

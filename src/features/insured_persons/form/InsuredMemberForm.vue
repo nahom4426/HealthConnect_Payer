@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import { useForm } from "@/components/new_form_builder/useForm";
 import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
@@ -8,37 +8,25 @@ import Button from "@/components/Button.vue";
 import InputEmail from "@/components/new_form_elements/InputEmail.vue";
 import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmitButton.vue";
 import { useAuthStore } from "@/stores/auth";
+import FamilyGroup from "../pages/FamilyGroup.vue";
+import FamilyDataProvider from "../components/FamilyDataProvider.vue";
+
+// 💡 NEW: import FamilyGroup component
+// import FamilyGroup from "@/components/EmployeePayerGroup/FamilyGroup.vue";
 
 const auth = useAuthStore();
+
 const props = defineProps({
-  initialData: {
-    type: Object,
-    default: () => ({}),
-  },
-  isEdit: {
-    type: Boolean,
-    default: false,
-  },
-  institutionId: {
-    type: String,
-    required: true,
-  },
-  pending: {
-    type: Boolean,
-    default: false,
-  },
-  onSubmit: {
-    type: Function,
-    required: true,
-  },
-  onCancel: {
-    type: Function,
-    required: true,
-  },
+  initialData: { type: Object, default: () => ({}) },
+  isEdit: { type: Boolean, default: false },
+  institutionId: { type: String, required: true },
+  pending: { type: Boolean, default: false },
+  onSubmit: { type: Function, required: true },
+  onCancel: { type: Function, required: true },
 });
 
 // Form data
-const employeePhoto = (ref < File) | (null > null);
+const employeePhoto = ref(null);
 const firstName = ref("");
 const fatherName = ref("");
 const institutionId = ref(auth.auth?.user?.payerUuid || "");
@@ -49,16 +37,19 @@ const dateOfBirth = ref("");
 const employeeId = ref("");
 const phoneNumber = ref("");
 const countryCode = ref("+251");
-const address = ref("");
+const woreda = ref("");
+const kebelle = ref("");
+const state = ref("");
 const email = ref("");
 const status = ref("ACTIVE");
 const previewImage = ref("");
 const payerId = ref("");
+const groupUuid = ref(""); // 💡 NEW
 
-// Initialize form data from props
 onMounted(() => {
   if (props.initialData && Object.keys(props.initialData).length > 0) {
     payerId.value = props.initialData.payerUuid || "";
+    groupUuid.value = props.initialData.groupUuid || ""; // 💡 NEW
     firstName.value = props.initialData.firstName || "";
     fatherName.value = props.initialData.fatherName || "";
     grandFatherName.value =
@@ -69,7 +60,9 @@ onMounted(() => {
     role.value = props.initialData.position || "";
     dateOfBirth.value = props.initialData.birthDate?.split("T")[0] || "";
     employeeId.value = props.initialData.idNumber || "";
-    address.value = props.initialData.address || "";
+    state.value = props.initialData.state || "";
+    woreda.value = props.initialData.woreda || "";
+    kebelle.value = props.initialData.kebelle || "";
     email.value = props.initialData.email || "";
     status.value = props.initialData.status || "ACTIVE";
 
@@ -95,10 +88,8 @@ onMounted(() => {
   }
 });
 
-// File upload handling
 function handleFileUpload(event) {
-  const target = event.target;
-  const file = target.files?.[0];
+  const file = event.target?.files?.[0];
   if (file) {
     employeePhoto.value = file;
     const reader = new FileReader();
@@ -111,35 +102,32 @@ function handleFileUpload(event) {
 
 function browseFiles() {
   const fileInput = document.getElementById("employee-photo-upload");
-  fileInput.click();
+  if (fileInput) fileInput.click();
 }
 
 function handleSubmit() {
   const formData = {
     firstName: firstName.value,
     payerUuid: institutionId.value || payerId.value,
+    groupUuid: groupUuid.value, // 💡 Include selected group
     fatherName: fatherName.value,
     grandFatherName: grandFatherName.value,
     gender: gender.value,
-    position: role.value,
     birthDate: dateOfBirth.value ? `${dateOfBirth.value}T00:00:00.000Z` : "",
     idNumber: employeeId.value,
     phone: `${countryCode.value}${phoneNumber.value}`,
-    address: address.value,
+    state: state.value,
+    woreda: woreda.value,
+    kebelle: kebelle.value,
     email: email.value,
     status: status.value,
     country: "Ethiopia",
-    state: "Addis Ababa", // Default as per your swagger example
   };
 
   if (employeePhoto.value) {
     formData.employeePhoto = employeePhoto.value;
-  }
-
-  if (previewImage.value && !employeePhoto.value && props.isEdit) {
-    if (props.initialData.photoBase64) {
-      formData.photoBase64 = props.initialData.photoBase64;
-    }
+  } else if (previewImage.value && props.isEdit && props.initialData.photoBase64) {
+    formData.photoBase64 = props.initialData.photoBase64;
   }
 
   props.onSubmit(formData);
@@ -252,13 +240,11 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
           <!-- Grandfather's Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Grandfather's Name <span class="text-red-500">*</span>
-            </label>
+            
             <Input
               v-model="grandFatherName"
               name="grandFatherName"
-              
+              label="Grandfather's Name"
               :attributes="{
                 placeholder: 'Enter Grand father\'s name',
               }"
@@ -266,28 +252,42 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           </div>
 
           <!-- Role -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Position <span class="text-red-500">*</span>
-            </label>
-            <Input
-              v-model="role"
-              name="role"
-              validation="required"
-              :attributes="{
-                placeholder: 'Enter Position',
-              }"
-            />
-          </div>
+       <FamilyDataProvider :id="institutionId" v-slot="{ group, pending, error }">
+  <div class="space-y-">
+    <label class="block text-sm font-medium pb-1 text-[#75778B]">
+      Select Group 
+    </label>
+    
+      <select
+        v-model="groupUuid"
+        name="groupUuid"
+      
+        :disabled="pending"
+        class="focus-within:border focus-within:border-primary bg-[#F9F9FD] p-4 overflow-hidden text-base rounded-md min-h-9 flex w-full"
+      >
+        <option value="" disabled>
+          {{ group?.length ? 'Select group' : 'No groups available' }}
+        </option>
+        <option
+          v-for="option in group"
+          :key="option.groupUuid"
+          :value="option.groupUuid"
+        >
+          {{ option.groupName }}
+        </option>
+      </select>
+  
+    <p v-if="error" class="mt-2 text-sm text-red-600">{{ error }}</p>
+  </div>
+</FamilyDataProvider>
 
-          <!-- Gender -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Gender <span class="text-red-500">*</span>
-            </label>
+
+ <div>
+           
             <Select
               v-model="gender"
               name="gender"
+              label="gender"
               validation="required"
               :options="genderOptions"
               :attributes="{
@@ -295,16 +295,16 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
               }"
             />
           </div>
+          <!-- Gender -->
+         
 
           <!-- Date of Birth -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Date of Birth <span class="text-red-500">*</span>
-            </label>
             <Input
               v-model="dateOfBirth"
               name="dateOfBirth"
               type="date"
+              label="Date of Birth"
               validation="required"
               :attributes="{
                 placeholder: 'Select Date',
@@ -336,14 +336,33 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
         <!-- Address -->
         <div class="py">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Address
-          </label>
           <Input
-            v-model="address"
-            name="address"
+            v-model="state"
+            name="state"
+            label="state"
             :attributes="{
-              placeholder: 'Enter address',
+              placeholder: 'Enter state',
+            }"
+          />
+        </div>
+           <div class="py">
+          
+          <Input
+            v-model="woreda"
+            label="woreda"
+            name="woreda"
+            :attributes="{
+              placeholder: 'Enter woreda',
+            }"
+          />
+        </div>
+           <div class="py">
+          <Input
+            v-model="kebelle"
+            name="kebelle"
+            label="kebelle"
+            :attributes="{
+              placeholder: 'Enter kebelle',
             }"
           />
         </div>
@@ -351,7 +370,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
         <!-- Phone Number -->
         <div class="py-1">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Phone Number <span class="text-red-500">*</span>
+            Phone Number 
           </label>
           <div class="flex w-full gap-2">
             <Select
@@ -366,11 +385,11 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
             <Input
               v-model="phoneNumber"
               name="phoneNumber"
-              validation="required"
+             
               :attributes="{
                 placeholder: 'Enter phone number',
                 class: 'pr-32 my-2 bg-[#F9F9FD]',
-                required: true,
+              
               }"
             />
           </div>
@@ -378,12 +397,11 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
 
         <!-- Email -->
         <div class="py-1">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Email
-          </label>
+          
           <InputEmail
             v-model="email"
             name="email"
+            label="email"
             validation="email"
             :attributes="{
               placeholder: 'Enter email',

@@ -45,7 +45,28 @@ console.log('InsuredPersonStatusRow props:', props.rowData);
 
 const { addToast } = useToast();
 const insuredStore = insuredMembers();
+const formatPhoneNumber = (phone) => {
+  if (!phone) return '';
 
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+
+  // Handle numbers starting with 0 (local format like 0911223322)
+  if (digits.startsWith('0') && digits.length === 10) {
+    return `+251 ${digits.slice(1)}`;
+  }
+
+  // Handle numbers already starting with +251 or 251
+  if (digits.startsWith('251') && digits.length === 12) {
+    return `+251 ${digits.slice(3)}`;
+  }
+
+  if (digits.startsWith('9') && digits.length === 9) {
+    return `+251 ${digits}`;
+  }
+
+  return phone; // return as-is if unrecognized
+}
 function getStatusStyle(status) {
   if (status === 'ACTIVE' || status === 'Active') {
     return 'bg-[#DFF1F1] text-[#02676B]';
@@ -209,7 +230,17 @@ async function handleDeactivateWithClose(insuredId) {
        <div>
          {{ row.firstName }} {{ row.fatherName }} {{ row.grandfatherName }}
       </div>
+      
       </div>
+ <div v-else-if="key === 'phone'" class="text-gray-700">
+      <template v-if="formatPhoneNumber(row[key]).startsWith('+251 ')">
+        <span class="text-primary">+251</span>
+        <span>{{ formatPhoneNumber(row[key]).slice(4) }}</span>
+      </template>
+      <template v-else>
+        {{ formatPhoneNumber(row[key]) }}
+      </template>
+    </div>
 
       <span v-else class="text-gray-700">
         {{ row[key] }}

@@ -63,6 +63,13 @@ export default [
         category: "Pages",
         privilege: ["Create Services"],
       },
+        {
+        path: "/create_contracts",
+        name: "Add Payers to Contracts",
+        icon: icons.pending_contracts,
+        category: "Pages",
+        privilege: ["Create Services"],
+      },
     ],
   },
   {
