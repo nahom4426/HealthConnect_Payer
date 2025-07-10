@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router';
 import Table from '@/components/Table.vue';
 import { useRoles } from '../store/roleStore';
 import { removeRoleById, getAllRole } from '../Api/RoleApi';
-import { toasted } from '@/utils/utils';
+import { removeUndefined, toasted } from '@/utils/utils';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { usePagination } from '@/composables/usePagination';
 import { openModal } from '@customizer/modal-x';
@@ -11,48 +11,67 @@ import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
 import DefaultPage from "@/components/DefaultPage.vue";
 import icons from "@/utils/icons";
 import RoleStatusRow from '../components/RoleStatusRow.vue';
+import RolesDataProvider from '../components/RolesDataProvider.vue';
 
 const router = useRouter();
-const rolesStore = useRoles();
 
-// Pagination state
-const pagination = usePagination({
-  store: rolesStore,
-  cb: getAllRole,
-});
-
-// API request for removing a role
-const removeReq = useApiRequest();
-const remove = (id: string) => {
-  openModal('Confirmation', {
-    title: 'Remove Role',
-    message: 'Are you sure you want to delete this role?'
-  }, (res) => {
-    if (res) {
-      removeReq.send(() => removeRoleById(id), (res) => {
-        if (res.success) {
-          rolesStore.remove(id);
-        }
-        toasted(res.success, 'Role Removed Successfully', res.error);
-      });
-    }
-  });
-};
-
-// Handle edit role navigation
-const editRole = (roleUuid: string) => {
-  router.push(`/edit_role/${roleUuid}`);
-};
-
-// Handle opening the add role modal
-const openAddRoleModal = () => {
-  router.push('/create-role');
-};
 </script>
 
 <template>
-  <DefaultPage v-slot="{ search }">
-    <div class="p-4">
+   <DefaultPage  placeholder="Search Roles">
+    <template #filter>
+      <button
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
+      >
+        <i v-html="icons.filter"></i>
+        <p class="text-base">Filters</p>
+      </button>
+    </template>
+
+    <template #add-action>
+      <button
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
+        @click.prevent="$router.push('/create-role')"
+      >
+        <i v-html="icons.plus_circle"></i>
+        <p class="text-base">Add Role</p>
+      </button>
+    </template>
+
+    <template #default="{ search }">
+      <RolesDataProvider
+        ref="dataProvider"
+        :search="search"
+        v-slot="{ roles, pending,  }"
+      >
+      
+        <Table 
+        :pending="pending" 
+        :headers="{
+          head: [
+            'Role Name',
+            'Role Description',
+            'Actions',
+          ],
+          row: [
+            'roleName',
+            'roleDescription',
+          ]
+        }" 
+        :rows="roles"
+        :rowCom="RoleStatusRow"
+        :Fallback="TableRowSkeleton"
+      >
+         
+        </Table>
+      </RolesDataProvider>
+    </template>
+  </DefaultPage>
+  <!-- <DefaultPage v-slot="{ search }">
+    <template #filter>
+      
+    </template> -->
+    <!-- <div class="p-4">
       <div class="flex justify-between items-center mb-6">
         <div class="flex items-center gap-2">
           <span class="p-2 bg-primary/10 rounded">
@@ -73,7 +92,15 @@ const openAddRoleModal = () => {
           </button>
         </div>
       </div>
-
+     
+    </div> -->
+     <!-- <template #default="{ search }">
+      <RolesDataProvider
+        ref="dataProvider"
+        :search="search"
+        v-slot="{ privileges, pending,  }"
+      >
+    
       <Table 
         :pending="pagination.pending.value" 
         :headers="{
@@ -91,17 +118,9 @@ const openAddRoleModal = () => {
         :rowCom="RoleStatusRow"
         :Fallback="TableRowSkeleton"
       >
-        <template #row="{ row }">
-          <RoleStatusRow 
-            :rowData="row" 
-            :rowKeys="['roleName', 'roleDescription']" 
-            :headKeys="['Role Name', 'Role Description', 'Actions']"
-            :onEdit="editRole"
-            :onDelete="remove"
-            :onRowClick="() => {}"
-          />
-        </template>
+      
       </Table>
-    </div>
-  </DefaultPage>
+    </RolesDataProvider>
+</template>
+  </DefaultPage> -->
 </template>
