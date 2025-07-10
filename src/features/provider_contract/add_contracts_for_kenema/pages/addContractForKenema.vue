@@ -1,157 +1,81 @@
 <script setup>
-import { ref, onMounted, computed, toRaw } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import Button from "@/components/Button.vue";
-import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmitButton.vue";
 import { addToast } from "@/toast";
 import { openModal } from "@customizer/modal-x";
 import { useApiRequest } from "@/composables/useApiRequest";
 import contractRequestStatusRow from "../components/contractRequestStatusRow.vue";
 import ActiveInstitutionsDataProvider from "@/features/instution_settings/components/ActiveInstitutionsDataProvider.vue";
-import { changeInstitutionStatus } from "@/features/instution_settings/api/institutionSettingsApi";
-import { useInstitutions } from "@/features/instution_settings/store/InstitutionsStore";
 import { createKenemaContracts } from "../api/contractRequestApi";
 
-const emit = defineEmits(["navigate"]);
 const router = useRouter();
-const dataProvider = ref();
-const store = useInstitutions();
-const statusReq = useApiRequest();
-const deleteReq = useApiRequest();
-
-// Selection management
+const search = ref("");
+const dataProvider = ref(null);
 const selectedPayers = ref([]);
 const allSelected = ref(false);
+const isLoading = ref(false); // Explicit loading state
 
-// Debug mounted hook
-onMounted(() => {
-  console.log('Parent component mounted');
-});
+// Computed property for selected count
+const selectedCount = computed(() => selectedPayers.value.length);
 
-// Refresh data function
-function refreshData() {
-  console.log("Refreshing institution data");
-  if (dataProvider.value) {
-    dataProvider.value.refresh();
-  }
-}
-
-// Handle page change function
-function handlePageChange(page) {
-  if (dataProvider.value) {
-    dataProvider.value.setPage(page);
-  }
-}
-
-// Handle limit change function
-function handleLimitChange(limit) {
-  if (dataProvider.value) {
-    dataProvider.value.setLimit(limit);
-  }
-}
-
-// View details function
-function viewDetails(institution) {
-  router.push(`/institution-settings/payers/${institution.payerUuid}`);
-}
-
-// Open edit modal function
-function openEditModal(institution) {
-  console.log("Opening edit modal for institution:", institution);
-  if (!institution || !institution.institutionUuid) {
-    console.error("Invalid institution data:", institution);
-    return;
-  }
-  openModal("EditPayer", {
-    payerUuid: institution.payerUuid,
-    payer: institution,
-    onUpdated: handleInstitutionUpdated,
-  });
-}
-
-// Handle institution updated function
-function handleInstitutionUpdated(updatedInstitution) {
-  console.log("Institution updated:", updatedInstitution);
-  store.update(updatedInstitution.institutionUuid, updatedInstitution);
-  refreshData();
-  addToast({
-    type: "success",
-    title: "Institution Updated",
-    message: `Institution "${updatedInstitution.institutionName}" has been updated successfully`,
-  });
-}
-
-// Handle status change function
-async function handleStatusChange(id, newStatus) {
-  statusReq.send(
-    () => changeInstitutionStatus(id, newStatus),
-    (res) => {
-      if (res.success) {
-        store.update(id, { status: newStatus });
-        addToast({
-          type: "success",
-          title: "Status Updated",
-          message: `Institution status has been updated to ${newStatus}`,
-        });
-        refreshData();
-      } else {
-        addToast({
-          type: "error",
-          title: "Update Failed",
-          message: res.error || "Failed to update institution status",
-        });
+// Toggle selection for a single payer
+function togglePayerSelection(payerUuid) {
+  const index = selectedPayers.value.indexOf(payerUuid);
+  if (index === -1) {
+    selectedPayers.value.push(payerUuid);
+    
+    // Check if all items are now selected
+    if (dataProvider.value && dataProvider.value.institutions) {
+      const allPayerUuids = dataProvider.value.institutions
+        .map(inst => inst.payerUuid)
+        .filter(Boolean);
+      
+      if (selectedPayers.value.length === allPayerUuids.length) {
+        allSelected.value = true;
       }
     }
-  );
+  } else {
+    selectedPayers.value.splice(index, 1);
+    allSelected.value = false;
+  }
 }
 
-// Computed property to show selected count
-const selectedCount = computed(() => {
-  return selectedPayers.value.length;
-});
-
-// Toggle select all function
+// Toggle select all
 function toggleSelectAll() {
-  console.log('Toggle Select All triggered');
-  allSelected.value = !allSelected.value;
+  if (!dataProvider.value || !dataProvider.value.institutions) return;
   
-  if (allSelected.value && dataProvider.value?.institutions) {
-    selectedPayers.value = dataProvider.value.institutions.map(p => p.payerUuid);
-  } else {
+  const institutions = dataProvider.value.institutions;
+  
+  if (allSelected.value) {
+    // Deselect all
     selectedPayers.value = [];
-  }
-}
-
-// Toggle individual selection function
-function togglePayerSelection(payerUuid) {
-  console.log('Toggling selection for:', payerUuid);
-  
-  const newSelection = [...selectedPayers.value];
-  const index = newSelection.indexOf(payerUuid);
-  
-  if (index === -1) {
-    newSelection.push(payerUuid);
   } else {
-    newSelection.splice(index, 1);
+    // Select all
+    selectedPayers.value = institutions.map(inst => inst.payerUuid).filter(Boolean);
   }
   
-  selectedPayers.value = newSelection;
-  
-  // Update "Select All" state
-  if (dataProvider.value?.institutions) {
-    allSelected.value = newSelection.length === dataProvider.value.institutions.length;
-  }
-  
-  console.log('Current selection:', selectedPayers.value);
+  allSelected.value = !allSelected.value;
 }
 
-// Create contracts API call function
-async function createContracts() {
-  const rawArray = toRaw(selectedPayers.value);
+// Clear all selections
+function clearSelections() {
+  // Clear the array by setting it to an empty array
+  selectedPayers.value = [];
+  // Reset the allSelected flag
+  allSelected.value = false;
   
-  if (rawArray.length === 0) {
+  // Force a UI update
+  nextTick(() => {
+    console.log("Selections cleared:", selectedPayers.value);
+  });
+}
+
+// Create contracts for selected payers
+async function createContracts() {
+  if (selectedPayers.value.length === 0) {
     addToast({
       type: "warning",
       title: "No Selection",
@@ -161,17 +85,24 @@ async function createContracts() {
   }
 
   try {
-    console.log("Creating contracts for:", rawArray);
-    const response = await createKenemaContracts(rawArray);
+    isLoading.value = true; // Set loading state
+    
+    // Store the selected payers count for the success message
+    const selectedCount = selectedPayers.value.length;
+    
+    const response = await createKenemaContracts(selectedPayers.value);
     
     if (response.success) {
+      // Clear selections BEFORE showing the toast
+      clearSelections();
+      
       addToast({
         type: "success",
         title: "Contracts Created",
-        message: `${rawArray.length} contract(s) created successfully`,
+        message: `${selectedCount} contract(s) created successfully`,
       });
-      selectedPayers.value = [];
-      allSelected.value = false;
+      
+      // Refresh data after clearing selections
       refreshData();
     } else {
       throw new Error(response.error || "Failed to create contracts");
@@ -183,23 +114,36 @@ async function createContracts() {
       title: "Creation Failed",
       message: error.message || "An error occurred while creating contracts",
     });
+  } finally {
+    isLoading.value = false; // Clear loading state
   }
 }
 
-// Handle add institution function
-function handleAddInstitution() {
-  openModal("AddPayer", {
-    onAdded: (newInstitution) => {
-      store.add(newInstitution);
-      refreshData();
-      addToast({
-        type: "success",
-        title: "Institution Added",
-        message: `Institution "${newInstitution.institutionName}" has been added successfully`,
-      });
-    },
-  });
+function refreshData() {
+  if (dataProvider.value) {
+    dataProvider.value.refresh();
+  }
 }
+
+function handlePageChange(page) {
+  if (dataProvider.value) {
+    dataProvider.value.currentPage = page;
+  }
+}
+
+function handleLimitChange(limit) {
+  if (dataProvider.value) {
+    dataProvider.value.itemsPerPage = limit;
+  }
+}
+
+function handleAddInstitution() {
+  router.push("/institutions/add");
+}
+
+onMounted(() => {
+  refreshData();
+});
 </script>
 
 <template>
@@ -225,13 +169,14 @@ function handleAddInstitution() {
 
     <template #add-action>
       <div class="flex gap-4">
-        <ModalFormSubmitButton
-          :pending="false"
-          :btn-text="`Create Contracts (${selectedCount})`"
+        <Button
           @click="createContracts"
-          class="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
           :disabled="selectedCount === 0"
-        />
+          :pending="isLoading"
+          class="btn flex justify-center items-center text-center gap-2 rounded-lg h-14 px-8 bg-green-600 text-white hover:bg-green-700"
+        >
+          <p class="text-base">Create Contracts{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}</p>
+        </Button>
         
         <Button
           @click.prevent="handleAddInstitution"
