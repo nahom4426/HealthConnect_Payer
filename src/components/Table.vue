@@ -14,6 +14,7 @@ const emit = defineEmits([
   "action:suspend",
   "action:edit",
   "bottom",
+  "select-payer",
 ]);
 
 const props = defineProps({
@@ -100,6 +101,10 @@ const pageChanger = inject("pageChanger", () => {});
 
 const selectedValue = ref(25);
 const active = ref(1);
+
+function handleRowSelection(payerUuid) {
+  emit('select-payer', payerUuid);
+}
 </script>
 <template>
   <DataTable
@@ -124,6 +129,7 @@ const active = ref(1);
           rowKeys: spec.row,
           pending: pending,
         }"
+        @select-payer="handleRowSelection"
       />
     </template>
     <template v-else>

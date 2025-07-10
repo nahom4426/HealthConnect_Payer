@@ -23,8 +23,6 @@ const props = defineProps({
   }
 });
 
- 
-
 const emit = defineEmits(['select']);
 const { addToast } = useToast();
 const payersStore = useInstitutions();
@@ -89,12 +87,8 @@ function handleCheckboxChange(row) {
     return;
   }
   
-  // Add null check before calling
-  if (typeof props.onSelect === 'function') {
-    props.onSelect(row.payerUuid);
-  } else {
-    console.error('onSelect is not a function');
-  }
+  // Call the onSelect prop function directly
+  props.onSelect(row.payerUuid);
 }
 
 async function handleActivateWithClose(payerUuid) {
