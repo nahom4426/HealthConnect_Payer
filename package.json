@@ -19,8 +19,8 @@
     "apexcharts": "^3.44.0",
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.5",
-    "chart.js": "^4.4.9",
     "bootstrap-icons": "^1.11.3",
+    "chart.js": "^4.4.9",
     "pdfmake": "^0.2.14",
     "pinia": "^2.1.7",
     "postcss": "^8.4.45",
@@ -28,7 +28,8 @@
     "tailwindcss": "^3.4.11",
     "uuid": "^11.1.0",
     "vue": "^3.5.17",
-    "vue-router": "^4.3.3"
+    "vue-router": "^4.3.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",

@@ -4,7 +4,7 @@ import { useToast } from '@/toast/store/toast';
 import { useInstitutions } from "@/features/instution_settings/store/InstitutionsStore";
 import icons from "@/utils/icons";
 import { changeInstutionStatus } from '@/features/instution_settings/api/institutionsApi';
-import { onMounted, defineProps, onUnmounted, toRaw } from 'vue';
+import { onMounted, defineProps, onUnmounted, toRaw, defineEmits } from 'vue';
 import { createKenemaContracts } from '../api/contractRequestApi';
 
 const props = defineProps({
@@ -14,16 +14,11 @@ const props = defineProps({
   selectedPayers: {
     type: Array,
     default: () => []
-  },
-  onSelect: {
-    type: Function,
-    default: (payerUuid) => {
-      console.warn('onSelect function not provided', payerUuid);
-    }
   }
 });
 
-const emit = defineEmits(['select']);
+// Define emits for selection changes
+const emit = defineEmits(['select-payer']);
 const { addToast } = useToast();
 const payersStore = useInstitutions();
 
@@ -87,8 +82,8 @@ function handleCheckboxChange(row) {
     return;
   }
   
-  // Call the onSelect prop function directly
-  props.onSelect(row.payerUuid);
+  // Emit the selection event instead of calling a prop function
+  emit('select-payer', row.payerUuid);
 }
 
 async function handleActivateWithClose(payerUuid) {
