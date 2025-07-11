@@ -745,12 +745,12 @@ export const subCitiesByCity: Record<string, string[]> = {
   ]
 };
 
-// Woredas by sub-city (simplified example - expand as needed)
-export const woredasBySubCity: Record<string, string[]> = {
-  "Addis Ketema": ["Woreda 1", "Woreda 2", "Woreda 3", "Woreda 4", "Woreda 5"],
-  "Bole": ["Woreda 1", "Woreda 2", "Woreda 3", "Woreda 4", "Woreda 5", "Woreda 6"],
-  "Kirkos": ["Woreda 1", "Woreda 2", "Woreda 3", "Woreda 4", "Woreda 5"],
-  "Yeka": ["Woreda 1", "Woreda 2", "Woreda 3", "Woreda 4", "Woreda 5", "Woreda 6"],
+// address1s by sub-city (simplified example - expand as needed)
+export const address1sBySubCity: Record<string, string[]> = {
+  "Addis Ketema": ["address1 1", "address1 2", "address1 3", "address1 4", "address1 5"],
+  "Bole": ["address1 1", "address1 2", "address1 3", "address1 4", "address1 5", "address1 6"],
+  "Kirkos": ["address1 1", "address1 2", "address1 3", "address1 4", "address1 5"],
+  "Yeka": ["address1 1", "address1 2", "address1 3", "address1 4", "address1 5", "address1 6"],
   // Add more as needed
 };
 
@@ -768,8 +768,8 @@ export function getSubCitiesByCity(city: string): string[] {
   return subCitiesByCity[city] || [];
 }
 
-// Helper function to get woredas based on sub-city
-export function getWoredasBySubCity(subCity: string): string[] {
-  return woredasBySubCity[subCity] || [];
+// Helper function to get address1s based on sub-city
+export function getaddress1sBySubCity(subCity: string): string[] {
+  return address1sBySubCity[subCity] || [];
 }
 

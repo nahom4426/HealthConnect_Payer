@@ -1,7 +1,7 @@
 <script setup>
 import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
-import { useInstitutions } from "@/features/instution_settings/store/InstitutionsStore";
+import { institutions } from "@/features/instution_settings/store/InstitutionsStore";
 import icons from "@/utils/icons";
 import { changeInstutionStatus } from '@/features/instution_settings/api/institutionsApi';
 import { onMounted, defineProps, onUnmounted, toRaw, defineEmits } from 'vue';
@@ -20,7 +20,7 @@ const props = defineProps({
 // Define emits for selection changes
 const emit = defineEmits(['select-payer']);
 const { addToast } = useToast();
-const payersStore = useInstitutions();
+const payersStore = institutions();
 
 function getStatusStyle(status) {
   if (status === 'ACTIVE' || status === 'Active') {

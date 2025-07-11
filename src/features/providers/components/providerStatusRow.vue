@@ -1,11 +1,12 @@
+
 <script setup>
 import { defineProps, onMounted, onUnmounted } from 'vue';
+import Button from "@/components/Button.vue";
 import { openModal } from '@customizer/modal-x';
+import { useProviders } from "@/features/providers/store/providersStore";
+import { changeProviderStatus } from "@/features/providers/api/providerApi";
 import { useToast } from '@/toast/store/toast';
-import { institutions } from "@/features/instution_settings/store/InstitutionsStore";
 import icons from "@/utils/icons";
-import { changeInstutionStatus } from '../api/institutionsApi';
-
 
 const props = defineProps({
   rowData: {
@@ -43,7 +44,7 @@ const props = defineProps({
 });
 
 const { addToast } = useToast();
-const payersStore = institutions();
+const providersStore = useProviders();
 
 function getStatusStyle(status) {
   if (status === 'ACTIVE' || status === 'Active') {
@@ -63,38 +64,27 @@ function handleImageError(event) {
   event.target.src = '/assets/placeholder-logo.png';
 }
 
-function handleEdit(row) {
-  console.log('Edit button clicked with row data:', row);
-  
-  openModal('EditPayer', { 
-    payerUuid: row.payerUuid, 
-    payer: row,
-    onUpdated: (updatedPayer) => {
-      console.log('Payer updated:', updatedPayer);
-      payersStore.update(updatedPayer.payerUuid, updatedPayer);
-    }
-  });
-}
+
 function handleAddAdmin(row) {
   console.log('Add Admin button clicked with row data:', JSON.stringify(row, null, 2));
   
-  // Create the role name based on payer name
-  const payerName = row.payerName || '';
-  console.log('Payer name:', payerName);
+  // Create the role name based on provider name
+  const providerName = row.providerName || '';
+  console.log('Provider name:', providerName);
   
   // IMPORTANT: Don't modify the original role name format
   // Instead, use the exact format that's in the database
-  const roleName = `PA_${payerName}_Manager`;
+  const roleName = `PR_${providerName}_Manager`;
   console.log('Generated role name:', roleName);
   
   // Log the modal parameters
   const modalData = {
-    payerUuid: row.payerUuid,
-    payer: row,
+    providerUuid: row.providerUuid,
+    provider: row,
     roleName: roleName,
-    onUpdated: (updatedPayer) => {
-      console.log('Payer updated:', updatedPayer);
-      payersStore.update(updatedPayer.payerUuid, updatedPayer);
+    onUpdated: (updatedProvider) => {
+      console.log('Provider updated:', updatedProvider);
+      providersStore.update(updatedProvider.providerUuid, updatedProvider);
     }
   };
   
@@ -104,87 +94,123 @@ function handleAddAdmin(row) {
   openModal('AddUser', modalData);
 }
 
+
+// Function to handle edit button click
+function handleEdit(row) {
+  console.log('Edit button clicked with row data:', row);
+  
+  // Check if this is a provider based on the providerUuid property
+  if (row.providerUuid) {
+    // Open the EditProvider modal with the row data
+    openModal('EditProvider', { 
+      providerUuid: row.providerUuid, 
+      provider: row,
+      onUpdated: (updatedProvider) => {
+        console.log('Provider updated:', updatedProvider);
+        // Update the provider in the store
+        providersStore.update(updatedProvider.providerUuid, updatedProvider);
+      }
+    });
+  } else {
+    // If it's not a provider, use the generic onEdit function
+    if (typeof props.onEdit === 'function') {
+      props.onEdit(row);
+    }
+  }
+}
+
 function toggleDropdown(event, rowId) {
   event.stopPropagation();
-  closeAllDropdowns();
+  closeAllDropdowns(); // Close any open dropdowns first
   const dropdown = document.getElementById(`dropdown-${rowId}`);
   if (dropdown) {
     dropdown.classList.toggle('hidden');
   }
 }
 
+// Close dropdown when clicking outside or when an option is selected
 function closeAllDropdowns() {
   document.querySelectorAll('.dropdown-menu').forEach(el => {
     el.classList.add('hidden');
   });
 }
 
+// Call this when component mounts
 onMounted(() => {
   window.addEventListener('click', closeAllDropdowns);
 });
 
+// Call this when component unmounts
 onUnmounted(() => {
   window.removeEventListener('click', closeAllDropdowns);
 });
 
+// Modified handler functions to close dropdown after action
 function handleEditWithClose(row) {
   closeAllDropdowns();
   handleEdit(row);
 }
-function handleAddAdminWithClose(row) {
-  closeAllDropdowns();
-  handleAddAdmin(row);
-}
+
 function handleViewWithClose(rowId) {
   closeAllDropdowns();
-  props.onView(rowId);
+  onView(rowId);
 }
 
-async function handleActivateWithClose(payerUuid) {
+
+async function handleActivateWithClose(providerId) {
   closeAllDropdowns();
   try {
-    const response = await changeInstutionStatus(payerUuid, 'ACTIVE');
+    const response = await changeProviderStatus(providerId, 'ACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
-        message: 'Payer has been activated successfully'
+        message: 'Provider has been activated successfully'
       });
-      payersStore.update(payerUuid, { status: 'ACTIVE' });
+      // Update the local state or trigger a refresh
+      providersStore.update(providerId, { status: 'ACTIVE' });
     } else {
-      throw new Error(response.error || 'Failed to activate payer');
+      throw new Error(response.error || 'Failed to activate provider');
     }
   } catch (error) {
     addToast({
       type: 'error',
       title: 'Activation Failed',
-      message: error.message || 'An error occurred while activating the payer'
+      message: error.message || 'An error occurred while activating the provider'
     });
   }
 }
 
-async function handleDeactivateWithClose(payerUuid) {
+async function handleDeactivateWithClose(providerId) {
   closeAllDropdowns();
   try {
-    const response = await changeInstutionStatus(payerUuid, 'INACTIVE');
+    const response = await changeProviderStatus(providerId, 'INACTIVE');
     if (response.success) {
       addToast({
         type: 'success',
         title: 'Status Updated',
-        message: 'Payer has been deactivated successfully'
+        message: 'Provider has been deactivated successfully'
       });
-      payersStore.update(payerUuid, { status: 'INACTIVE' });
+      // Update the local state or trigger a refresh
+      providersStore.update(providerId, { status: 'INACTIVE' });
     } else {
-      throw new Error(response.error || 'Failed to deactivate payer');
+      throw new Error(response.error || 'Failed to deactivate provider');
     }
   } catch (error) {
     addToast({
       type: 'error',
       title: 'Deactivation Failed',
-      message: error.message || 'An error occurred while deactivating the payer'
+      message: error.message || 'An error occurred while deactivating the provider'
     });
   }
 }
+function handleAddAdminWithClose(row) {
+  closeAllDropdowns();
+  handleAddAdmin(row);
+}
+
+
+
 </script>
 
 <template>
@@ -196,7 +222,7 @@ async function handleDeactivateWithClose(payerUuid) {
   >  
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
-    <!-- Payer Logo Column (added to match provider) -->
+    <!-- Provider Logo Column (added to match provider) -->
 
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <div v-if="key === 'status'" class="truncate">  
@@ -213,34 +239,34 @@ async function handleDeactivateWithClose(payerUuid) {
         </span>
       </div>
       
-      <div v-else-if="key === 'payerName'" class="text-gray-700 flex items-center gap-2.5 ">
+       <div v-else-if="key === 'providerName'" class="text-gray-700 flex items-center gap-2.5 ">
        
       <div class="flex justify-center items-center">
         <img 
           v-if="row.logoBase64" 
           :src="row.logoBase64" 
-          alt="Payer Logo" 
+          alt="Provider Logo" 
           class="h-10 w-10 object-contain rounded-full border border-gray-200"
         />
         <img 
           v-else-if="row.logoUrl" 
           :src="row.logoUrl" 
-          alt="Payer Logo" 
+          alt="Provider Logo" 
           class="h-10 w-10 object-contain rounded-full border border-gray-200"
         />
-        <!-- <img 
+        <img 
           v-else-if="row.logoPath" 
-          :src="`${getBaseUrl()}/payer/logo/${row.logoPath}`" 
-          alt="Payer Logo" 
+          :src="`${getBaseUrl()}/provider/logo/${row.logoPath}`" 
+          alt="Provider Logo" 
           class="h-10 w-10 object-contain rounded-full border border-gray-200"
           @error="handleImageError"
-        /> -->
+        />
         <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
           <span class="text-gray-500 text-xs">No Logo</span>
         </div>
       </div>
        <div>
-        {{ row.payerName }}
+        {{ row.providerName }}
       </div>
       </div>
       <span v-else class="text-gray-700">
@@ -251,7 +277,7 @@ async function handleDeactivateWithClose(payerUuid) {
     <td class="p-3" >  
       <div class="dropdown-container relative ">
         <button 
-          @click.stop="toggleDropdown($event, row.payerUuid || row.id)"
+          @click.stop="toggleDropdown($event, row.providerUuid || row.id)"
           class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
           type="button"
         >
@@ -261,7 +287,7 @@ async function handleDeactivateWithClose(payerUuid) {
         </button>
 
         <div 
-          :id="`dropdown-${row.payerUuid || row.id}`"
+          :id="`dropdown-${row.providerUuid || row.id}`"
           class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
                 >
           <div class="py-1" role="none">
@@ -286,7 +312,7 @@ async function handleDeactivateWithClose(payerUuid) {
           
             
             <!-- <button 
-              @click.stop="handleViewWithClose(row.payerUuid || row.id)"
+              @click.stop="handleViewWithClose(row.providerUuid || row.id)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               <div class="flex items-center justify-start pl-4 gap-4">
@@ -298,7 +324,7 @@ async function handleDeactivateWithClose(payerUuid) {
             <template v-if="row.status">
               <button 
                 v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
-                @click.stop="handleActivateWithClose(row.payerUuid || row.id)"
+                @click.stop="handleActivateWithClose(row.providerUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">
@@ -309,7 +335,7 @@ async function handleDeactivateWithClose(payerUuid) {
              
               <button 
                 v-if="row.status === 'ACTIVE' || row.status === 'Active'"
-                @click.stop="handleDeactivateWithClose(row.payerUuid || row.id)"
+                @click.stop="handleDeactivateWithClose(row.providerUuid || row.id)"
                 class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
               >
                 <div class="flex items-center justify-start pl-4 gap-4">

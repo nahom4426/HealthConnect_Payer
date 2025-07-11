@@ -1,11 +1,11 @@
-<script setup lang="ts">
+<script setup>
 import { ref, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import ActiveInstitutionsDataProvider from "../components/ActiveInstitutionsDataProvider.vue";
 import Button from "@/components/Button.vue";
-import { Status } from "@/types/interface";
+import { Status } from "@/types/interface"; // If this is TypeScript enum, you'll need to replace it or convert to a JS object.
 import { addToast } from "@/toast";
 import { openModal } from "@customizer/modal-x";
 import { useApiRequest } from "@/composables/useApiRequest";
@@ -14,12 +14,13 @@ import {
   deleteInstitutionStatus,
 } from "../api/institutionSettingsApi";
 import StatusRow from "../components/StatusRow.vue";
-import { useInstitutions } from "../store/InstitutionsStore";
+import { institutions } from "../store/InstitutionsStore";
+import icons from "@/utils/icons";
 
 const emit = defineEmits(["navigate"]);
 const router = useRouter();
 const dataProvider = ref();
-const store = useInstitutions();
+const store = institutions();
 const statusReq = useApiRequest();
 const deleteReq = useApiRequest();
 
@@ -30,23 +31,23 @@ function refreshData() {
   }
 }
 
-function handlePageChange(page: number) {
+function handlePageChange(page) {
   if (dataProvider.value) {
     dataProvider.value.setPage(page);
   }
 }
 
-function handleLimitChange(limit: number) {
+function handleLimitChange(limit) {
   if (dataProvider.value) {
     dataProvider.value.setLimit(limit);
   }
 }
 
-function viewDetails(institution: any) {
+function viewDetails(institution) {
   router.push(`/institution-settings/payers/${institution.payerUuid}`);
 }
 
-function openEditModal(institution: any) {
+function openEditModal(institution) {
   console.log("Opening edit modal for institution:", institution);
 
   if (!institution || !institution.institutionUuid) {
@@ -61,7 +62,7 @@ function openEditModal(institution: any) {
   });
 }
 
-function handleInstitutionUpdated(updatedInstitution: any) {
+function handleInstitutionUpdated(updatedInstitution) {
   console.log("Institution updated:", updatedInstitution);
   store.update(updatedInstitution.institutionUuid, updatedInstitution);
   refreshData();
@@ -72,7 +73,7 @@ function handleInstitutionUpdated(updatedInstitution: any) {
   });
 }
 
-async function handleStatusChange(id: string, newStatus: Status) {
+function handleStatusChange(id, newStatus) {
   statusReq.send(
     () => changeInstitutionStatus(id, newStatus),
     (res) => {
@@ -95,7 +96,7 @@ async function handleStatusChange(id: string, newStatus: Status) {
   );
 }
 
-function handleDelete(id: string) {
+function handleDelete(id) {
   if (
     confirm(
       "Are you sure you want to delete this institution? This action cannot be undone."
@@ -124,17 +125,17 @@ function handleDelete(id: string) {
   }
 }
 
-function handleActivate(id: string) {
+function handleActivate(id) {
   handleStatusChange(id, Status.ACTIVE);
 }
 
-function handleDeactivate(id: string) {
+function handleDeactivate(id) {
   handleStatusChange(id, Status.INACTIVE);
 }
 
 function handleAddInstitution() {
   openModal("AddPayer", {
-    onAdded: (newInstitution: any) => {
+    onAdded: (newInstitution) => {
       store.add(newInstitution);
       refreshData();
       addToast({
@@ -157,91 +158,26 @@ function handleImageError(event) {
 
 <template>
   <DefaultPage placeholder="Search Active Institutions">
+    
     <!-- Filter Button -->
-    <template #filter>
+     <template #filter>
       <button
-        class="btn flex justify-center items-center text-center gap-2 mx-4 btn-outline border-[1px] rounded-lg h-14 px-6 text-primary border-primary hover:bg-primary/10"
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
       >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M2.5 5H8.33333"
-            stroke="#02676B"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M2.5 10H10"
-            stroke="#02676B"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M15.8333 10H17.4999"
-            stroke="#02676B"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M11.6667 5L17.5001 5"
-            stroke="#02676B"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M10.8333 15L16.6666 15"
-            stroke="#02676B"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M2.5 15H5"
-            stroke="#02676B"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <circle
-            cx="6.66667"
-            cy="15"
-            r="1.66667"
-            stroke="#02676B"
-            stroke-width="1.5"
-          />
-          <ellipse
-            cx="14.1667"
-            cy="10"
-            rx="1.66667"
-            ry="1.66667"
-            stroke="#02676B"
-            stroke-width="1.5"
-          />
-          <ellipse
-            cx="9.99992"
-            cy="4.99999"
-            rx="1.66667"
-            ry="1.66667"
-            stroke="#02676B"
-            stroke-width="1.5"
-          />
-        </svg>
+        <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
     </template>
-
     <!-- Add Button -->
     <template #add-action>
-      <Button
+       <button
+        class="btn flex justify-center items-center text-center gap-2 mx-4 btn-outline border-[1px] rounded-lg h-14 px-6 text-primary border-primary hover:bg-primary/10"
+            @click="openModal('payerListImport')"
+          >
+            <i v-html="icons.add_circle" class=""></i>
+            Import Payers
+          </button>
+      <button
         @click.prevent="handleAddInstitution"
         class="btn flex justify-center items-center text-center gap-2 rounded-lg h-14 px-8 bg-primary text-white hover:bg-primary-dark"
       >
@@ -261,7 +197,8 @@ function handleImageError(event) {
           />
         </svg>
         <p class="text-base">Add Payer</p>
-      </Button>
+      </button>
+     
     </template>
 
     <!-- Content -->
@@ -301,7 +238,7 @@ function handleImageError(event) {
           :rows="institutions"
           :rowCom="StatusRow"
           :cells="{
-            location: (_: any, row: any) => `${row.city || ''}, ${row.subCity || ''}, ${row.woreda || ''}, ${row.country || ''}`
+            location: (_: any, row: any) => `${row.city || ''}, ${row.subCity || ''}, ${row.address1 || ''}, ${row.country || ''}`
           }"
           :pagination="{
             currentPage,
@@ -325,6 +262,7 @@ function handleImageError(event) {
                 'payerName',
                 'email',
                 'tinNumber',
+                'totalContracts',
                 'telephone',
                 'category',
                 'status',

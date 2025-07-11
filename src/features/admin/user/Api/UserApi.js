@@ -30,7 +30,21 @@ export function getUserById(id) {
   return api.addAuthenticationHeader().get(`${path}/${id}`);
 }
 export function updateUserById(id, data) {
-  return api.addAuthenticationHeader().put(`${path}/${id}`, data);
+  const formattedData = {
+    ...data,
+    gender: data.gender?.toLowerCase(), // Ensure gender is lowercase for API
+  };
+
+  return api
+    .addAuthenticationHeader()
+    .put(`${path}/${id}`, formattedData)
+    .catch((error) => {
+      return {
+        success: false,
+        error: error.message || "Failed to update user. Server error.",
+        data: null,
+      };
+    });
 }
 export function removeUserById(id) {
   return api.addAuthenticationHeader().delete(`${path}/${id}`);

@@ -33,8 +33,7 @@ function register(formData: FormData) {
     const requiredPayerFields = [
       'payerName', 
       'telephone',
-      'address1', 
-      'tinNumber', 
+      
       'category'
     ];
 

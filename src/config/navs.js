@@ -184,10 +184,6 @@ export default [
     name: "Privilege",
     icon: icons.privilege,
     privilege: ["CREATE_USER"],
-<<<<<<< HEAD
-
-=======
->>>>>>> 0ff71908eb8c20dce72c796f0e806c9e89b81dbc
   },
   {
     path: "/setting",

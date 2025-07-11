@@ -255,6 +255,7 @@ function refreshData() {
           }"
           :rows="batchStore.batch"
           :rowCom="BatchStatusRow"
+          :placeholder="'No Batches Found'"
           :pagination="{
             currentPage,
             itemsPerPage,

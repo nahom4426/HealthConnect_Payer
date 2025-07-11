@@ -63,7 +63,13 @@ const props = defineProps({
         <p class="text-xs text-base-clr">Sample Data Analytics</p>
       </div>
     </div>
-
+  <div class="hidden md:block">
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 rounded-lg shadow-inner">
+        <span class="text-indigo-700 font-medium text-sm md:text-base">
+          {{ authStore.auth?.user?.companyName || 'Admin' }}
+        </span>
+      </div>
+    </div>
     <div class="flex items-center gap-5">
       <button class="px-5 py-3 rounded-md bg-base-clr3">
         <i

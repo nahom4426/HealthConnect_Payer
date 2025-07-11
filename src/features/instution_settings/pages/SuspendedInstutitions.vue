@@ -6,14 +6,14 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import InActiveInstitutionsDataProvider from "../components/InActiveInstitutionsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
-import { useInstitutions } from "../store/InstitutionsStore";
+import { institutions } from "../store/InstitutionsStore";
 import { addToast } from "@/toast";
 // import EditInstitutionModal from "../components/EditInstitutionModal.vue";
 import StatusRow from "../components/StatusRow.vue";
 
 const router = useRouter();
 const dataProvider = ref();
-const store = useInstitutions();
+const store = institutions();
 const showEditModal = ref(false);
 const selectedInstitutionUuid = ref('');
 const selectedInstitution = ref(null);
@@ -117,7 +117,7 @@ function handleEdit(institution: any) {
           :rows="institutions"
           :rowCom="StatusRow"
           :cells="{
-            location: (_: any, row: any) => `${row.city || ''}, ${row.subCity || ''}, ${row.woreda || ''}, ${row.country || ''}`
+            location: (_: any, row: any) => `${row.city || ''}, ${row.subCity || ''}, ${row.address1 || ''}, ${row.country || ''}`
           }"
           :pagination="{
             currentPage,
