@@ -10,6 +10,7 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import contractRequestStatusRow from "../components/contractRequestStatusRow.vue";
 import ActiveInstitutionsDataProvider from "@/features/instution_settings/components/ActiveInstitutionsDataProvider.vue";
 import { createKenemaContracts } from "../api/contractRequestApi";
+import icons from '@/utils/icons';
 
 const router = useRouter();
 const search = ref("");
@@ -17,6 +18,7 @@ const dataProvider = ref(null);
 const selectedPayers = ref([]);
 const allSelected = ref(false);
 const isLoading = ref(false); // Explicit loading state
+const showDropdown = ref(false); // For dropdown menu
 
 // Computed property for selected count
 const selectedCount = computed(() => selectedPayers.value.length);
@@ -58,6 +60,16 @@ function toggleSelectAll() {
   }
   
   allSelected.value = !allSelected.value;
+}
+
+// Toggle dropdown menu
+function toggleDropdown() {
+  showDropdown.value = !showDropdown.value;
+}
+
+// Close dropdown when clicking outside
+function closeDropdown() {
+  showDropdown.value = false;
 }
 
 // Clear all selections
@@ -138,11 +150,33 @@ function handleLimitChange(limit) {
 }
 
 function handleAddInstitution() {
-  router.push("/institutions/add");
+  closeDropdown();
+  openModal("AddPayer", {
+    onAdded: (newInstitution) => {
+      store.add(newInstitution);
+      refreshData();
+      addToast({
+        type: "success",
+        title: "Institution Added",
+        message: `Institution "${newInstitution.institutionName}" has been added successfully`,
+      });
+    },
+  });
+}
+
+function handleImportPayers() {
+  closeDropdown();
+  openModal("payerListImport");
 }
 
 onMounted(() => {
   refreshData();
+  // Add click event listener to close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown-container')) {
+      closeDropdown();
+    }
+  });
 });
 </script>
 
@@ -169,25 +203,88 @@ onMounted(() => {
 
     <template #add-action>
       <div class="flex gap-4">
-        <Button
+        <button
           @click="createContracts"
           :disabled="selectedCount === 0"
           :pending="isLoading"
           class="btn flex justify-center items-center text-center gap-2 rounded-lg h-14 px-8 bg-green-600 text-white hover:bg-green-700"
         >
           <p class="text-base">Create Contracts{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}</p>
-        </Button>
+        </button>
         
-        <Button
-          @click.prevent="handleAddInstitution"
-          class="btn flex justify-center items-center text-center gap-2 rounded-lg h-14 px-8 bg-primary text-white hover:bg-primary-dark"
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 5.8V12.2M12.2 9H5.8M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" 
-                  stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <p class="text-base">Add Payer</p>
-        </Button>
+        <!-- Dropdown container -->
+        <div class="dropdown-container relative">
+          <button
+            @click.stop="toggleDropdown"
+            class="btn flex justify-center items-center text-center gap-2 rounded-lg h-14 px-8 bg-primary text-white hover:bg-primary-dark"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9 5.8V12.2M12.2 9H5.8M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z"
+                stroke="white"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <p class="text-base">Payer Actions</p>
+            <svg 
+              class="w-4 h-4 ml-1" 
+              :class="{ 'transform rotate-180': showDropdown }"
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          
+          <!-- Dropdown menu -->
+          <div 
+            v-if="showDropdown" 
+            class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+          >
+            <div class="py-1" role="menu" aria-orientation="vertical">
+              <button
+                @click="handleAddInstitution"
+                class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                role="menuitem"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M9 5.8V12.2M12.2 9H5.8M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Add Payer
+              </button>
+              <button
+                @click="handleImportPayers"
+                class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                role="menuitem"
+              >
+                <i v-html="icons.add_circle" class="text-gray-700"></i>
+                Import Payers
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 

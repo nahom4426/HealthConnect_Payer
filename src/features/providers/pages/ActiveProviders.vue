@@ -11,7 +11,7 @@ import { changeProviderStatus, deleteProvider } from "../api/providerApi";
 import { addToast } from "@/toast";
 
 import { useApiRequest } from "@/composables/useApiRequest";
-import StatusRow from "@/components/StatusRow.vue";
+import providerStatusRow from "../components/providerStatusRow.vue";
 import { openModal } from "@customizer/modal-x";
 import { useProviders } from "../store/providersStore";
 import icons from "@/utils/icons";
@@ -211,7 +211,7 @@ function handleAddProvider() {
             ],
           }"
           :rows="providers"
-          :rowCom="StatusRow"
+          :rowCom="providerStatusRow"
           :pagination="{
             currentPage,
             itemsPerPage,
@@ -221,7 +221,7 @@ function handleAddProvider() {
           }"
         >
           <template #row>
-            <StatusRow
+            <providerStatusRow
               :rowData="providers"
               :rowKeys="[
                 'providerName',

@@ -327,12 +327,12 @@ defineExpose({
     />
 
     <Input
-      label="Woreda"
+      label="address1"
       name="address1"
       v-model="address1"
       validation="required"
       :attributes="{
-        placeholder: 'Enter Woreda',
+        placeholder: 'Enter address1',
       }"
     />
 

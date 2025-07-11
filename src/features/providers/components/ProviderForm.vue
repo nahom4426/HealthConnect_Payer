@@ -51,7 +51,7 @@ const previewImage = ref('');
 onMounted(() => {
   if (props.initialData && Object.keys(props.initialData).length > 0) {
     providerName.value = props.initialData.providerName || '';
-    threeDigitAcronym.value = props.initialData.providerCode || '';
+    threeDigitAcronym.value = props.initialData.threeDigitAcronym || '';
     category.value = props.initialData.category || '';
     address.value = props.initialData.address1 || '';
     tin.value = props.initialData.tinNumber || '';
@@ -66,24 +66,20 @@ onMounted(() => {
       countryCode.value = matchedCode;
       telephone.value = fullTelephone.slice(matchedCode.length);
     } else {
-      // fallback if code isn't matched
-      countryCode.value = '+251'; // or default
+      countryCode.value = '+251';
       telephone.value = fullTelephone;
     }
 
-    // Handle different logo formats
     if (props.initialData.logoBase64) {
       previewImage.value = props.initialData.logoBase64;
     } else if (props.initialData.logoUrl) {
       previewImage.value = props.initialData.logoUrl;
     } else if (props.initialData.logoPath) {
-      // Construct the full URL for the logo
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
       previewImage.value = `${baseUrl}/provider/logo/${props.initialData.logoPath}`;
     }
   }
 });
-
 
 // File upload handling
 function handleFileUpload(event: Event) {
@@ -145,12 +141,6 @@ function resetForm() {
 }
 
 function handleSubmit() {
-  // For edit mode, logo might be optional
-  if (!props.isEdit && !providerLogo.value) {
-    console.error('Provider logo is required for new providers');
-    return;
-  }
-
   const formData = {
     providerName: providerName.value,
     threeDigitAcronym: threeDigitAcronym.value,
@@ -163,7 +153,7 @@ function handleSubmit() {
     country: 'Ethiopia'
   };
 
-  // Only include logo if it exists (for new providers or if changed)
+  // Only include logo if it exists
   if (providerLogo.value) {
     formData.providerLogo = providerLogo.value;
   }
@@ -200,33 +190,28 @@ const categoryOptions = [
       <!-- Provider Logo -->
       <div class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
-          Provider logo <span v-if="!isEdit" class="text-red-500">*</span>
+          Provider logo
         </label>
-      <div 
-  @dragover="handleDragOver"
-  @dragleave="handleDragLeave"
-  @drop="handleDrop"
-  class="border-[1px] bg-[#F6F7FA] border-dashed border-[#75778B] rounded-md items-center justify-center p-6 flex flex-col cursor-pointer hover:border-primary"
->
-  <div v-if="previewImage" class="mb-4 relative w-full">
-    <img :src="previewImage" alt="Logo preview" class="h-20 w-auto object-contain mx-auto" />
-  </div>
-  
-  <div class="flex items-end justify-end mt-2">
-    <!-- <div class="text-2xl font-bold text-gray-700">HYATT</div>
-    <div class="text-lg text-gray-500 ml-2">WP REGENCY za</div> -->
-    <div class="flex items-end   rounded-md px-3 py-1">
-      <button 
-  v-if="previewImage"
-  type="button" 
-  @click="browseFiles"
-  class="text-xs font-medium text-white bg-[#02676B] ml-2 py-2 px-3 rounded hover:bg-[#014F4F]"
->
-  Change Logo
-</button>
-
-    </div>
-  </div>
+        <div 
+          @dragover="handleDragOver"
+          @dragleave="handleDragLeave"
+          @drop="handleDrop"
+          class="border-[1px] bg-[#F6F7FA] border-dashed border-[#75778B] rounded-md items-center justify-center p-6 flex flex-col cursor-pointer hover:border-primary"
+        >
+          <div v-if="previewImage" class="mb-4 relative w-full">
+            <img :src="previewImage" alt="Logo preview" class="h-20 w-auto object-contain mx-auto" />
+          </div>
+          
+          <div class="flex items-end justify-end mt-2">
+            <button 
+              v-if="previewImage"
+              type="button" 
+              @click="browseFiles"
+              class="text-xs font-medium text-white bg-[#02676B] ml-2 py-2 px-3 rounded hover:bg-[#014F4F]"
+            >
+              Change Logo
+            </button>
+          </div>
 
           <template v-if="!previewImage">
             <p class="text-sm text-[#75778B]">Drag your logo file to start uploading</p>
@@ -245,7 +230,6 @@ const categoryOptions = [
             accept="image/*" 
             class="hidden" 
             @change="handleFileUpload"
-            :required="!isEdit"
           />
         </div>
       </div>
@@ -256,29 +240,29 @@ const categoryOptions = [
           Provider Name <span class="text-red-500">*</span>
         </label>
         <div class="flex w-full gap-2">
-        <Input
-          v-model="threeDigitAcronym"
-          name="threeDigitAcronym"
-          validation="required"
-          :attributes="{
-            placeholder: 'Enter three characters ID ',
-            class: 'pr-4 my-2 bg-[#F9F9FD]',
-            maxlength: 3,
-            pattern: '^[A-Z]{3}$',
-            title: 'Three-digit acronym must be uppercase letters (e.g., ABC)',
-            required: true
-          }"
-        />
-        <Input
-          v-model="providerName"
-          name="providerName"
-          validation="required"
-          :attributes="{
-            placeholder: 'Enter provider\'s legal name',
-             class: 'pr-[30rem] my-2 bg-[#F9F9FD]',
-            required: true
-          }"
-        />
+          <Input
+            v-model="threeDigitAcronym"
+            name="threeDigitAcronym"
+            validation="required"
+            :attributes="{
+              placeholder: 'Enter three characters ID ',
+              class: 'pr-4 my-2 bg-[#F9F9FD]',
+              maxlength: 3,
+              pattern: '^[A-Z]{3}$',
+              title: 'Three-digit acronym must be uppercase letters (e.g., ABC)',
+              required: true
+            }"
+          />
+          <Input
+            v-model="providerName"
+            name="providerName"
+            validation="required"
+            :attributes="{
+              placeholder: 'Enter provider\'s legal name',
+              class: 'pr-[30rem] my-2 bg-[#F9F9FD]',
+              required: true
+            }"
+          />
         </div>
       </div>
       
@@ -302,12 +286,12 @@ const categoryOptions = [
         </div>
         
         <!-- Phone Number -->
-      <div class="space-y-2">
-  <label class="block text-sm font-medium text-[#75778B]">
-    Phone Number <span class="text-red-500">*</span>
-  </label>
-  <div class="flex w-full gap-2">
-     <Select
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-[#75778B]">
+            Phone Number <span class="text-red-500">*</span>
+          </label>
+          <div class="flex w-full gap-2">
+            <Select
               v-model="countryCode"
               name="countryCode"
               :options="['+251', '+1', '+44', '+91']"
@@ -326,9 +310,8 @@ const categoryOptions = [
                 required: true
               }"
             />
-  </div>
-</div>
-
+          </div>
+        </div>
       </div>
       
       <!-- Two column layout -->
@@ -369,7 +352,7 @@ const categoryOptions = [
       <!-- Admin User -->
       <div class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
-         Provider's Email <span class="text-red-500">*</span>
+          Provider's Email <span class="text-red-500">*</span>
         </label>
         <InputEmail
           v-model="email"
@@ -412,8 +395,7 @@ const categoryOptions = [
         :pending="pending"
         :btn-text="isEdit ? 'Update Provider' : 'Add Provider'"
         class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
-        />
-
+      />
     </div>
   </Form>
 </template>
@@ -432,6 +414,3 @@ const categoryOptions = [
   @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5;
 }
 </style>
-
-
-

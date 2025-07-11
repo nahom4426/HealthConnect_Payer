@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useForm } from "@/components/new_form_builder/useForm";
 import Form from "@/components/new_form_builder/Form.vue";
 import Input from "@/components/new_form_elements/Input.vue";
@@ -10,6 +10,13 @@ import ModalFormSubmitButton from "@/components/new_form_builder/ModalFormSubmit
 import { useAuthStore } from "@/stores/auth";
 import FamilyGroup from "../pages/FamilyGroup.vue";
 import FamilyDataProvider from "../components/FamilyDataProvider.vue";
+import { 
+  ethiopianRegions, 
+  citiesByRegion, 
+  subCitiesByCity, 
+  getCitiesByRegion, 
+  getSubCitiesByCity 
+} from '@/features/instution_settings/utils/ethiopianLocations';
 
 // 💡 NEW: import FamilyGroup component
 // import FamilyGroup from "@/components/EmployeePayerGroup/FamilyGroup.vue";
@@ -37,14 +44,41 @@ const dateOfBirth = ref("");
 const employeeId = ref("");
 const phoneNumber = ref("");
 const countryCode = ref("+251");
-const woreda = ref("");
-const kebelle = ref("");
-const state = ref("");
+const woreda = ref(""); // Woreda
+const subcity = ref(""); // Sub City
+const city = ref(""); // City
+const state = ref("Addis Ababa");
 const email = ref("");
 const status = ref("ACTIVE");
 const previewImage = ref("");
 const payerId = ref("");
 const groupUuid = ref(""); // 💡 NEW
+
+// Computed properties for dynamic dropdowns
+const availableCities = computed(() => {
+  return getCitiesByRegion(state.value);
+});
+
+const availableSubCities = computed(() => {
+  return getSubCitiesByCity(city.value);
+});
+
+const isAddisAbaba = computed(() => {
+  return state.value === 'Addis Ababa';
+});
+
+// Watch for state changes to reset city and sub-city
+watch(state, (newState) => {
+  city.value = '';
+  subcity.value = '';
+  woreda.value = '';
+});
+
+// Watch for city changes to reset sub-city
+watch(city, (newCity) => {
+  subcity.value = '';
+  woreda.value = '';
+});
 
 onMounted(() => {
   if (props.initialData && Object.keys(props.initialData).length > 0) {
@@ -60,9 +94,11 @@ onMounted(() => {
     role.value = props.initialData.position || "";
     dateOfBirth.value = props.initialData.birthDate?.split("T")[0] || "";
     employeeId.value = props.initialData.idNumber || "";
-    state.value = props.initialData.state || "";
-    woreda.value = props.initialData.woreda || "";
-    kebelle.value = props.initialData.kebelle || "";
+    state.value = props.initialData.state || "Addis Ababa";
+    city.value = props.initialData.city || ""; // City
+    subcity.value = props.initialData.subcity || ""; // Sub City
+    woreda.value = props.initialData.woreda || ""; // Woreda
+
     email.value = props.initialData.email || "";
     status.value = props.initialData.status || "ACTIVE";
 
@@ -117,8 +153,9 @@ function handleSubmit() {
     idNumber: employeeId.value,
     phone: `${countryCode.value}${phoneNumber.value}`,
     state: state.value,
-    woreda: woreda.value,
-    kebelle: kebelle.value,
+    woreda: woreda.value, // Woreda
+    subcity: subcity.value, // Sub City
+    city: city.value, // City
     email: email.value,
     status: status.value,
     country: "Ethiopia",
@@ -334,39 +371,6 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
           />
         </div>
 
-        <!-- Address -->
-        <div class="py">
-          <Input
-            v-model="state"
-            name="state"
-            label="state"
-            :attributes="{
-              placeholder: 'Enter state',
-            }"
-          />
-        </div>
-           <div class="py">
-          
-          <Input
-            v-model="woreda"
-            label="woreda"
-            name="woreda"
-            :attributes="{
-              placeholder: 'Enter woreda',
-            }"
-          />
-        </div>
-           <div class="py">
-          <Input
-            v-model="kebelle"
-            name="kebelle"
-            label="kebelle"
-            :attributes="{
-              placeholder: 'Enter kebelle',
-            }"
-          />
-        </div>
-
         <!-- Phone Number -->
         <div class="py-1">
           <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -407,6 +411,89 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
               placeholder: 'Enter email',
             }"
           />
+        </div>
+      </div>
+
+      <!-- Address Information -->
+      <div class="border border-[#75778B33] p-5">
+        <h3 class="text-md font-medium text-[#75778B] mb-4">Address Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- State/Region -->
+          <div>
+            <label class="block text-sm font-medium text-[#75778B] mb-1">
+              State/Region 
+            </label>
+            <Select
+              v-model="state"
+              name="state"
+              :options="ethiopianRegions"
+              :attributes="{
+                placeholder: 'Select State/Region',
+              }"
+            />
+          </div>
+          
+          <!-- City -->
+          <div>
+            <label class="block text-sm font-medium text-[#75778B] mb-1">
+              City 
+            </label>
+            <Select
+              v-if="availableCities.length > 0"
+              v-model="city"
+              name="city"
+              :options="availableCities"
+              :attributes="{
+                placeholder: 'Select City',
+              }"
+            />
+            <Input
+              v-else
+              v-model="city"
+              name="city"
+              :attributes="{
+                placeholder: 'Enter City',
+              }"
+            />
+          </div>
+          
+          <!-- Sub City -->
+          <div>
+            <label class="block text-sm font-medium text-[#75778B] mb-1">
+              Sub City 
+            </label>
+            <Select
+              v-if="isAddisAbaba && availableSubCities.length > 0"
+              v-model="subcity"
+              name="subcity"
+              :options="availableSubCities"
+              :attributes="{
+                placeholder: 'Select Sub City',
+              }"
+            />
+            <Input
+              v-else
+              v-model="subcity"
+              name="subcity"
+              :attributes="{
+                placeholder: 'Enter Sub City',
+              }"
+            />
+          </div>
+          
+          <!-- Woreda -->
+          <div>
+            <label class="block text-sm font-medium text-[#75778B] mb-1">
+              Woreda 
+            </label>
+            <Input
+              v-model="woreda"
+              name="woreda"
+              :attributes="{
+                placeholder: 'Enter Woreda',
+              }"
+            />
+          </div>
         </div>
       </div>
 

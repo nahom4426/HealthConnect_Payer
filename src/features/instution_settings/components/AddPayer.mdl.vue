@@ -9,9 +9,9 @@ import { useRouter } from 'vue-router';
 import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref } from "vue";
-import { useInstitutions } from "../store/InstitutionsStore";
+import { institutions } from "../store/InstitutionsStore";
 
-const payersStore = useInstitutions();
+const payersStore = institutions();
 const pending = ref(false);
 const router = useRouter();
 const formDataProvider = ref();
@@ -25,9 +25,6 @@ async function handleSubmit(formValues: any) {
 
     const requiredFields = [
       'payerName',
-      'email',
-      'address',
-      'tinNumber',
       'category',
       'telephone'
     ];
@@ -48,15 +45,15 @@ async function handleSubmit(formValues: any) {
   description: formValues.description || formValues.memo,
  telephone: cleanPhoneNumber(formValues.telephone),
   category: formValues.category,
-  email: formValues.email,
-  address1: formValues.address,
+  email: formValues.email || formValues.payerName+"@gmail.com",
+  address1: formValues.address1 || "",
   address2: formValues.address2 || "",
   address3: formValues.address3 || "",
-  state: formValues.state || "Ethiopia",
+  state: formValues.state || "Addis Ababa",
   country: formValues.country || "Ethiopia",
   latitude: formValues.latitude || 0,
   longitude: formValues.longitude || 0,
-  tinNumber: formValues.tinNumber,
+  tinNumber: formValues.tinNumber || "",
   status: formValues.status || "ACTIVE"
 };
 

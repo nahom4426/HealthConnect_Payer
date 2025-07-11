@@ -89,6 +89,7 @@ const { claimServices: services } = storeToRefs(claimServicesStore); // Destruct
       }"
       :rows="claimServices" 
       :rowCom="StatusRow"
+      
       :pagination="{
         currentPage,
         itemsPerPage,

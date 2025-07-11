@@ -7,17 +7,17 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { useAuthStore } from "@/stores/auth";
 import { toast } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
-import { importInsuredPersons } from "../api/insuredPersonsApi";
-import { insuredMembers } from "../store/insuredPersonsStore";
+import { importPayerPersons } from "../api/institutionSettingsApi";
+import { institutions } from "../store/InstitutionsStore";
 import * as XLSX from 'xlsx'; // You'll need to install this: npm install xlsx
 
 const props = defineProps({
   data: String,
 });
 
-const auth = useAuthStore().auth?.user?.payerUuid;
+// const auth = useAuthStore().auth?.user?.email || "";
 const res = useApiRequest();
-const insuredStore = insuredMembers();
+const insuredStore = institutions();
 
 const fileInput = ref(null);
 const selectedFile = ref(null);
@@ -107,7 +107,7 @@ const importFile = () => {
   fd.append("file", selectedFile.value);
   
   res.send(
-    () => importInsuredPersons({ payerUuid: auth }, fd, {
+    () => importPayerPersons({ }, fd, {
       onUploadProgress: (e) => {
         progress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
       }

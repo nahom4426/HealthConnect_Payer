@@ -8,8 +8,9 @@ import { useUsers } from "../store/userStore";
 import NewFormParent from "../../role/components/NewFormParent.vue";
 import { ref, computed, watch } from "vue";
 import Button from "@/components/Button.vue";
-import UserForm from "../form/userForm.vue";
+
 import { useForm } from "@/components/new_form_builder/useForm";
+import UserForm from "./UserForm.vue";
 
 const route = useRoute();
 const userStore = useUsers();

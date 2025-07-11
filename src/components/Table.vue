@@ -1,6 +1,6 @@
 <script setup>
 import DataTable from "./DataTable.vue";
-import { inject, ref, useAttrs, watch } from "vue";
+import { inject, ref, useAttrs, watch, computed } from "vue";
 import GenericTableRow from "./GenericTableRow.vue";
 import TableRowSkeleton from "./TableRowSkeleton.vue";
 import icons from "@/utils/icons";
@@ -30,7 +30,7 @@ const props = defineProps({
   },
   rows: {
     type: Array,
-    default: [],
+    default: () => [],
   },
   lastCol: { type: Boolean, default: false },
   firstCol: { type: Boolean, default: false },
@@ -45,6 +45,7 @@ const props = defineProps({
     default: TableRowSkeleton,
   },
   pending: Boolean,
+  customActions: Boolean,
 });
 
 function toUpper(str) {
@@ -105,6 +106,16 @@ const active = ref(1);
 function handleRowSelection(payerUuid) {
   emit('select-payer', payerUuid);
 }
+
+// Computed property to check if we have data to display
+const hasData = computed(() => {
+  return props.rows && props.rows.length > 0;
+});
+
+// Computed property to check if we should show the empty state
+const showEmptyState = computed(() => {
+  return !props.pending && !hasData.value;
+});
 </script>
 <template>
   <DataTable
@@ -119,57 +130,63 @@ function handleRowSelection(payerUuid) {
     <template v-if="firstCol" #headerFirst="{ row }">
       <slot name="headerFirst" :row="row" />
     </template>
-    <template v-if="rowCom">
-      <component
-        :is="rowCom"
-        v-bind="{
-          cells: cells,
-          headKeys: spec.head,
-          rowData: rows,
-          rowKeys: spec.row,
-          pending: pending,
-        }"
-        @select-payer="handleRowSelection"
-      />
-    </template>
-    <template v-else>
-      <GenericTableRow
-        @row="(row) => emit('row', row)"
-        :firstCol="props.firstCol"
-        :lastCol="props.lastCol"
-        :head-keys="spec.head"
-        :row-data="rows"
-        :row-keys="spec.row"
-        :cells="cells"
-      >
-        <template v-if="firstCol" #select="{ row }">
-          <slot name="select" :row="row" />
-        </template>
-        <template v-if="lastCol" #lastCol="{ row }">
-          <slot name="lastCol" :row="row" />
-        </template>
+    
+    <!-- Show row component if we have data -->
+    <template v-if="hasData">
+      <template v-if="rowCom">
+        <component
+          :is="rowCom"
+          v-bind="{
+            cells: cells,
+            headKeys: spec.head,
+            rowData: rows,
+            rowKeys: spec.row,
+            pending: pending,
+          }"
+          @select-payer="handleRowSelection"
+        />
+      </template>
+      <template v-else>
+        <GenericTableRow
+          @row="(row) => emit('row', row)"
+          :firstCol="props.firstCol"
+          :lastCol="props.lastCol"
+          :head-keys="spec.head"
+          :row-data="rows"
+          :row-keys="spec.row"
+          :cells="cells"
+        >
+          <template v-if="firstCol" #select="{ row }">
+            <slot name="select" :row="row" />
+          </template>
+          <template v-if="lastCol" #lastCol="{ row }">
+            <slot name="lastCol" :row="row" />
+          </template>
 
-        <template #actions="{ row }">
-          <slot name="actions" :row="row" />
-        </template>
-      </GenericTableRow>
-      <tr v-if="!rows?.length && !pending">
-        <td :colspan="spec.head.length + 1">
-          <slot name="placeholder">
-            <div class="flex flex-col gap-2 items-center">
-              <div
-                class="flex-1 w-full flex justify-center py-5 h-full size-28 *:h-56"
-              >
-                <img src="../assets/img/noData.gif" alt="No Data" />
-              </div>
-              <p class="text-xl">
-                {{ placeholder ? placeholder : "No Data Found" }}
-              </p>
-            </div>
-          </slot>
-        </td>
-      </tr>
+          <template #actions="{ row }">
+            <slot name="actions" :row="row" />
+          </template>
+        </GenericTableRow>
+      </template>
     </template>
+    
+    <!-- Empty state - show when no data and not loading -->
+    <tr v-if="showEmptyState">
+      <td :colspan="spec.head.length + 1">
+        <slot name="placeholder">
+          <div class="flex flex-col gap-2 items-center py-8">
+            <div class="flex-1 w-full flex justify-center py-5 h-full">
+              <img src="../assets/img/noData.gif" alt="No Data" class="h-56" />
+            </div>
+            <p class="text-xl text-gray-600">
+              {{ placeholder ? placeholder : "No Data Found" }}
+            </p>
+          </div>
+        </slot>
+      </td>
+    </tr>
+    
+    <!-- Loading state -->
     <template v-if="pending">
       <component
         :cols="spec.head.length + 1"
@@ -179,8 +196,10 @@ function handleRowSelection(payerUuid) {
       />
     </template>
   </DataTable>
+  
+  <!-- Pagination -->
   <div
-    v-if="!pending && showPagination"
+    v-if="!pending && showPagination && hasData"
     class="flex justify-between p-4 items-center"
   >
     <div class="flex gap-5 items-center">
@@ -197,7 +216,7 @@ function handleRowSelection(payerUuid) {
       </select>
     </div>
     <div class="text-base-clr">
-      Showing {{ rows?.length }} out of {{ totalElements }} records
+      Showing {{ rows?.length || 0 }} out of {{ totalElements || 0 }} records
     </div>
     <div class="flex gap-6 items-center justify-between">
       <div @click="previousPage" class="cursor-pointer">

@@ -3,6 +3,7 @@ import type { AsyncResponse } from "@/types/interface";
 import type { ActiveInstitution } from "../store/InstitutionsStore";
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
+import { getQueryFormObject } from "@/utils/utils";
 
 const api = new ApiService();
 const basePath = '/payer'; // Corrected base path
@@ -95,7 +96,19 @@ export function downloadInstitutionTemplate(): Promise<Blob> {
 }
 
 
-
+export function importPayerPersons(
+  id: Record<string, any> = {},
+  data: FormData,
+  config: Record<string, any> = {}
+): Promise<any> {
+  const qr = getQueryFormObject(id);
+  return api.addAuthenticationHeader().post(`${basePath}/import${qr}`, data, {
+    ...config,
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+}
 
 
 

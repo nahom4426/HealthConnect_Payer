@@ -7,7 +7,7 @@ import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import { ref, onMounted, watch } from "vue";
 import { updateInstitution } from "../api/institutionSettingsApi";
-import { useInstitutions } from "../store/InstitutionsStore";
+import { institutions } from "../store/InstitutionsStore";
 
 const props = defineProps({
   data: {
@@ -21,7 +21,7 @@ const error = ref('');
 const pending = ref(false);
 const payerData = ref({});
 const payerUuid = ref('');
-const payersStore = useInstitutions();
+const payersStore = institutions();
 function cleanPhoneNumber(phone: string): string {
   // Remove a leading 0 after the country code (e.g., +2510xxxx → +251xxxx)
   return phone.replace(/^(\+\d{3})0/, '$1');
@@ -70,7 +70,9 @@ async function handleSubmit(formValues: any) {
        email: formValues.email,
       telephone: cleanPhoneNumber(formValues.telephone),
       category: formValues.category || "",
-      address1: formValues.address || "",
+     address1: formValues.address1 || "",
+     address2: formValues.address2 || "",
+     address3: formValues.address3 || "",
       state: formValues.state || "Ethiopia",
       country: formValues.country || "Ethiopia",
       latitude: 0,

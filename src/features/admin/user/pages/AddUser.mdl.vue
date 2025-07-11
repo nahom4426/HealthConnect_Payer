@@ -2,45 +2,74 @@
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import UserForm from "./UserForm.vue";
-import { useRouter } from 'vue-router';
 import { closeModal } from "@customizer/modal-x";
-import { toasted } from "@/utils/utils";
-import { ref } from "vue";
-import { CreateUser } from '../Api/UserApi';
-import { useUsers } from '../store/userStore';
+import { ref, onMounted } from "vue";
+import { CreateUser } from "../Api/UserApi";
+import { useUsers } from "../store/userStore";
+import { useToast } from '@/toast/store/toast';
 
-const userStore = useUsers();
-const router = useRouter();
+const props = defineProps({
+  data: {
+    type: Object,
+    default: () => ({})
+  }
+});
+
+// Create a reactive reference to the data
+const modalData = ref(props.data || {});
 const formPending = ref(false);
+const error = ref('');
+const userStore = useUsers();
+const { addToast } = useToast();
 
-async function handleSubmit(formValues: any) {
+onMounted(() => {
+  console.log('AddUser modal received data:', modalData.value);
+});
+
+// Handle form submission
+async function handleSubmit(formValues) {
   try {
     formPending.value = true;
+    console.log('Form submitted with values:', formValues);
     
+    // Make sure payerUuid is included
     const userData = {
-      email: formValues.email,
-      password: formValues.password,
-      title: formValues.title,
-      firstName: formValues.firstName,
-      fatherName: formValues.fatherName,
-      grandFatherName: formValues.grandFatherName,
-      gender: formValues.gender,
-      mobilePhone: formValues.mobilePhone,
-      roleUuid: formValues.roleUuid
+      ...formValues,
+      payerUuid: modalData.value.payerUuid || formValues.payerUuid
     };
-
+    
+    console.log('Submitting user data:', userData);
+    
     const result = await CreateUser(userData);
-
+    
     if (result.success) {
+      console.log('User created successfully:', result.data);
+      
+      // Add the new user to the store
       userStore.add(result.data);
-      toasted(true, 'User created successfully');
+      
+      addToast({
+        type: 'success',
+        title: 'Success',
+        message: 'User created successfully'
+      });
+      
+      // Call onUpdated callback if provided
+      if (typeof modalData.value.onUpdated === 'function') {
+        modalData.value.onUpdated(result.data);
+      }
+      
       closeModal();
-      router.push('/Users');
     } else {
       throw new Error(result.error || 'Failed to create user');
     }
-  } catch (error: any) {
-    toasted(false, 'Error', error.message || 'Failed to create user');
+  } catch (error) {
+    console.error('Error creating user:', error);
+    addToast({
+      type: 'error',
+      title: 'Error',
+      message: error.message || 'Failed to create user'
+    });
   } finally {
     formPending.value = false;
   }
@@ -55,11 +84,19 @@ async function handleSubmit(formValues: any) {
       title="Add User" 
       subtitle="To add a new user, please fill out the information in the fields below."
     >
-      <UserForm
-        :pending="formPending"
-        :onSubmit="handleSubmit"
-        :onCancel="() => closeModal()"
-      />
+      <div class="bg-white rounded-lg">
+        <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+          {{ error }}
+        </div>
+        
+        <UserForm
+          :pending="formPending"
+          :onSubmit="handleSubmit"
+          :onCancel="() => closeModal()"
+          :roleName="modalData.roleName"
+          :payerUuid="modalData.payerUuid"
+        />
+      </div>
     </NewFormParent>
   </ModalParent>
 </template>

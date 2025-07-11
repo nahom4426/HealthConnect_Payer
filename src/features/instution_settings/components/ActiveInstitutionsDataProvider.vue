@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePagination } from "@/composables/usePagination";
 import { getActiveInstitutions } from "../api/institutionsApi";
-import { useInstitutions } from "../store/InstitutionsStore";
+import { institutions } from "../store/InstitutionsStore";
 import { watch, computed, onMounted } from "vue";
 import { debounce } from "@/utils/debounce";
 
@@ -12,7 +12,7 @@ const props = defineProps({
   },
 });
 
-const store = useInstitutions();
+const store = institutions();
 
 const pagination = usePagination({
   store: store,

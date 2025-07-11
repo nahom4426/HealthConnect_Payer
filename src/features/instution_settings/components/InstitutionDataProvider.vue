@@ -40,7 +40,7 @@ function fetchData() {
 }
 
 // Initial fetch
-fetchData();
+
 
 // Watch for search changes
 watch(
