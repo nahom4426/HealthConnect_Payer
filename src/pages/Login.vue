@@ -14,20 +14,17 @@ onMounted(() => {
 
 <template>
   <div
-    class="flex flex-col gap-6 md:grid md:grid-cols-5 overflow-y-scroll scrollbar-hide rounded-lg p-6 bg-[#F6F7FA] min-h-screen w-full"
+    class="box-border flex flex-col gap-6 md:grid md:grid-cols-5 scrollbar-hide rounded-lg p-6 bg-[#F6F7FA] h-full w-full"
   >
-    <div class="hidden md:block md:col-span-3 rounded-lg sticy h-screen">
-      <img
-        :src="loginImageUrl"
-        alt="Login background"
-        class="w-full h-full object-cover rounded-2xl"
-      />
+    <div :style="{
+      backgroundImage: 'url(/src/assets/img/login.jpg)'
+    }" class="bg-no-repeat bg-cover hidden md:block md:col-span-3 rounded-lg">
     </div>
 
     <div
-      class="md:col-span-2 overflow-y-auto bg-[#DFF1F1] mr-12 rounded-2xl h-full flex items items-center md:justify-center"
+      class="md:col-span-2 overflow-y-auto bg-[#DFF1F1] rounded-2xl h-full grid place-items-center box-border py-12 grid-cols-1 "
     >
-      <LoginTemp />
+      <LoginTemp class="mx-auto" />
     </div>
   </div>
 </template>

@@ -93,15 +93,15 @@ function validate(setError = true) {
 
   error.value = "";
   for (let key of keys) {
-    if (
-      ![undefined, null].includes(validation[key]?.args) &&
-      ![undefined, null].includes(validation[key]?.message)
-    ) {
-      validation[key] = {
-        args: validation[key],
-        message: null,
-      };
-    }
+    // if (
+    //   ![undefined, null].includes(validation[key]?.args) &&
+    //   ![undefined, null].includes(validation[key]?.message)
+    // ) {
+    //   validation[key] = {
+    //     args: validation[key],
+    //     message: null,
+    //   };
+    // }
 
     if (!validator?.[key]) {
       console.error(

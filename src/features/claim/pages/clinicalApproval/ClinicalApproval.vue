@@ -1,9 +1,7 @@
 <script setup>
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
-import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAndStatusRow.vue";
 import SubmittedClaimDataProvider from "../submittedClaim/components/SubmittedClaimDataProvider.vue";
 import Clinical_Row from "./components/Clinical_Row.vue";
 import { ref } from "vue";
@@ -19,7 +17,7 @@ const pagination = usePagination({
 </script>
 
 <template>
-  <DefaultPage :first="false" placeholder="Search Insured Members">
+  <DefaultPage :first="false" placeholder="">
     <template #first>
       <div
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-base-clr bg-base-clr3"

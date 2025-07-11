@@ -88,15 +88,15 @@ watch(
 
 const nextPage = inject("next", null);
 const previousPage = inject("previous", null);
-const send = inject("send", () => {});
+// const send = inject("send", () => {});
 const sendPagination = inject("sendPagination", () => {});
 
 const page = inject("page", 1);
-const searchTotalPages = inject("searchTotalPages");
+const searchTotalPages = inject("searchTotalPages",null);
 const totalPages = inject("totalPages", 1);
 
 const perPage = inject("perPage", 25);
-const totalElements = inject("totalElements");
+const totalElements = inject("totalElements",null) ;
 const pageChanger = inject("pageChanger", () => {});
 
 const selectedValue = ref(25);

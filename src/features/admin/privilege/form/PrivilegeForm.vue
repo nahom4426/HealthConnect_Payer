@@ -42,7 +42,7 @@ const privilegeType=ref([{
   >
     <Input
       name="privilegeName"
-      validation="required"
+      validation="required|minmax-3,50 (Minimum length is 3 characters.)"
       label="Privilege Name"
       :value="props.privilege?.privilegeName || ''"
       :attributes="{
@@ -51,8 +51,8 @@ const privilegeType=ref([{
       }"
     />
     <Input
-      validation="required"
-      class="col-span-2"
+            validation="required|minmax-3,50 (Minimum length is 3 characters.)"
+
       name="privilegeDescription"
       :value="props.privilege?.privilegeDescription || ''"
 
@@ -66,7 +66,8 @@ const privilegeType=ref([{
       :value="props.privilege?.privilegeCategory || ''"
       name="privilegeCategory"
       label="Privilege Category"
-      validation="required"
+            validation="required|minmax-3,50 (Minimum length is 3 characters.)"
+
       :attributes="{
         placeholder: 'Enter Privilege Category',
        
@@ -77,6 +78,7 @@ const privilegeType=ref([{
    :obj="true"
   :value="props.privilege?.privilegeType"
   name="privilegeType"
+  validation="required"
   label="Privilege Type"
   :options="privilegeType"
   :attributes="{

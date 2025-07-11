@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import UserForm from "./UserForm.vue";
@@ -9,7 +9,6 @@ import { ref, onMounted, watch } from "vue";
 import { updateUserById } from "../Api/UserApi";
 import { useUsers } from "../store/userStore";
 
-// In modal-x, props are passed via the 'data' prop
 const props = defineProps({
   data: {
     type: Object,
@@ -18,7 +17,6 @@ const props = defineProps({
   }
 });
 
-// Initialize the users store
 const usersStore = useUsers();
 
 const error = ref('');
@@ -43,7 +41,7 @@ watch(() => props.data, (newData) => {
   }
 }, { deep: true });
 
-async function handleSubmit(formValues: any) {
+async function handleSubmit(formValues) {
   try {
     pending.value = true;
     error.value = '';

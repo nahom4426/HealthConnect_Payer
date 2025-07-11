@@ -1,38 +1,26 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import ProfileForm from "../components/ProfileForm.vue";
 import SecurityForm from "../components/SecurityForm.vue";
 import Button from "@/components/Button.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { updateProfileData, uploadProfilePicture } from "../api/profileApi";
-import { toasted } from "@/utils/utils";
+import { convertBase64Image, toasted } from "@/utils/utils";
 import { useForm } from "@/components/new_form_builder/useForm";
 import icons from "@/utils/icons";
 
 const auth = useAuthStore();
 
-const profilePicture = ref(auth.auth?.imageData || null);
+const profilePicture = ref(auth.auth?.user?.imageData || null);
 const imageSrc = "/src/assets/img/profile.png";
 
 async function processProfilePicture() {
   if (profilePicture.value && !profilePicture.value.startsWith("data:image/")) {
     profilePicture.value = `data:image/png;base64,${profilePicture.value}`;
+    return
   }
 
-  try {
-    if (profilePicture.value?.startsWith("data:image/jpeg")) {
-      return;
-    }
-
-    // profilePicture.value = await convertBase64Image(
-    //   profilePicture.value,
-    //   "image/jpeg",
-    //   0.85
-    // );
-  } catch (error) {
-    console.error("Error processing image:", error);
-  }
 }
 
 processProfilePicture();
@@ -71,7 +59,7 @@ const handleFileChange = (event) => {
 
           localStorage.setItem(
             "userDetail",
-            JSON.stringify(authStore.auth)
+            JSON.stringify({...(authStore.auth?.user || {})})
           );
 
           toasted(true, "Profile picture updated successfully!");
@@ -119,6 +107,8 @@ function handleUpdateProfile({values}){
     toasted(res.success,'Profile Updated Successfully',res.error)
   })
 }
+
+
 </script>
 <template>
   <div class="max-w-full min-h-full">

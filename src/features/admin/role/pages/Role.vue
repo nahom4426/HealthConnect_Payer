@@ -1,17 +1,11 @@
-<script setup lang="ts">
+<script setup >
 import { useRouter } from 'vue-router';
 import Table from '@/components/Table.vue';
-import { useRoles } from '../store/roleStore';
-import { removeRoleById, getAllRole } from '../Api/RoleApi';
-import { removeUndefined, toasted } from '@/utils/utils';
-import { useApiRequest } from '@/composables/useApiRequest';
-import { usePagination } from '@/composables/usePagination';
-import { openModal } from '@customizer/modal-x';
 import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
 import DefaultPage from "@/components/DefaultPage.vue";
 import icons from "@/utils/icons";
-import RoleStatusRow from '../components/RoleStatusRow.vue';
 import RolesDataProvider from '../components/RolesDataProvider.vue';
+import Dropdown from '@/components/Dropdown.vue';
 
 const router = useRouter();
 
@@ -59,68 +53,43 @@ const router = useRouter();
           ]
         }" 
         :rows="roles"
-        :rowCom="RoleStatusRow"
         :Fallback="TableRowSkeleton"
       >
+      <template #actions="{row}">
+          <Dropdown v-slot="{ setRef, toggleDropdown }">
+        <div
+          @click.prevent="toggleDropdown"
+          class="flex items-center gap-2 px-5 py-3 rounded-lg cursor-pointer"
+        >
+          <button>
+            <i v-html="icons.threeDots"></i>
+          </button>
+        </div>
+        <div
+          class="flex shadow-lg text-base p-2 mt-2 rounded-lg flex-col gap-2 bg-white"
+          :ref="setRef"
+        >
+          <button @click.prevent="$router.push(`/edit_role/${row?.roleUuid}`)"
+            class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+          >
+            <i v-html="icons.edits" />
+            <span>Edit</span>
+          </button>
+
+          <button
+          
+            class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+          >
+            <i v-html="icons.details" />
+            <span>Detal</span>
+          </button>
+          
+        </div>
+      </Dropdown>
+      </template>
          
         </Table>
       </RolesDataProvider>
     </template>
   </DefaultPage>
-  <!-- <DefaultPage v-slot="{ search }">
-    <template #filter>
-      
-    </template> -->
-    <!-- <div class="p-4">
-      <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center gap-2">
-          <span class="p-2 bg-primary/10 rounded">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"
-                fill="#263558" stroke="#263558" stroke-linecap="round" />
-            </svg>
-          </span>
-          <h3>Roles</h3>
-        </div>
-
-        <div class="flex items-center space-x-4">
-          <button @click.prevent="openAddRoleModal"
-            class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white">
-            <i v-html="icons.plus_circle"></i>
-            Add Role
-          </button>
-        </div>
-      </div>
-     
-    </div> -->
-     <!-- <template #default="{ search }">
-      <RolesDataProvider
-        ref="dataProvider"
-        :search="search"
-        v-slot="{ privileges, pending,  }"
-      >
-    
-      <Table 
-        :pending="pagination.pending.value" 
-        :headers="{
-          head: [
-            'Role Name',
-            'Role Description',
-            'Actions',
-          ],
-          row: [
-            'roleName',
-            'roleDescription',
-          ]
-        }" 
-        :rows="rolesStore.roles"
-        :rowCom="RoleStatusRow"
-        :Fallback="TableRowSkeleton"
-      >
-      
-      </Table>
-    </RolesDataProvider>
-</template>
-  </DefaultPage> -->
-</template>
+  </template>

@@ -41,6 +41,13 @@ export function useForm(id, inner = true, childrenName) {
 
       if(!inputs || !(inputs instanceof NodeList)) return false;
 
+      const firstErorEl=[...inputs].find(el=>el.dataset.valid=='false')
+      if(firstErorEl){
+        firstErorEl.focus();
+        firstErorEl.scrollIntoView()
+        return
+        
+      }
       const allValid = [...inputs].every(el => el.dataset['valid'] == 'true')
 
       if(!allValid) return

@@ -58,6 +58,7 @@ function fileSize(file, maxSize, __, message) {
 }
 
 function max(value, maxValue = 0, _, message) {
+  
   if (value.length < maxValue.args) return [true];
   
   return [false, message || `must be less than ${maxValue?.args}`];
@@ -80,6 +81,7 @@ function exactly(value, maxValue = 0, _, message) {
 function minmax(value, minMaxValue, _, message) {
   if (value.length >= minMaxValue[0] && value.length < minMaxValue[1])
     return [true];
+console.log(value, minMaxValue,message);
 
   return [
     false,
@@ -116,6 +118,8 @@ function num(value, limit, _, message) {
 }
 
 function num_minmax(value, limit, _, message) {
+  console.log(limit);
+  
   let regex = /^[0-9]+$/;
   if (limit instanceof Array) {
     if (limit.length == 1) regex = new RegExp(`^[0-9]{${limit[0]}}$`);
@@ -123,6 +127,8 @@ function num_minmax(value, limit, _, message) {
       regex = new RegExp(`^[0-9]{${limit[0]},${limit[1]}}$`);
   }
 
+  console.log(regex);
+  
   if (regex.test(value)) return [true];
 
   return [false, message || `not a valid number`];
@@ -257,6 +263,7 @@ const common = {
   alpha,
   max,
   min,
+  num_minmax,
   num,
   len,
   exact,

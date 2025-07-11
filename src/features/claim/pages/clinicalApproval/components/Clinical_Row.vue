@@ -1,5 +1,4 @@
 <script setup>
-import Button from "@/components/Button.vue";
 import icons from "@/utils/icons";
 import {
   formatCurrency,

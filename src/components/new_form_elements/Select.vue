@@ -13,10 +13,13 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  attributes: {
+    type: Object
+  }
 });
 </script>
 <template>
-  <InputParent v-slot="{ setRef, error, value, attributes, changeValue }">
+  <InputParent :attributes="{...attributes, type: 'text'}" v-slot="{ setRef, error, value, attributes, changeValue }">
     <InputLayout
       :class="$attrs.class + ' relative'"
       :error="error"

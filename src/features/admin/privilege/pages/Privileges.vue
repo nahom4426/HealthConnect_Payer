@@ -3,8 +3,8 @@ import { ref } from "vue";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
 import PrivilegesDataProvider from "../components/PrivilegesDataProvider.vue";
-import StatusRow from "../components/PrivilegeStatusRow.vue";
 import icons from "@/utils/icons";
+import Dropdown from "@/components/Dropdown.vue";
 
 const dataProvider = ref();
 
@@ -46,9 +46,40 @@ const dataProvider = ref();
             row: ['privilegeName', 'privilegeDescription', 'privilegeCategory'],
           }"
           :rows="privileges"
-          :rowCom="StatusRow"
         
         >
+         <template #actions="{row}">
+          <Dropdown v-slot="{ setRef, toggleDropdown }">
+        <div
+          @click.prevent="toggleDropdown"
+          class="flex items-center gap-2 px-5 py-3 rounded-lg cursor-pointer"
+        >
+          <button>
+            <i v-html="icons.threeDots"></i>
+          </button>
+        </div>
+        <div
+          class="flex shadow-lg text-base p-2 mt-2 rounded-lg flex-col gap-2 bg-white"
+          :ref="setRef"
+        >
+          <button @click.prevent="$router.push(`/edit_privilege/${row?.privilegeUuid}`)"
+            class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+          >
+            <i v-html="icons.edits" />
+            <span>Edit</span>
+          </button>
+
+          <button
+          
+            class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+          >
+            <i v-html="icons.details" />
+            <span>Detal</span>
+          </button>
+          
+        </div>
+      </Dropdown>
+      </template>
          
         </Table>
       </PrivilegesDataProvider>

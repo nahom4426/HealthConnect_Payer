@@ -17,38 +17,38 @@ const authStore = useAuthStore();
           validation="required"
           :value="authStore.auth?.user?.firstName"
           name="firstName"
-           :attributes="{
-          placeholder: 'Enter your First Name',
-        }"
-          
+          :attributes="{
+            placeholder: 'Enter your First Name',
+          }"
         />
         <Input
           label="Father’s Name"
           :value="authStore.auth?.user?.fatherName"
           validation="required"
           name="fatherName"
-           :attributes="{
-          placeholder: 'Enter your Father’s Name',
-        }"
-        /><Input
+          :attributes="{
+            placeholder: 'Enter your Father’s Name',
+          }"
+        />
+        <Input
           label="Grandfather’s Name"
           :value="authStore.auth?.user?.grandFatherName"
           validation="required"
           name="grandFatherName"
-           :attributes="{
-          placeholder: 'Enter your Grandfather’s Name',
-        }"
+          :attributes="{
+            placeholder: 'Enter your Grandfather’s Name',
+          }"
         />
-        <Select label="Gender"
-            name="gender"
-            :options="['MALE','FEMALE']"
-            :attributes="{
-                type:'text',
-                placeholder:'Enter Your Gender'
-            }"
-            :value="authStore.auth?.user?.gender"
-
-            />
+        <Select
+          label="Gender"
+          name="gender"
+          :options="['MALE', 'FEMALE']"
+          :attributes="{
+            type: 'text',
+            placeholder: 'Enter Your Gender',
+          }"
+          :value="authStore.auth?.user?.gender"
+        />
       </div>
       <div
         class="border border-base-clr/20 grid grid-cols-2 gap-6 rounded-md p-5"
@@ -58,18 +58,18 @@ const authStore = useAuthStore();
           :value="authStore.auth?.user?.mobilePhone"
           validation="required"
           name="phone"
-           :attributes="{
-          placeholder: 'Enter your phone number',
-        }"
+          :attributes="{
+            placeholder: 'Enter your phone number',
+          }"
         />
         <Input
           label="Email"
           :value="authStore.auth?.user?.email"
           validation="required"
           name="email"
-           :attributes="{
-          placeholder: 'Enter your email',
-        }"
+          :attributes="{
+            placeholder: 'Enter your email',
+          }"
         />
       </div>
     </Form>

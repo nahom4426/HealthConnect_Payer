@@ -11,18 +11,9 @@ const profilePicture=ref(authStore.auth?.user?.imageData)
 async function processProfilePicture() {
   if (profilePicture.value!=null&&!profilePicture.value.startsWith("data:image/") ) {
     profilePicture.value = `data:image/png;base64,${authStore.auth?.user?.imageData}`;
+    return
   }
-  try {
-    if (profilePicture.value.startsWith("data:image/jpeg")) {
-      return;
-    }
-
-    profilePicture.value = await convertBase64Image(
-      profilePicture.value,
-      "image/jpeg",
-      0.85
-    );
-  } catch (error) {}
+  
 }
 processProfilePicture();
 
@@ -98,7 +89,7 @@ const props = defineProps({
          
           </div>
           <div class="flex flex-col">
-            <span class="text-sm font-normal">{{
+            <span class="text-sm font-bold">{{
               authStore.auth.user?.firstName +
                 " " +
                 authStore.auth.user?.fatherName || ""
@@ -107,7 +98,7 @@ const props = defineProps({
               v-if="authStore.auth.user"
               class="text-xs px-2.5 py-1 rounded-full font-medium"
             >
-              {{ authStore.auth?.user?.companyName || ''}}
+              {{ authStore.auth?.user?.companyName || authStore.auth?.user?.roleName || ''}}
             </span>
             
           </div>

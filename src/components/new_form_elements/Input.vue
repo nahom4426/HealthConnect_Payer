@@ -1,28 +1,29 @@
 <script setup>
 import InputParent from "../new_form_builder/InputParent.vue";
-import InputLayout from "./NewInputLayout.vue";
+import NewInputLayout from "./NewInputLayout.vue";
 
 const props = defineProps({
   focus: {
     type: Boolean,
     default: false
   },
+  label: String,
+  attributes: [String, Object]
 })
 </script>
 <template>
-  <InputParent v-slot="{ setRef, error, value, changeValue }">
-    <InputLayout :error="error" :label="$attrs?.label">
+  <InputParent :attributes="attributes" v-slot="{ setRef, error, value, changeValue }">
+    <NewInputLayout :error="error" :label="label">
       <div class="flex w-full ">
         <slot class="" name="left" />
         <input
           v-focus="focus"
           :ref="setRef"
-      
           v-bind="$attrs"
           :value="value"
           @input="changeValue($event.target.value)"
         />
       </div>
-    </InputLayout>
+    </NewInputLayout>
   </InputParent>
 </template>

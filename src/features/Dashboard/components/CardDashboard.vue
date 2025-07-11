@@ -3,24 +3,21 @@ import { useAuthStore } from "@/stores/auth";
 import icons from "@/utils/icons";
 import { convertBase64Image } from "@/utils/utils";
 import { ref } from "vue";
-const profilePicture = ref("");
 const authStore = useAuthStore();
-async function processProfilePicture() {
-  if (!profilePicture.value.startsWith("data:image/")) {
-    profilePicture.value = `data:image/png;base64,${authStore.auth?.user?.logo}`;
-  }
-  try {
-    if (profilePicture.value.startsWith("data:image/jpeg")) {
-      return;
-    }
 
-    profilePicture.value = await convertBase64Image(
-      profilePicture.value,
-      "image/jpeg",
-      0.85
-    );
-  } catch (error) {}
+const profilePicture = ref(authStore.auth?.user?.logo);
+const companyLogo='/src/assets/img/companyLogo.png'
+
+
+async function processProfilePicture() {
+  if (profilePicture.value && !profilePicture.value.startsWith("data:image/")) {
+    profilePicture.value = `data:image/png;base64,${profilePicture.value}`;
+    return
+  }
+
+ 
 }
+
 processProfilePicture();
 </script>
 
@@ -47,7 +44,7 @@ processProfilePicture();
       >
         <img
           class="absolute w-[9rem] top- h-[10rem]"
-          :src="profilePicture"
+          :src="profilePicture || companyLogo"
           alt="Logo"
         />
       </div>

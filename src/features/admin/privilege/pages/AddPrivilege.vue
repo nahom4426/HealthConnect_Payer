@@ -44,7 +44,7 @@ function create({ values, reset }) {
 
 </script>
 <template>
- <div class=" bg-white p-4 rounded-xl space-y-6">
+ <div class=" bg-white p-4 rounded-xl space-y-6 box-border">
   <h1 class=" border-b font-semibold p-4">Add privilege</h1>
   <PrivilegeForm/>
   <div
@@ -57,7 +57,7 @@ function create({ values, reset }) {
   </div>
   <Button
     size="md"
-    class="flex justify-center w-full items-center mt-3 gap-3 p-4 text-white bg-primary"
+    class="flex justify-center w-full items-center mt-3 gap-3  box-border text-white bg-primary"
     :pending="req.pending.value"
     @click.prevent="submit(create)"
   >

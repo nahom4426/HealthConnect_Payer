@@ -15,7 +15,7 @@ function validationKeys(validation) {
 
     const [params, ...messages] = args.split(" ");
 
-    if ((params && params.includes(",")) || (params && !params.includes("("))) {
+    if ((params && params.includes(","))) {
       const arg = params?.split(",") || true;
       const message = messages.join(" ").replace(/[()]/g, "");
 
@@ -29,13 +29,7 @@ function validationKeys(validation) {
               args: arg,
               message,
             };
-    } else if (params && params.includes("(")) {
-      const message = [params, ...messages].join(" ").replace(/[()]/g, "");
-      state[name] = {
-        args: null,
-        message,
-      };
-    } else {
+    }  else {
       state[name] = {
         args: true,
         message: null,

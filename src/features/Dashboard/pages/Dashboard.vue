@@ -187,7 +187,6 @@ onMounted(() => {
           <p class="font-semibold text-[#373946]">Top Providers</p>
           <Table
             :showPagination="false"
-            :pending="pending"
             :headers="{
               head: ['Name', 'TotalClaims', 'Sales'],
               row: ['status', 'totalClaim', 'sales'],

@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { PropType, ref, computed, onMounted } from 'vue';
+<script setup >
+import {  ref, computed, onMounted } from 'vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import InputPassword from '@/components/new_form_elements/InputPassword.vue';
 import Select from '@/components/new_form_elements/Select.vue';
@@ -9,7 +9,7 @@ import Spinner from '@/components/Spinner.vue';
 import InputLayout from '@/components/new_form_elements/NewInputLayout.vue';
 const props = defineProps({
   initialData: {
-    type: Object as PropType<any>,
+    type: Object,
     default: () => ({})
   },
   isEdit: {
@@ -21,15 +21,15 @@ const props = defineProps({
     default: false
   },
   onSubmit: {
-    type: Function as PropType<(values: any) => void>,
+    type: Function,
     required: true
   },
   onCancel: {
-    type: Function as PropType<() => void>,
+    type: Function,
     required: true
   },
   roles: {
-    type: Array as PropType<any[]>,
+    type: Array ,
     default: () => []
   }
 });
@@ -46,7 +46,7 @@ const mobilePhone = ref('');
 const roleUuid = ref('');
 
 // Role fetching state
-const roles = ref<any[]>([]);
+const roles = ref([]);
 const fetchRolesPending = ref(false);
 const rolesError = ref<string | null>(null);
 
@@ -152,24 +152,7 @@ function handleSubmit() {
         />
       </div>
 
-      <!-- Password -->
-      <!-- <div class="space-y-2">
-        <label class="block text-sm font-medium text-[#75778B]">
-          Password <span v-if="!isEdit" class="text-red-500">*</span>
-        </label>
-        <InputPassword
-          v-model="password"
-          name="password"
-          :validation="isEdit ? '' : 'required'"
-          :attributes="{
-            placeholder: 'Enter password',
-            required: !isEdit,
-            autocomplete: 'new-password'
-          }"
-        />
-      </div> -->
-
-      <!-- Title -->
+     
       <div class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
           Title <span class="text-red-500">*</span>
@@ -187,7 +170,7 @@ function handleSubmit() {
       </div>
 
       <!-- First Name -->
-      <div class="space-y-2">
+      <div  class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
           First Name <span class="text-red-500">*</span>
         </label>

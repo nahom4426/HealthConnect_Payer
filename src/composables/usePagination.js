@@ -54,12 +54,13 @@ export function usePagination(options = {}) {
   }
 
   function fetch(next = true, current = false, cache = false) {
+
     if (
       req.pending.value ||
       (next && pagination.done.value) ||
       pagination.page.value >= pagination.totalPages.value
     )
-      console.log("jjj");
+      {console.log("jjj");}
 
     req.send(
       () => paginationOptions.value.cb(getPaginationData(next, current)),
