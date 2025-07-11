@@ -49,26 +49,31 @@ const goBack = () => {
 
 </script>
 <template>
-< <div class=" bg-white rounded-xl pb-8  h-full flex flex-col gap-6 justify-between">
-    <div class="">
-      <h1 class=" font-semibold border-b p-4 ">Update Role</h1>
+<NewFormParent
+    :is-modal="false"
+    size="auto "
+    class="flex justify-center h-full pb-6 bg-white"
+    title="Update Role"
+  >
     <PrivilegesDataProvider :pre-page="500" v-slot="{ privileges, pending }">
       <RoleForm v-if="!pending" :privileges="privileges" :roles="roleStore" />
       <p v-else>Loading...</p>
     </PrivilegesDataProvider>
-    </div>
-    
-    <Button
-      size="sm"
-      type="primary"
-      class="flex justify-center  items-center mt-3 gap-3 p-2 bg-primary"
-      :pending="req.pending.value"
-      @click.prevent="submit(update)"
-    >
-      <!-- <i class="pb-[3px]" v-html="icons.plus" /> -->
-      Update Role
-    </Button>
-  </div>
+    <template #bottom>
+
+        <Button
+          size="sm"
+          type="primary"
+          class="flex justify-center  items-center mt-3 gap-3 p-2 bg-primary"
+          :pending="req.pending.value"
+          @click.prevent="submit(update)"
+        >
+          <!-- <i class="pb-[3px]" v-html="icons.plus" /> -->
+          Update Role
+        </Button>
+    </template>
+  
+  </NewFormParent>
  
 
 </template>
