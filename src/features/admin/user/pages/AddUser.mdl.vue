@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import UserForm from "./UserForm.vue";
@@ -15,7 +15,6 @@ const props = defineProps({
   }
 });
 
-// Create a reactive reference to the data
 const modalData = ref(props.data || {});
 const formPending = ref(false);
 const error = ref('');

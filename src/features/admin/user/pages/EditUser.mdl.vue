@@ -16,10 +16,10 @@ const props = defineProps({
   }
 });
 
-const usersStore = useUsers();
-
-const error = ref('');
+const userUuid = ref(props.data?.userUuid || '');
+const userData = ref(props.data?.user || {});
 const pending = ref(false);
+const error = ref('');
 const userStore = useUsers();
 const { addToast } = useToast();
 const req = useApiRequest();
@@ -32,14 +32,7 @@ onMounted(async () => {
   }
 });
 
-watch(() => props.data, (newData) => {
-  if (newData) {
-    userUuid.value = newData.userUuid || '';
-    userData.value = newData.user || {};
-  }
-}, { deep: true });
-
-async function handleSubmit(formValues) {
+async function fetchUserData() {
   try {
     pending.value = true;
     
