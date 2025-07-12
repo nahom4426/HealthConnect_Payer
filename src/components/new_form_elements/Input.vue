@@ -13,7 +13,7 @@ const props = defineProps({
 </script>
 <template>
   <InputParent :attributes="attributes" v-slot="{ setRef, error, value, changeValue }">
-    <NewInputLayout :error="error" :label="label">
+    <NewInputLayout :error="error"  :label="label">
       <div class="flex w-full ">
         <slot class="" name="left" />
         <input

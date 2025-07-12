@@ -1,13 +1,15 @@
-<script setup >
-import {  ref, computed, onMounted } from 'vue';
+<script setup>
+import { PropType, ref, computed, onMounted } from 'vue';
 import Input from '@/components/new_form_elements/Input.vue';
+import InputPassword from '@/components/new_form_elements/InputPassword.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Form from '@/components/new_form_builder/Form.vue';
 import { getAllRole } from '../../role/Api/RoleApi';
+import Spinner from '@/components/Spinner.vue';
 import InputLayout from '@/components/new_form_elements/NewInputLayout.vue';
 const props = defineProps({
   initialData: {
-    type: Object,
+    type: Object ,
     default: () => ({})
   },
   isEdit: {
@@ -19,137 +21,80 @@ const props = defineProps({
     default: false
   },
   onSubmit: {
-    type: Function,
+    type: Function ,
     required: true
   },
   onCancel: {
-    type: Function,
+    type: Function ,
     required: true
   },
-  roleName: {
-    type: String,
-    default: ''
-  },
-  payerUuid: {
-    type: String,
-    default: ''
+  roles: {
+    type: Array ,
+    default: () => []
   }
 });
 
+// Form data
+const email = ref('');
+const password = ref('');
+const title = ref('');
+const firstName = ref('');
+const fatherName = ref('');
+const grandFatherName = ref('');
+const gender = ref('');
+const mobilePhone = ref('');
+const roleUuid = ref('');
 
-const formEl = ref(null);
-
-
-  
-  fetchRoles();
-
-const roleDisabled = ref(false);
-
+// Role fetching state
 const roles = ref([]);
 const fetchRolesPending = ref(false);
-const rolesError = ref(null);
+const rolesError = ref<string | null>(null);
 
+// Role options computation
 const roleOptions = computed(() => {
-  if (!roles.value) return [];
-  
-  const rolesArray = roles.value.content || roles.value;
-  
-  if (!Array.isArray(rolesArray)) {
-    console.error('Roles is not an array:', roles.value);
-    return [];
-  }
-  
-  return rolesArray.map(role => ({
+  return roles.value.map(role => ({
     label: role.roleName,
     value: role.roleUuid
   }));
 });
 
 
+// Fetch roles function
 async function fetchRoles() {
-  console.log('Fetching roles, looking for:', props.roleName);
-  fetchRolesPending.value = true;
-  
   try {
-    const response = await getAllRole();
+    fetchRolesPending.value = true;
+    rolesError.value = null;
     
-    if (response.success) {
-      roles.value = response.data || [];
-      console.log('Fetched roles:', roles.value);
-      
-      if (props.roleName) {
-        
-        const rolesArray = roles.value.content || roles.value;
-        
-        if (!Array.isArray(rolesArray)) {
-          console.error('Roles is not an array:', roles.value);
-          return;
-        }
-       
-        const payerNameMatch = props.roleName.match(/^PA_(.+)_Manager$/);
-        const payerName = payerNameMatch ? payerNameMatch[1] : null;
-        
-        let matchingRole = null;
-        
-        if (payerName) {
-                    matchingRole = rolesArray.find(role => 
-            role.roleName === props.roleName
-          );
-          
-                     if (!matchingRole) {
-            matchingRole = rolesArray.find(role => 
-              role.roleName && role.roleName.includes(payerName)
-            );
-          }
-        }
-        
-                 if (!matchingRole) {
-          console.log('No match found using payer name, trying more general approach');
-          
-                     matchingRole = rolesArray.find(role => 
-            role.roleName === props.roleName
-          );
-          
-                     if (!matchingRole) {
-            const normalizedRoleName = props.roleName.toLowerCase();
-            matchingRole = rolesArray.find(role => 
-              role.roleName && role.roleName.toLowerCase() === normalizedRoleName
-            );
-          }
-          
-                     if (!matchingRole) {
-            console.log('No exact match found, trying partial match');
-            matchingRole = rolesArray.find(role => 
-              role.roleName && 
-              (role.roleName.includes(props.roleName) || 
-               props.roleName.includes(role.roleName))
-            );
-          }
-        }
-        
-        if (matchingRole) {
-          console.log('Found matching role:', matchingRole);
-          roleUuid.value = matchingRole.roleUuid;
-                     roleDisabled.value = true;
-        } else {
-          console.log('No matching role found for:', props.roleName);
-          console.log('Available roles:', rolesArray.map(r => r.roleName).join(', '));
-        }
-      }
-    } else {
-      console.error('Failed to fetch roles:', response.error);
+    const response = await getAllRole({ page: 1, limit: 500 });
+    
+    if (!response?.data?.content || !Array.isArray(response.data.content)) {
+      throw new Error('Invalid data format: missing content array');
     }
-  } catch (error) {
-    console.error('Error fetching roles:', error);
+
+    roles.value = response.data.content.map(item => ({
+      roleUuid: item.roleUuid,
+      roleName: item.roleName,
+      roleDescription: item.roleDescription || '',
+      privilegeList: item.privilegeList || []
+    }));
+
+    if (roles.value.length === 0) {
+      rolesError.value = 'No roles available';
+    }
+  } catch (err) {
+    rolesError.value = 'Failed to load roles. Please try again.';
   } finally {
     fetchRolesPending.value = false;
   }
 }
 
- const titleOptions = ['Mr', 'Ms.', 'Dr.', 'Prof'];
+// Title options
+const titleOptions = ['Mr', 'Ms.', 'Dr.', 'Prof'];
 const genderOptions = ['Female', 'Male'];
 
-  onMounted(async () => {
+// Initialize form data from props
+onMounted(async () => {
+  // Fetch roles when component mounts
   await fetchRoles();
 
   if (props.initialData && Object.keys(props.initialData).length > 0) {
@@ -159,30 +104,9 @@ const genderOptions = ['Female', 'Male'];
     firstName.value = props.initialData.firstName || '';
     fatherName.value = props.initialData.fatherName || '';
     grandFatherName.value = props.initialData.grandFatherName || '';
-    
-        if (props.initialData.gender) {
-  gender.value = props.initialData.gender.charAt(0).toUpperCase() + 
-                 props.initialData.gender.slice(1).toLowerCase();
-}
+    gender.value = props.initialData.gender || '';
     mobilePhone.value = props.initialData.mobilePhone || '';
-    
-         if (props.initialData.roleUuid) {
-      roleUuid.value = props.initialData.roleUuid;
-    } 
-         else if (props.initialData.roleName && roles.value) {
-      const rolesArray = roles.value.content || roles.value;
-      
-      if (Array.isArray(rolesArray)) {
-        const matchingRole = rolesArray.find(role => 
-          role.roleName === props.initialData.roleName
-        );
-        
-        if (matchingRole) {
-          roleUuid.value = matchingRole.roleUuid;
-          console.log('Found matching role by name:', matchingRole);
-        }
-      }
-    }
+    roleUuid.value = props.initialData.roleUuid || '';
   }
 });
 
@@ -228,7 +152,24 @@ function handleSubmit() {
         />
       </div>
 
-     
+      <!-- Password -->
+      <!-- <div class="space-y-2">
+        <label class="block text-sm font-medium text-[#75778B]">
+          Password <span v-if="!isEdit" class="text-red-500">*</span>
+        </label>
+        <InputPassword
+          v-model="password"
+          name="password"
+          :validation="isEdit ? '' : 'required'"
+          :attributes="{
+            placeholder: 'Enter password',
+            required: !isEdit,
+            autocomplete: 'new-password'
+          }"
+        />
+      </div> -->
+
+      <!-- Title -->
       <div class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
           Title <span class="text-red-500">*</span>
@@ -246,7 +187,7 @@ function handleSubmit() {
       </div>
 
       <!-- First Name -->
-      <div  class="space-y-2">
+      <div class="space-y-2">
         <label class="block text-sm font-medium text-[#75778B]">
           First Name <span class="text-red-500">*</span>
         </label>
@@ -331,30 +272,33 @@ function handleSubmit() {
         <label class="block text-sm font-medium text-[#75778B]">
           Role <span class="text-red-500">*</span>
         </label>
-        <InputLayout>
-          <select
-            v-model="roleUuid"
-            name="roleUuid"
-            required
-            :disabled="roleDisabled"
-            class="custom-input"
-          >
-            <option value="" disabled>
-              {{ roleOptions.length ? 'Select role' : 'No roles available' }}
-            </option>
-            <option
-              v-for="option in roleOptions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
-        </InputLayout>
-        
-        <p v-if="roleDisabled" class="mt-1 text-xs text-blue-500">
-          This role is automatically assigned and cannot be changed.
-        </p>
+    <InputLayout
+ 
+ 
+>
+  <select
+    v-model="roleUuid"
+    name="roleUuid"
+    required
+    :disabled="!roleOptions.length"
+    class="custom-input"
+  >
+    <option value="" disabled>
+      {{ roleOptions.length ? 'Select role' : 'No roles available' }}
+    </option>
+    <option
+      v-for="option in roleOptions"
+      :key="option.value"
+      :value="option.value"
+    >
+      {{ option.label }}
+    </option>
+  </select>
+</InputLayout>
+
+
+
+        <p v-if="rolesError" class="mt-2 text-sm text-red-600">{{ rolesError }}</p>
       </div>
     </div>
 
@@ -370,10 +314,9 @@ function handleSubmit() {
       </button>
       <button
         type="submit"
-        class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-2 rounded-lg flex items-center justify-center"
-        :disabled="pending"
+        class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-2 rounded-lg"
+        :disabled="pending || fetchRolesPending"
       >
-        <span v-if="pending" class="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
         {{ isEdit ? 'Update User' : 'Add User' }}
       </button>
     </div>

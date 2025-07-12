@@ -153,6 +153,8 @@ function alpha(value, limit, _, message) {
 }
 
 function equalTo(value, name, formid, message) {
+  console.log(value, name,formid,message);
+  
   let form = document.querySelector("#" + formid);
   if (form[name.args].value == value) return [true];
 

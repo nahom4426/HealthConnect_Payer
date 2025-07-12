@@ -57,10 +57,11 @@ function handleChangePassword({ values }) {
           placeholder: 'Enter new password',
         }"
       />
+        <!-- validation="required|equalTo-newPassword" -->
+
       <InputPassword
         name="confirmPassword"
         label="Confirm Password"
-        validation="required|equalTo-newPassword"
         :attributes="{
           placeholder: 'Reenter your new password',
         }"
