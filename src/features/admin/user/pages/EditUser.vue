@@ -6,7 +6,7 @@ import { getAllRole } from "../../role/Api/RoleApi";
 import { allRequest, toasted } from "@/utils/utils";
 import { useUsers } from "../store/userStore";
 import NewFormParent from "../../role/components/NewFormParent.vue";
-import { ref, computed, watch } from "vue";
+import { ref, } from "vue";
 import Button from "@/components/Button.vue";
 
 import { useForm } from "@/components/new_form_builder/useForm";
@@ -22,7 +22,6 @@ const router = useRouter();
 const userReq = useApiRequest();
 const updateReq = useApiRequest();
 
-// Create refs to store the API response data
 const userData = ref(null);
 const rolesData = ref([]);
 
@@ -48,7 +47,7 @@ userReq.send(
               roleName: role.roleName || role.name || "",
             };
           })
-          .filter((role) => role.roleUuid && role.roleName); // Filter out invalid roles
+          .filter((role) => role.roleUuid && role.roleName); 
 
       }
     }

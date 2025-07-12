@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { useApiRequest } from '@/composables/useApiRequest';
 import { fetchUserFilesView } from '../Api/UserApi';
 import { ref } from 'vue';
@@ -10,7 +10,7 @@ const props = defineProps({
         required: true,
     }
 })
-
+   
 const req = useApiRequest();
 const src = ref('')
 req.send(

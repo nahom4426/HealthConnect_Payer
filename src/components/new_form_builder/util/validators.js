@@ -81,7 +81,6 @@ function exactly(value, maxValue = 0, _, message) {
 function minmax(value, minMaxValue, _, message) {
   if (value.length >= minMaxValue[0] && value.length < minMaxValue[1])
     return [true];
-console.log(value, minMaxValue,message);
 
   return [
     false,
@@ -98,7 +97,7 @@ function min(value, minValue = 0, _, message) {
 
 function email(value, _, __, message) {
   if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value))
-    return [true];
+    return [true]; 
 
   return [false, message || `not a valid email`];
 }
@@ -118,7 +117,6 @@ function num(value, limit, _, message) {
 }
 
 function num_minmax(value, limit, _, message) {
-  console.log(limit);
   
   let regex = /^[0-9]+$/;
   if (limit instanceof Array) {
@@ -155,6 +153,8 @@ function alpha(value, limit, _, message) {
 }
 
 function equalTo(value, name, formid, message) {
+  console.log(value, name,formid,message);
+  
   let form = document.querySelector("#" + formid);
   if (form[name.args].value == value) return [true];
 

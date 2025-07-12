@@ -15,7 +15,6 @@ const props = defineProps({
   }
 });
 
-// Create a reactive reference to the data
 const modalData = ref(props.data || {});
 const formPending = ref(false);
 const error = ref('');

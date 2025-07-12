@@ -3,7 +3,6 @@ import Table from '@/components/Table.vue';
 import { useUserStore } from '../store/userStore';
 import { getAllUser } from '../Api/UserApi';
 import UserStatusRow from '../components/statusrow.vue';
-import { useApiRequest } from '@/composables/useApiRequest';
 import { usePagination } from '@/composables/usePagination';
 import { openModal } from '@customizer/modal-x';
 import TableRowSkeleton from '@/components/TableRowSkeleton.vue';

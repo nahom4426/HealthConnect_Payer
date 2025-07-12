@@ -35,16 +35,33 @@ function toggleSidebar(status) {
 }
 
 const filteredNavs = computed(() => {
-  const privileges = authStore.user?.privileges || [];
+  const privileges = authStore.user?.authorities || [];
+  const userRole = authStore.user?.roleName;
 
-  const hasAccess = (path) =>
-    privileges.some((p) => p.toLowerCase().includes(path.toLowerCase()));
+  const hasAccess = (path, requiredPrivileges) => {
+    if (!requiredPrivileges || requiredPrivileges.length === 0) return true;
+    
+    // Super Admin or user with All Privileges can access everything
+    if (userRole === "Super Admin" || privileges.includes("All Privileges")) {
+      return true;
+    }
+    
+    // If user has no authorities and privileges are required, deny access
+    if (privileges.length === 0) {
+      return false;
+    }
+    
+    // Check if user has any of the required privileges
+    return requiredPrivileges.some((priv) => 
+      privileges.includes(`ROLE_${priv}`)
+    );
+  };
 
   return navs
     .map((item) => {
       if (item.navs) {
         const filteredChildren = item.navs.filter((child) =>
-          hasAccess(child.path)
+          hasAccess(child.path, child.privilege)
         );
         if (filteredChildren.length) {
           return {
@@ -54,7 +71,7 @@ const filteredNavs = computed(() => {
         }
         return null;
       } else {
-        return hasAccess(item.path) ? item : null;
+        return hasAccess(item.path, item.privilege) ? item : null;
       }
     })
     .filter(Boolean);

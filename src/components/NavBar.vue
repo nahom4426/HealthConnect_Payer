@@ -3,11 +3,11 @@ import icons from "@/utils/icons";
 import Dropdown from "./Dropdown.vue";
 import { useAuthStore } from "@/stores/auth";
 import { ref, computed } from "vue";
-import { convertBase64Image } from "@/utils/utils";
-const authStore = useAuthStore();
-const imageSrc = "/src/assets/img/profile.png";
+import imageSrc from '@/assets/img/profile.png'
 
-const profilePicture=ref(authStore.auth?.user?.imageData)
+const authStore = useAuthStore();
+
+const profilePicture=ref(authStore.auth?.user?.imageData || null)
 async function processProfilePicture() {
   if (profilePicture.value!=null&&!profilePicture.value.startsWith("data:image/") ) {
     profilePicture.value = `data:image/png;base64,${authStore.auth?.user?.imageData}`;

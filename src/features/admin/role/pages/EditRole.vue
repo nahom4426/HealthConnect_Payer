@@ -25,10 +25,13 @@ if (!Object.keys(role.value).length) {
         (res) => {
             if (res.success) {
                 role.value = res.data;
+                
             }
         }
     );
 }
+console.log(role.value);
+
 
 function update({ values }) {
     updateReq.send(
@@ -43,9 +46,6 @@ function update({ values }) {
     );
 }
 
-const goBack = () => {
-    router.go(-1);
-}
 
 </script>
 <template>
@@ -56,9 +56,11 @@ const goBack = () => {
     title="Update Role"
   >
     <PrivilegesDataProvider :pre-page="500" v-slot="{ privileges, pending }">
-      <RoleForm v-if="!pending" :privileges="privileges" :roles="roleStore" />
+      <RoleForm v-if="!pending" :selectPrivilege="role?.privilegeList" :privileges="privileges" :roles="roleStore" />
       <p v-else>Loading...</p>
     </PrivilegesDataProvider>
+      {{ privileges }}
+
     <template #bottom>
 
         <Button

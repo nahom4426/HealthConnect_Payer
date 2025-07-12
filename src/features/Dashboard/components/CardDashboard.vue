@@ -3,10 +3,11 @@ import { useAuthStore } from "@/stores/auth";
 import icons from "@/utils/icons";
 import { convertBase64Image } from "@/utils/utils";
 import { ref } from "vue";
+import companyLogo from '@/assets/img/companyLogo.jpeg'
+
 const authStore = useAuthStore();
 
 const profilePicture = ref(authStore.auth?.user?.logo);
-const companyLogo='/src/assets/img/companyLogo.png'
 
 
 async function processProfilePicture() {

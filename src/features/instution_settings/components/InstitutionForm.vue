@@ -20,7 +20,11 @@ import {
 
 const props = defineProps({
   initialData: {
+<<<<<<< HEAD
     type: Object,
+=======
+    type: Object ,
+>>>>>>> d3feedd07d6534514df8ca70d104fddfe4625ad2
     default: () => ({})
   },
   isEdit: {
@@ -146,7 +150,11 @@ function handleFileUpload(event) {
     
     const reader = new FileReader();
     reader.onload = (e) => {
+<<<<<<< HEAD
       previewImage.value = e.target?.result ;
+=======
+      previewImage.value = e.target?.result;
+>>>>>>> d3feedd07d6534514df8ca70d104fddfe4625ad2
     };
     reader.readAsDataURL(file);
     
@@ -155,7 +163,11 @@ function handleFileUpload(event) {
 }
 
 function browseFiles() {
+<<<<<<< HEAD
   const fileInput = document.getElementById('file-upload') ;
+=======
+  const fileInput = document.getElementById('file-upload');
+>>>>>>> d3feedd07d6534514df8ca70d104fddfe4625ad2
   fileInput.click();
 }
 
@@ -179,7 +191,11 @@ function handleDrop(event) {
     
     const reader = new FileReader();
     reader.onload = (e) => {
+<<<<<<< HEAD
       previewImage.value = e.target?.result ;
+=======
+      previewImage.value = e.target?.result;
+>>>>>>> d3feedd07d6534514df8ca70d104fddfe4625ad2
     };
     reader.readAsDataURL(file);
   }

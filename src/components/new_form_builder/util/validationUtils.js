@@ -1,5 +1,7 @@
 function validationKeys(validation) {
   const rules = new String(validation);
+  console.log(validation);
+  
 
   return rules.split("|").reduce((state, rule) => {
     const [name, args] = rule.split("-");
