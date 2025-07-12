@@ -464,11 +464,7 @@ export const subCitiesByCity: Record<string, string[]> = {
   ],
   
   // Sidama region cities
-  "Hawassa": [
-    "Bahil Adarash", "Misrak", "Menaharia", "Tabor", "Hayk Dar",
-    "Kebele 01", "Kebele 02", "Kebele 03", "Kebele 04", "Kebele 05",
-    "Kebele 06", "Kebele 07", "Kebele 08", "Kebele 09", "Kebele 10"
-  ],
+
   
   "Yirgalem": [
     "Kebele 01", "Kebele 02", "Kebele 03", "Kebele 04", "Kebele 05",
@@ -694,20 +690,14 @@ export const subCitiesByCity: Record<string, string[]> = {
   ],
   
   // South West Ethiopia region cities
-  "Bonga": [
-    "Kebele 01", "Kebele 02", "Kebele 03", "Kebele 04", "Kebele 05",
-    "Kebele 06", "Kebele 07", "Kebele 08", "Kebele 09", "Kebele 10"
-  ],
+
   
   "Tepi": [
     "Kebele 01", "Kebele 02", "Kebele 03", "Kebele 04", "Kebele 05",
     "Kebele 06", "Kebele 07", "Kebele 08", "Kebele 09", "Kebele 10"
   ],
   
-  "Mizan Teferi": [
-    "Kebele 01", "Kebele 02", "Kebele 03", "Kebele 04", "Kebele 05",
-    "Kebele 06", "Kebele 07", "Kebele 08", "Kebele 09", "Kebele 10"
-  ],
+
   
   "Masha": [
     "Kebele 01", "Kebele 02", "Kebele 03", "Kebele 04", "Kebele 05",

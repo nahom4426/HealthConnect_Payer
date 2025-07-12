@@ -380,7 +380,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
             <Select
               v-model="countryCode"
               name="countryCode"
-              :options="['+251', '+1', '+44', '+91']"
+              :options="['+251']"
               :attributes="{
                  class: 'pr-2 my-2 bg-[#F9F9FD]',
                 required: true,

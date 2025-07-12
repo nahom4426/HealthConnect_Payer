@@ -11,7 +11,11 @@ export default [
 	{
 		path: '/payer_list',
 		name: 'Active Institution',
-		component: ActiveInstitution
+		component: ActiveInstitution,
+		meta: {
+		  requiresAuth: true,
+		  privilege: ['CREATE_USER'], // Changed from privileges to privilege to match what the router checks
+		},
 	},
 	{
 		path: '/suspended_institution',

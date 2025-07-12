@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { ref, onMounted, watch, PropType, computed } from 'vue';
+<script setup>
+import { ref, onMounted, watch, computed } from 'vue';
 import { useForm } from '@/components/new_form_builder/useForm';
 import Form from '@/components/new_form_builder/Form.vue';
 import Input from '@/components/new_form_elements/Input.vue';
@@ -20,7 +20,7 @@ import {
 
 const props = defineProps({
   initialData: {
-    type: Object as PropType<any>,
+    type: Object,
     default: () => ({})
   },
   isEdit: {
@@ -32,11 +32,11 @@ const props = defineProps({
     default: false
   },
   onSubmit: {
-    type: Function as PropType<(formData: any) => void>,
+    type: Function,
     required: true
   },
   onCancel: {
-    type: Function as PropType<() => void>,
+    type: Function ,
     required: true
   }
 });
@@ -101,7 +101,7 @@ onMounted(() => {
     memo.value = props.initialData.description || props.initialData.memo || '';
 
     const fullTelephone = props.initialData.telephone || props.initialData.contactPersonPhone || '';
-    const possibleCodes = ['+251', '+1', '+44', '+91'];
+    const possibleCodes = ['+251'];
     const matchedCode = possibleCodes.find(code => fullTelephone.startsWith(code));
     
     if (matchedCode) {
@@ -138,15 +138,15 @@ onMounted(() => {
 });
 
 // File upload handling
-function handleFileUpload(event: Event) {
-  const input = event.target as HTMLInputElement;
+function handleFileUpload(event) {
+  const input = event.target;
   if (input.files && input.files.length > 0) {
     const file = input.files[0];
     payerLogo.value = file;
     
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.value = e.target?.result as string;
+      previewImage.value = e.target?.result ;
     };
     reader.readAsDataURL(file);
     
@@ -155,23 +155,23 @@ function handleFileUpload(event: Event) {
 }
 
 function browseFiles() {
-  const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+  const fileInput = document.getElementById('file-upload') ;
   fileInput.click();
 }
 
-function handleDragOver(event: DragEvent) {
+function handleDragOver(event) {
   event.preventDefault();
-  (event.currentTarget as HTMLElement).classList.add('border-primary');
+  (event.currentTarget ).classList.add('border-primary');
 }
 
-function handleDragLeave(event: DragEvent) {
+function handleDragLeave(event) {
   event.preventDefault();
-  (event.currentTarget as HTMLElement).classList.remove('border-primary');
+  (event.currentTarget ).classList.remove('border-primary');
 }
 
-function handleDrop(event: DragEvent) {
+function handleDrop(event) {
   event.preventDefault();
-  (event.currentTarget as HTMLElement).classList.remove('border-primary');
+  (event.currentTarget ).classList.remove('border-primary');
   
   if (event.dataTransfer?.files.length) {
     const file = event.dataTransfer.files[0];
@@ -179,7 +179,7 @@ function handleDrop(event: DragEvent) {
     
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.value = e.target?.result as string;
+      previewImage.value = e.target?.result ;
     };
     reader.readAsDataURL(file);
   }
@@ -397,7 +397,7 @@ const categoryOptions = [
             <Select
               v-model="countryCode"
               name="countryCode"
-              :options="['+251', '+1', '+44', '+91']"
+              :options="['+251']"
               :attributes="{
                 class: 'pr-2 my-2 bg-[#F9F9FD]',
                 required: true

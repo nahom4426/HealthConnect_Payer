@@ -11,8 +11,13 @@ export default [
 	{
 		path: '/provider_list',
 		name: 'Providers List',
-		component: ProviderList
+		component: ProviderList,
+		meta: {
+		  requiresAuth: true,
+		  privilege: ['CREATE_USER'], // Changed from privileges to privilege to match what the router checks
+		},
 	},
+
 	{
 		path: '/inactive_providers',
 		name: 'inactive providers',

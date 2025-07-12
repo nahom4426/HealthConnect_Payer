@@ -71,7 +71,7 @@ onMounted(() => {
     status.value = props.initialData.status || 'ACTIVE';
 
     const fullPhone = props.initialData.phone || '';
-    const possibleCodes = ['+251', '+1', '+44', '+91'];
+    const possibleCodes = ['+251'];
     const matchedCode = possibleCodes.find(code => fullPhone.startsWith(code));
     
     if (matchedCode) {
@@ -329,7 +329,7 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
             <Select
               v-model="countryCode"
               name="countryCode"
-              :options="['+251', '+1', '+44', '+91']"
+              :options="['+251']"
               :attributes="{ 
                 
                 required: true 

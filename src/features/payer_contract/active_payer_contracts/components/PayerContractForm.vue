@@ -57,7 +57,7 @@ onMounted(() => {
     memo.value = props.initialData.description || props.initialData.memo || '';
 
     const fullTelephone = props.initialData.telephone || '';
-    const possibleCodes = ['+251', '+1', '+44', '+91'];
+    const possibleCodes = ['+251'];
     const matchedCode = possibleCodes.find(code => fullTelephone.startsWith(code));
     
     if (matchedCode) {
@@ -291,7 +291,7 @@ const categoryOptions = [
     <Select
       v-model="countryCode"
       name="countryCode"
-      :options="['+251', '+1', '+44', '+91']"
+      :options="['+251']"
       :attributes="{ required: true }"
     />
     <Input

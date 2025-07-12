@@ -75,7 +75,7 @@ const roleUuid = ref('');
 // Role fetching state
 const roles = ref([]);
 const fetchRolesPending = ref(false);
-const rolesError = ref<string | null>(null);
+
 
 // Role options computation
 const roleOptions = computed(() => {

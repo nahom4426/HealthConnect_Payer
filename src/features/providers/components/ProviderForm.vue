@@ -59,7 +59,7 @@ onMounted(() => {
     memo.value = props.initialData.description || props.initialData.memo || '';
 
     const fullTelephone = props.initialData.telephone || '';
-    const possibleCodes = ['+251', '+1', '+44', '+91'];
+    const possibleCodes = ['+251'];
     const matchedCode = possibleCodes.find(code => fullTelephone.startsWith(code));
     
     if (matchedCode) {
@@ -294,7 +294,7 @@ const categoryOptions = [
             <Select
               v-model="countryCode"
               name="countryCode"
-              :options="['+251', '+1', '+44', '+91']"
+              :options="['+251']"
               :attributes="{
                 class: 'pr-2 my-2 bg-[#F9F9FD]',
                 required: true
@@ -319,14 +319,14 @@ const categoryOptions = [
         <!-- Address -->
         <div class="space-y-2">
           <label class="block text-sm font-medium text-[#75778B]">
-            Address <span class="text-red-500">*</span>
+            Subcity <span class="text-red-500">*</span>
           </label>
           <Input
             v-model="address"
             name="address"
             validation="required"
             :attributes="{
-              placeholder: 'Enter company address',
+              placeholder: 'Enter company Subcity',
               required: true
             }"
           />

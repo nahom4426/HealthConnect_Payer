@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import UserForm from "./UserForm.vue";
