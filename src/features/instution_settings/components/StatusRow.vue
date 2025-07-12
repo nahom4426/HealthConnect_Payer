@@ -278,9 +278,9 @@ async function handleDeactivateWithClose(payerUuid) {
               @click.stop="handleAddAdminWithClose(row)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              <div class="flex items-center justify-start pl-4 gap-4">
-                <i v-html="icons.edits" />
-                Add Admin
+              <div class="flex items-center text-primary justify-start pl-4 gap-4">
+                <i v-html="icons.assign" />
+                Assign Admin
               </div>
             </button>
           
