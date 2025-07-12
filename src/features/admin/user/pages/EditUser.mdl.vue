@@ -23,8 +23,6 @@ const error = ref('');
 const userStore = useUsers();
 const { addToast } = useToast();
 const req = useApiRequest();
-const userUuid = ref('');
-const userData = ref({});
 
 onMounted(async () => {
   console.log('EditUser modal received data:', props.data);
@@ -39,7 +37,6 @@ onMounted(async () => {
   }
 });
 
-<<<<<<< HEAD
 watch(() => props.data, (newData) => {
   if (newData) {
     userUuid.value = newData.userUuid || '';
@@ -47,8 +44,6 @@ watch(() => props.data, (newData) => {
   }
 }, { deep: true });
 
-=======
->>>>>>> d3feedd07d6534514df8ca70d104fddfe4625ad2
 async function fetchUserData() {
   try {
     pending.value = true;

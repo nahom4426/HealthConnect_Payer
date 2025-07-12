@@ -238,7 +238,7 @@ function handleImageError(event) {
           :rows="institutions"
           :rowCom="StatusRow"
           :cells="{
-            location: (_: any, row: any) => `${row.city || ''}, ${row.subCity || ''}, ${row.address1 || ''}, ${row.country || ''}`
+            location: (_, row) => `${row.city || ''}, ${row.subCity || ''}, ${row.address1 || ''}, ${row.country || ''}`
           }"
           :pagination="{
             currentPage,

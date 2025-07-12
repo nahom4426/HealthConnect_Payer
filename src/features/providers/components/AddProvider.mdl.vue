@@ -116,14 +116,12 @@ async function handleSubmit(formValues) {
     >
       <div class="bg-white rounded-lg">
         <ProviderFormDataProvider ref="formDataProvider">
-          <template #default="{ pending: providerPending }">
             <!-- Keep sync with outer ref -->
             <ProviderForm
               :pending="pending"
               :onSubmit="handleSubmit"
               :onCancel="() => closeModal()"
             />
-          </template>
         </ProviderFormDataProvider>
       </div>
     </NewFormParent>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 import { useApiRequest } from "@/composables/useApiRequest";
 import { createProvider, importProviders, downloadProviderTemplate } from "../api/providerApi";
 import { ref } from "vue";
@@ -16,7 +16,7 @@ const importReq = useApiRequest();
 const downloadReq = useApiRequest();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
-function register(formData: FormData) {
+function register(formData) {
   console.log('Registration form data received:', formData);
   
   // Check if required fields are present
@@ -28,7 +28,7 @@ function register(formData: FormData) {
   }
 
   try {
-    const providerData = JSON.parse(providerJson as string);
+    const providerData = JSON.parse(providerJson );
     
     const requiredProviderFields = [
       'providerName', 
@@ -38,7 +38,7 @@ function register(formData: FormData) {
     ];
 
     const missingFields = requiredProviderFields.filter(field => {
-      const value = providerData[field];
+      const value = providerData[field];;
       return value === undefined || value === null || value === '';
     });
 
@@ -57,7 +57,7 @@ function register(formData: FormData) {
   }
 }
 
-function sendRegistrationRequest(formData: FormData) {
+function sendRegistrationRequest(formData) {
   console.log('Sending registration request with form data');
   
   return new Promise((resolve, reject) => {
@@ -78,7 +78,7 @@ function sendRegistrationRequest(formData: FormData) {
     );
   });
 }
-function importFile(file: File) {
+function importFile(file) {
   return new Promise((resolve, reject) => {
     importReq.send(
       () => importProviders(file),

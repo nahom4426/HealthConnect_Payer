@@ -1,11 +1,11 @@
-<script setup lang="ts">
+<script setup>
 import { useForm } from '@/components/new_form_builder/useForm';
 import Form from '@/components/new_form_builder/Form.vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Textarea from '@/components/new_form_elements/Textarea.vue';
 import Button from '@/components/Button.vue';
-import { PropType, ref, computed, watch, onMounted } from 'vue';
+import {  ref, computed, watch, onMounted } from 'vue';
 import { openModal } from '@customizer/modal-x';
 import icons from '@/utils/icons';
 import InputEmail from '@/components/new_form_elements/InputEmail.vue';
@@ -13,7 +13,7 @@ import ModalFormSubmitButton from '@/components/new_form_builder/ModalFormSubmit
 
 const props = defineProps({
   initialData: {
-    type: Object as PropType<any>,
+    type: Object ,
     default: () => ({})
   },
   isEdit: {
@@ -25,11 +25,11 @@ const props = defineProps({
     default: false
   },
   onSubmit: {
-    type: Function as PropType<(values: any) => void>,
+    type: Function ,
     required: true
   },
   onCancel: {
-    type: Function as PropType<() => void>,
+    type: Function ,
     required: true
   }
 });
@@ -84,37 +84,37 @@ onMounted(() => {
 
 
 // File upload handling
-function handleFileUpload(event: Event) {
-  const target = event.target as HTMLInputElement;
+function handleFileUpload(event) {
+  const target = event.target ;
   const file = target.files?.[0];
   if (file) {
     providerLogo.value = file;
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.value = e.target?.result as string;
+      previewImage.value = e.target?.result ;
     };
     reader.readAsDataURL(file);
   }
 }
 
 function browseFiles() {
-  const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+  const fileInput = document.getElementById('file-upload') ;
   fileInput.click();
 }
 
-function handleDragOver(event: DragEvent) {
+function handleDragOver(event) {
   event.preventDefault();
-  (event.currentTarget as HTMLElement).classList.add('border-primary');
+  (event.currentTarget ).classList.add('border-primary');
 }
 
-function handleDragLeave(event: DragEvent) {
+function handleDragLeave(event) {
   event.preventDefault();
-  (event.currentTarget as HTMLElement).classList.remove('border-primary');
+  (event.currentTarget).classList.remove('border-primary');
 }
 
-function handleDrop(event: DragEvent) {
+function handleDrop(event) {
   event.preventDefault();
-  (event.currentTarget as HTMLElement).classList.remove('border-primary');
+  (event.currentTarget ).classList.remove('border-primary');
   
   if (event.dataTransfer?.files.length) {
     const file = event.dataTransfer.files[0];
@@ -122,7 +122,7 @@ function handleDrop(event: DragEvent) {
     
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.value = e.target?.result as string;
+      previewImage.value = e.target?.result ;
     };
     reader.readAsDataURL(file);
   }
