@@ -9,11 +9,11 @@ import { updateProfileData, uploadProfilePicture } from "../api/profileApi";
 import { convertBase64Image, toasted } from "@/utils/utils";
 import { useForm } from "@/components/new_form_builder/useForm";
 import icons from "@/utils/icons";
+import imageSrc from '@/assets/img/profile.png'
 
 const auth = useAuthStore();
 
 const profilePicture = ref(auth.auth?.user?.imageData || null);
-const imageSrc = "/src/assets/img/profile.png";
 
 async function processProfilePicture() {
   if (profilePicture.value && !profilePicture.value.startsWith("data:image/")) {

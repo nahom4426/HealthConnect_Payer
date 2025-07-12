@@ -19,10 +19,10 @@ const props = defineProps({
     }
 });
 
-// Create a ref to track selected privileges
 const selectedPrivileges = ref(props.selectPrivilege || []);
+console.log(selectedPrivileges.value);
 
-// Watch for changes in selectPrivilege prop
+
 watch(() => props.selectPrivilege, (newVal) => {
     if (newVal) {
         selectedPrivileges.value = newVal;
