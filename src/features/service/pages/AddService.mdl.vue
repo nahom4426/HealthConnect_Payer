@@ -37,7 +37,7 @@ function create({ values, reset }) {
       size="lg"
       class="flex justify-center bg-white"
       title="Add New Services"
-      subtitle="Add a new medical service"
+      subtitle="Add a New Medical Service"
     >
       <ServiceForm />
 

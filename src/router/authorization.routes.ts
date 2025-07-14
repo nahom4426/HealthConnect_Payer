@@ -11,7 +11,7 @@ export default [
         component: AuthorizationIndex,
         meta: {
           requiresAuth: true,
-          privilege: ['create_user','View_card'], // Changed from privileges to privilege to match what the router checks
+          privilege: ['Create Services'], // Changed from privileges to privilege to match what the router checks
         },
         children: [
           {
@@ -26,7 +26,7 @@ export default [
             props: true,
             meta: {
               requiresAuth: true,
-              privilege: ['create_user','View_card'],
+              privilege: ['Create Services'], // Changed from privileges to privilege to match what the router checks
             }
           }
         ]

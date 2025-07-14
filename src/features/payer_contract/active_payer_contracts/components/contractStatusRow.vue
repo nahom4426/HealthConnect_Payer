@@ -199,6 +199,7 @@ function handleReject(row) {
           >
             <div class="py-1" role="none">
               <button
+                v-if="row.status === 'PENDING' || row.status === 'REJECTED'"
                 @click.stop="handleEditWithClose(row)"
                 class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
@@ -209,6 +210,7 @@ function handleReject(row) {
               </button>
 
               <button
+                v-if="row.status === 'ACTIVE' || row.status === 'Active'"
                 @click.prevent="
                   $router.push(
                     `/payer_contracts/detail/${row.contractHeaderUuid}`
@@ -224,7 +226,7 @@ function handleReject(row) {
 
               <template v-if="row.status">
                 <button
-                  v-if="row.status === 'APPROVED' || row.status === 'APPROVED'"
+                  v-if="row.status === 'APPROVED' || row.status === 'Approved'"
                   @click.stop="handleApprove(row)"
                   class="block w-full text-center py-2 text-sm text-[#28A745] hover:bg-gray-100"
                 >

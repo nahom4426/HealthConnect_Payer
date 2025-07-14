@@ -1,14 +1,39 @@
 <script setup >
-import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 import Table from '@/components/Table.vue';
 import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
 import DefaultPage from "@/components/DefaultPage.vue";
 import icons from "@/utils/icons";
 import RolesDataProvider from '../components/RolesDataProvider.vue';
 import Dropdown from '@/components/Dropdown.vue';
+import { removeRoleById } from '../Api/RoleApi';
+import { useApiRequest } from '@/composables/useApiRequest';
+import { toasted } from '@/utils/utils';
+import { useRouter } from 'vue-router';
 
-const router = useRouter();
 
+const deleteReq = useApiRequest();
+
+function handleDelete(id) {
+  if (confirm("Are you sure you want to delete this role? This action cannot be undone.")) {
+    deleteReq.send(
+      () => removeRoleById(id),
+      (res) => {
+        if (res.success) {
+          toasted(true, "Role deleted successfully");
+          // Refresh the data provider
+          if (dataProvider.value) {
+            dataProvider.value.refresh();
+          }
+        } else {
+          toasted(false, "", res.error || "Failed to delete role");
+        }
+      }
+    );
+  }
+}
+
+const dataProvider = ref(null);
 </script>
 
 <template>
@@ -84,6 +109,13 @@ const router = useRouter();
             <span>Detal</span>
           </button>
           
+          <button
+            @click.prevent="handleDelete(row?.roleUuid)"
+            class="p-2 flex text-red-500 items-center gap-2 rounded-lg hover:bg-gray-100"
+          >
+            <i v-html="icons.trash || icons.delete" />
+            <span>Delete</span>
+          </button>
         </div>
       </Dropdown>
       </template>

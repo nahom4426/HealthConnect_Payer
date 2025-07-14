@@ -146,10 +146,12 @@ async function handleDeactivateWithClose(insuredId) {
                   @click="
                     $router.push(`claim-approval/detail/${row.batchCode}`)
                   "
-                  class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+                  class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
+                 <div class="flex items-start justify-start pl-4 gap-4">
                   <i v-html="icons.edits" />
                   <span>Detail</span>
+          </div>
                 </button>
        
             <template v-if="row.status">

@@ -7,10 +7,10 @@ export default [
         path: '/submit_claims',
         name: 'SubmitClaims',
         component: SubmitClaimsIndex,
-        // meta: {
-        //   requiresAuth: true,
-        //   privileges: ['create_user','View_card'],
-        // },
+        meta: {
+          requiresAuth: true,
+          privilege: ['Create Services'], // Changed from privileges to privilege to match what the router checks
+        },
         children: [
           {
             path: '',
@@ -22,10 +22,10 @@ export default [
             name: 'Submit Claims Details',
             component: SubmitClaimsDetails,
             props: true,
-            // meta: {
-            //   requiresAuth: true,
-            //   privileges: ['create_user','View_card'],
-            // }
+            meta: {
+              requiresAuth: true,
+              privilege: ['Create Services'], // Changed from privileges to privilege to match what the router checks
+            }
           }
         ]
       },

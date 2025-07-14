@@ -47,7 +47,7 @@ const selectedClaims = ref([]);
 // Payer selection
 const selectedPayerUuid = ref("");
 const selectedPayerName = ref("");
-
+const isPayerSelected = computed(() => !!selectedPayerUuid.value);
 // Initialize data
 onMounted(async () => {
   await claimServicesStore.fetchActiveInstitutions();
@@ -74,7 +74,7 @@ watch(selectedPayerUuid, (newUuid) => {
 
 // Generate claims with filters
 const generateClaims = async () => {
-  if (!dataProvider.value) return;
+  if (!dataProvider.value || !selectedPayerUuid.value) return;
 
   isGenerating.value = true;
   try {
@@ -217,7 +217,7 @@ function refreshData() {
         @click="isClaimCreationMode = !isClaimCreationMode"
       >
         <i v-html="icons.add"></i>
-        <span>{{ isClaimCreationMode ? "Back" : "Add Credit" }}</span>
+        <span>{{ isClaimCreationMode ? "Back" : "Create Claims" }}</span>
       </button>
     </template>
 
@@ -277,6 +277,7 @@ function refreshData() {
         <div class="space-y-4 mb-4">
           <div class="border rounded-lg p-4 border-[#ECECEE] gap-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
+             <div class="grid grid-cols-1 md:grid-cols-2 pt-2  gap-4">
               <Input
                 v-model="fromDate"
                 label="Credits From"
@@ -298,8 +299,8 @@ function refreshData() {
                   min: fromDate,
                 }"
               />
-            </div>
-            <div class="flex w-full gap-4 pt-2">
+              </div>
+                 <div class="flex w-full gap-4 pt-2">
               <div class="w-full pr-2">
                 <Select
                   :obj="true"
@@ -315,13 +316,17 @@ function refreshData() {
                 />
               </div>
               <div class="justify-end pt-6 w-28">
-                <ModalFormSubmitButton
-                  :pending="isGenerating"
-                  :btn-text="'Generate'"
-                  @click="generateClaims"
-                  class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
-                />
+          <ModalFormSubmitButton
+              :pending="isGenerating"
+              :btn-text="'Generate'"
+              :disabled="!isPayerSelected"
+              :title="!isPayerSelected ? 'Please select a payer first' : ''"
+              @click="generateClaims"
+              class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
+            />
               </div>
+            </div>
+         
             </div>
           </div>
 
@@ -336,7 +341,7 @@ function refreshData() {
               </p>
               <ModalFormSubmitButton
                 :pending="isSubmitting"
-                :btn-text="`Create ${selectedClaims.length} Claims`"
+                :btn-text="`Create Claims for ${selectedClaims.length} services `"
                 :disabled="selectedClaims.length === 0"
                 class="bg-primary hover:bg-[#014F4F] text-white px-6 py-3"
                 @click="submitClaims"
@@ -399,3 +404,12 @@ function refreshData() {
     </template>
   </DefaultPage>
 </template>
+<style scoped>
+/* Add this to your styles */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #cccccc !important;
+  border-color: #cccccc !important;
+}
+</style>

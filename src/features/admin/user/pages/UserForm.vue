@@ -1,5 +1,5 @@
 <script setup>
-import { PropType, ref, computed, onMounted } from 'vue';
+import {ref, computed, onMounted } from 'vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import InputPassword from '@/components/new_form_elements/InputPassword.vue';
 import Select from '@/components/new_form_elements/Select.vue';
@@ -44,7 +44,7 @@ const grandFatherName = ref('');
 const gender = ref('');
 const mobilePhone = ref('');
 const roleUuid = ref('');
-
+const rolesError = ref('');
 // Role fetching state
 const roles = ref([]);
 const fetchRolesPending = ref(false);
