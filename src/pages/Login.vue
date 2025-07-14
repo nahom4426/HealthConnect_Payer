@@ -1,7 +1,7 @@
 <script setup>
 import LoginTemp from "./components/LoginTemp.vue";
 import { ref, onMounted } from "vue";
-import loginBg from '@/assets/img/login.jpg'
+import loginBg from '@/assets/img/login.png'
 const isLoading = ref(true);
 
 onMounted(() => {

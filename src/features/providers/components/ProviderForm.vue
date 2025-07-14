@@ -1,19 +1,21 @@
-<script setup lang="ts">
-import { useForm } from '@/components/new_form_builder/useForm';
+<script setup >
 import Form from '@/components/new_form_builder/Form.vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Textarea from '@/components/new_form_elements/Textarea.vue';
 import Button from '@/components/Button.vue';
-import { PropType, ref, computed, watch, onMounted } from 'vue';
-import { openModal } from '@customizer/modal-x';
-import icons from '@/utils/icons';
+import {  ref, computed, watch, onMounted } from 'vue';
 import InputEmail from '@/components/new_form_elements/InputEmail.vue';
 import ModalFormSubmitButton from '@/components/new_form_builder/ModalFormSubmitButton.vue';
+import { 
+  ethiopianRegions, 
+  getCitiesByRegion, 
+  getSubCitiesByCity 
+} from '@/features/instution_settings/utils/ethiopianLocations';
 
 const props = defineProps({
   initialData: {
-    type: Object as PropType<any>,
+    type: Object ,
     default: () => ({})
   },
   isEdit: {
@@ -25,11 +27,11 @@ const props = defineProps({
     default: false
   },
   onSubmit: {
-    type: Function as PropType<(values: any) => void>,
+    type: Function ,
     required: true
   },
   onCancel: {
-    type: Function as PropType<() => void>,
+    type: Function ,
     required: true
   }
 });
@@ -41,11 +43,40 @@ const threeDigitAcronym = ref('');
 const category = ref('');
 const telephone = ref('');
 const countryCode = ref('+251');
-const address = ref('');
+const state = ref('Addis Ababa');
+const address3 = ref(''); // City
+const address2 = ref(''); // Sub City
+const address1 = ref(''); // Woreda
 const tin = ref('');
 const email = ref('');
 const memo = ref('');
 const previewImage = ref('');
+
+// Computed properties for dynamic dropdowns
+const availableCities = computed(() => {
+  return getCitiesByRegion(state.value);
+});
+
+const availableSubCities = computed(() => {
+  return getSubCitiesByCity(address3.value);
+});
+
+const isAddisAbaba = computed(() => {
+  return state.value === 'Addis Ababa';
+});
+
+// Watch for state changes to reset city and sub-city
+watch(state, (newState) => {
+  address3.value = '';
+  address2.value = '';
+  address1.value = '';
+});
+
+// Watch for city changes to reset sub-city
+watch(address3, (newCity) => {
+  address2.value = '';
+  address1.value = '';
+});
 
 // Initialize form data from props
 onMounted(() => {
@@ -53,13 +84,16 @@ onMounted(() => {
     providerName.value = props.initialData.providerName || '';
     threeDigitAcronym.value = props.initialData.threeDigitAcronym || '';
     category.value = props.initialData.category || '';
-    address.value = props.initialData.address1 || '';
+    state.value = props.initialData.state || 'Addis Ababa';
+    address3.value = props.initialData.address3 || ''; // City
+    address2.value = props.initialData.address2 || ''; // Sub City
+    address1.value = props.initialData.address1 || ''; // Woreda
     tin.value = props.initialData.tinNumber || '';
     email.value = props.initialData.email || '';
     memo.value = props.initialData.description || props.initialData.memo || '';
 
     const fullTelephone = props.initialData.telephone || '';
-    const possibleCodes = ['+251', '+1', '+44', '+91'];
+    const possibleCodes = ['+251'];
     const matchedCode = possibleCodes.find(code => fullTelephone.startsWith(code));
     
     if (matchedCode) {
@@ -82,37 +116,37 @@ onMounted(() => {
 });
 
 // File upload handling
-function handleFileUpload(event: Event) {
-  const target = event.target as HTMLInputElement;
+function handleFileUpload(event) {
+  const target = event.target ;
   const file = target.files?.[0];
   if (file) {
     providerLogo.value = file;
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.value = e.target?.result as string;
+      previewImage.value = e.target?.result ;
     };
     reader.readAsDataURL(file);
   }
 }
 
 function browseFiles() {
-  const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+  const fileInput = document.getElementById('file-upload') ;
   fileInput.click();
 }
 
-function handleDragOver(event: DragEvent) {
+function handleDragOver(event) {
   event.preventDefault();
-  (event.currentTarget as HTMLElement).classList.add('border-primary');
+  (event.currentTarget ).classList.add('border-primary');
 }
 
-function handleDragLeave(event: DragEvent) {
+function handleDragLeave(event) {
   event.preventDefault();
-  (event.currentTarget as HTMLElement).classList.remove('border-primary');
+  (event.currentTarget ).classList.remove('border-primary');
 }
 
-function handleDrop(event: DragEvent) {
+function handleDrop(event) {
   event.preventDefault();
-  (event.currentTarget as HTMLElement).classList.remove('border-primary');
+  (event.currentTarget ).classList.remove('border-primary');
   
   if (event.dataTransfer?.files.length) {
     const file = event.dataTransfer.files[0];
@@ -120,25 +154,20 @@ function handleDrop(event: DragEvent) {
     
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.value = e.target?.result as string;
+      previewImage.value = e.target?.result ;
     };
     reader.readAsDataURL(file);
   }
 }
 
-function resetForm() {
-  providerLogo.value = null;
-  providerName.value = '';
-  threeDigitAcronym.value = '';
-  category.value = '';
-  telephone.value = '';
-  countryCode.value = '+251';
-  address.value = '';
-  tin.value = '';
-  email.value = '';
-  memo.value = '';
-  previewImage.value = '';
-}
+
+
+
+
+
+
+
+
 
 function handleSubmit() {
   const formData = {
@@ -146,7 +175,10 @@ function handleSubmit() {
     threeDigitAcronym: threeDigitAcronym.value,
     category: category.value,
     telephone: `${countryCode.value}${telephone.value}`,
-    address: address.value,
+    state: state.value,
+    address3: address3.value, // City
+    address2: address2.value, // Sub City
+    address1: address1.value, // Woreda
     tinNumber: tin.value,
     email: email.value,
     description: memo.value,
@@ -294,7 +326,7 @@ const categoryOptions = [
             <Select
               v-model="countryCode"
               name="countryCode"
-              :options="['+251', '+1', '+44', '+91']"
+              :options="['+251']"
               :attributes="{
                 class: 'pr-2 my-2 bg-[#F9F9FD]',
                 required: true
@@ -313,25 +345,91 @@ const categoryOptions = [
           </div>
         </div>
       </div>
-      
-      <!-- Two column layout -->
+
+      <h3 class="text-md font-medium text-[#75778B]">Address Information</h3>
+      <!-- Address Information -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Address -->
+        <!-- State/Region -->
         <div class="space-y-2">
           <label class="block text-sm font-medium text-[#75778B]">
-            Address <span class="text-red-500">*</span>
+            State/Region 
           </label>
-          <Input
-            v-model="address"
-            name="address"
-            validation="required"
+          <Select
+            v-model="state"
+            name="state"
+            :options="ethiopianRegions"
             :attributes="{
-              placeholder: 'Enter company address',
+              placeholder: 'Select State/Region',
               required: true
             }"
           />
         </div>
         
+        <!-- City -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-[#75778B]">
+            City 
+          </label>
+          <Select
+            v-if="availableCities.length > 0"
+            v-model="address3"
+            name="address3"
+            :options="availableCities"
+            :attributes="{
+              placeholder: 'Select City',
+            }"
+          />
+          <Input
+            v-else
+            v-model="address3"
+            name="address3"
+            :attributes="{
+              placeholder: 'Enter City',
+            }"
+          />
+        </div>
+        
+        <!-- Sub City -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-[#75778B]">
+            Sub City 
+          </label>
+          <Select
+            v-if="isAddisAbaba && availableSubCities.length > 0"
+            v-model="address2"
+            name="address2"
+            :options="availableSubCities"
+            :attributes="{
+              placeholder: 'Select Sub City',
+            }"
+          />
+          <Input
+            v-else
+            v-model="address2"
+            name="address2"
+            :attributes="{
+              placeholder: 'Enter Sub City',
+            }"
+          />
+        </div>
+        
+        <!-- Woreda/address1 -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-[#75778B]">
+            Woreda 
+          </label>
+          <Input
+            v-model="address1"
+            name="address1"
+            :attributes="{
+              placeholder: 'Enter Woreda',
+            }"
+          />
+        </div>
+      </div>
+      
+      <!-- Two column layout -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- TIN -->
         <div class="space-y-2">
           <label class="block text-sm font-medium text-[#75778B]">
@@ -347,22 +445,22 @@ const categoryOptions = [
             }"
           />
         </div>
-      </div>
-      
-      <!-- Admin User -->
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-[#75778B]">
-          Provider's Email <span class="text-red-500">*</span>
-        </label>
-        <InputEmail
-          v-model="email"
-          name="email"
-          validation="required|email"
-          :attributes="{
-            placeholder: 'Email of the provider',
-            required: true
-          }"
-        />
+        
+        <!-- Email -->
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-[#75778B]">
+            Provider's Email 
+          </label>
+          <InputEmail
+            v-model="email"
+            name="email"
+            validation="required|email"
+            :attributes="{
+              placeholder: 'Email of the provider',
+              required: true
+            }"
+          />
+        </div>
       </div>
       
       <!-- Memo -->

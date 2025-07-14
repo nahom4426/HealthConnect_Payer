@@ -23,9 +23,6 @@ async function handleSubmit(formValues) {
     const requiredFields = [
       "providerName",
       "threeDigitAcronym",
-      "email",
-      "telephone",
-      "address",
       "tinNumber",
       "category",
     ];
@@ -49,7 +46,9 @@ async function handleSubmit(formValues) {
       telephone: `${formValues.telephone}`,
       category: formValues.category,
       level: formValues.level || "PRIMARY",
-      address1: formValues.address,
+      address1: formValues.address1 || "",
+      address2: formValues.address2 || "",
+      address3: formValues.address3 || "",
       state: formValues.state || "Ethiopia",
       country: formValues.country || "Ethiopia",
       latitude: formValues.latitude || 0,
@@ -117,14 +116,12 @@ async function handleSubmit(formValues) {
     >
       <div class="bg-white rounded-lg">
         <ProviderFormDataProvider ref="formDataProvider">
-          <template #default="{ pending: providerPending }">
             <!-- Keep sync with outer ref -->
             <ProviderForm
               :pending="pending"
               :onSubmit="handleSubmit"
               :onCancel="() => closeModal()"
             />
-          </template>
         </ProviderFormDataProvider>
       </div>
     </NewFormParent>

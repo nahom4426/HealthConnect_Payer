@@ -75,7 +75,9 @@ async function handleSubmit(formValues: any) {
       telephone: `${formValues.telephone}`, // already combined with country code
       category: formValues.category,
       level: formValues.level || "PRIMARY",
-      address1: formValues.address,
+      address1: formValues.address1 || "",
+      address2: formValues.address2 || "",
+      address3: formValues.address3 || "",
       state: formValues.state || "Ethiopia",
       country: formValues.country,
       latitude: formValues.latitude || 0,

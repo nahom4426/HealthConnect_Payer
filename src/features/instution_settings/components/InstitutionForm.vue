@@ -20,7 +20,7 @@ import {
 
 const props = defineProps({
   initialData: {
-    type: Object ,
+    type: Object,
     default: () => ({})
   },
   isEdit: {
@@ -101,7 +101,7 @@ onMounted(() => {
     memo.value = props.initialData.description || props.initialData.memo || '';
 
     const fullTelephone = props.initialData.telephone || props.initialData.contactPersonPhone || '';
-    const possibleCodes = ['+251', '+1', '+44', '+91'];
+    const possibleCodes = ['+251'];
     const matchedCode = possibleCodes.find(code => fullTelephone.startsWith(code));
     
     if (matchedCode) {
@@ -155,7 +155,7 @@ function handleFileUpload(event) {
 }
 
 function browseFiles() {
-  const fileInput = document.getElementById('file-upload');
+  const fileInput = document.getElementById('file-upload') ;
   fileInput.click();
 }
 
@@ -179,7 +179,7 @@ function handleDrop(event) {
     
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.value = e.target?.result;
+      previewImage.value = e.target?.result ;
     };
     reader.readAsDataURL(file);
   }
@@ -397,7 +397,7 @@ const categoryOptions = [
             <Select
               v-model="countryCode"
               name="countryCode"
-              :options="['+251', '+1', '+44', '+91']"
+              :options="['+251']"
               :attributes="{
                 class: 'pr-2 my-2 bg-[#F9F9FD]',
                 required: true

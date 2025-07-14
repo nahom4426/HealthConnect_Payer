@@ -174,7 +174,7 @@ const removeClaim = (claimUuid: string) => {
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
               v-if="row.insuredUuid"
             >
-              <div class="flex items-center justify-start pl-4 gap-4">
+              <div class="flex items-start justify-start pl-4 gap-4">
                 <i v-html="icons.details" />
                 Details
               </div>

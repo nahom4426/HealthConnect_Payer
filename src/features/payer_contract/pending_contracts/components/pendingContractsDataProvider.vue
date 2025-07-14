@@ -10,11 +10,12 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  status: {
-    type: String,
-    
-    // Default status for active contracts
-  },
+status: {
+  type: String,
+  // default: "REJECTED",
+  // validator: (value) => ["REJECTED", "APPROVED", "PENDING"].includes(value),
+},
+
   search: {
     type: String,
     default: ""

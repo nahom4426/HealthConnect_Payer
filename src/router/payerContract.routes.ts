@@ -15,6 +15,10 @@ export default [
 		path: '/new_contract',
 		name: 'Add New Contract',
 		component: PayerContractIndex,
+		meta: {
+		  requiresAuth: true,
+		  privilege: ['Create Employees'], // Changed from privileges to privilege to match what the router checks
+		},
 		children: [
 			{
 				path: '',

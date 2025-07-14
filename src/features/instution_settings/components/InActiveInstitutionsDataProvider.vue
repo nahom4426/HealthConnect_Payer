@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { usePagination } from "@/composables/usePagination";
 import { getInActiveInstitutions } from "../api/institutionsApi";
 import { institutions } from "../store/InstitutionsStore";

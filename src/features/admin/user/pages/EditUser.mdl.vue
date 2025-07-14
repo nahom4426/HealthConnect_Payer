@@ -3,7 +3,7 @@ import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import UserForm from "./UserForm.vue";
 import { closeModal } from "@customizer/modal-x";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { updateUserById, getUserById } from "../Api/UserApi";
 import { useUsers } from "../store/userStore";
 import { useApiRequest } from "@/composables/useApiRequest";
@@ -27,10 +27,22 @@ const req = useApiRequest();
 onMounted(async () => {
   console.log('EditUser modal received data:', props.data);
   
-  if (userUuid.value && (!userData.value || Object.keys(userData.value).length === 0)) {
-    await fetchUserData();
+  if (props.data && props.data.userUuid) {
+    userUuid.value = props.data.userUuid;
+    userData.value = props.data.user || {};
+    
+    if (userUuid.value && (!userData.value || Object.keys(userData.value).length === 0)) {
+      await fetchUserData();
+    }
   }
 });
+
+watch(() => props.data, (newData) => {
+  if (newData) {
+    userUuid.value = newData.userUuid || '';
+    userData.value = newData.user || {};
+  }
+}, { deep: true });
 
 async function fetchUserData() {
   try {

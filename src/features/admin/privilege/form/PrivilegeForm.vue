@@ -64,6 +64,15 @@ const privilegeType = ref([
         placeholder: 'Enter Privilege Category',
       }"
     />
+     <Input
+      :value="props.privilege?.privilegeType || ''"
+      name="privilegeType"
+      label="Privilege Type"
+      validation="required|minmax-3,50 (Minimum length is 3 characters.)"
+      :attributes="{
+        placeholder: 'Enter Privilege Type',
+      }"
+    />
     <div v-privilege.role="'ADMIN'">
       <Select
         :obj="true"

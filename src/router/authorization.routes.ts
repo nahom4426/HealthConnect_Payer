@@ -9,10 +9,10 @@ export default [
         path: '/claim-approval',
         name: 'Claim Approval',
         component: AuthorizationIndex,
-        // meta: {
-        //   requiresAuth: true,
-        //   privileges: ['create_user','View_card'],
-        // },
+        meta: {
+          requiresAuth: true,
+          privilege: ['Create Services'], // Changed from privileges to privilege to match what the router checks
+        },
         children: [
           {
             path: '',
@@ -24,10 +24,10 @@ export default [
             name: 'Authorization Details',
             component: AuthorizationDetails,
             props: true,
-            // meta: {
-            //   requiresAuth: true,
-            //   privileges: ['create_user','View_card'],
-            // }
+            meta: {
+              requiresAuth: true,
+              privilege: ['Create Services'], // Changed from privileges to privilege to match what the router checks
+            }
           }
         ]
       },

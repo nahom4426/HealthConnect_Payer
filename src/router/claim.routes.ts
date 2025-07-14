@@ -18,6 +18,10 @@ export default [
     path: "/submitted_claims",
     name: "Submitted Claim",
     component: SubmittedClaimIndex,
+     meta: {
+          requiresAuth: true,
+          privilege: ['Create Services'], // Changed from privileges to privilege to match what the router checks
+        },
     children: [
       { path: "",
         name: "Submitted",
@@ -70,6 +74,10 @@ export default [
     path: "/track_claims",
     name: "Track Claims",
     component: TrackClaim,
+    meta: {
+      requiresAuth: true,
+      privilege: ['Create Services'], // Changed from privileges to privilege to match what the router checks
+    },
   },
 
   {

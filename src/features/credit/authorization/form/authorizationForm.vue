@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useForm } from '@/components/new_form_builder/useForm';
 import Form from '@/components/new_form_builder/Form.vue';
@@ -12,7 +12,7 @@ import { useAuthStore } from "@/stores/auth";
 const auth = useAuthStore();
 const props = defineProps({
   initialData: {
-    type: Object as PropType<any>,
+    type: Object ,
     default: () => ({})
   },
   isEdit: {
@@ -28,11 +28,11 @@ const props = defineProps({
     default: false
   },
   onSubmit: {
-    type: Function as PropType<(values: any) => void>,
+    type: Function ,
     required: true
   },
   onCancel: {
-    type: Function as PropType<() => void>,
+    type: Function ,
     required: true
   }
 });
@@ -71,7 +71,7 @@ onMounted(() => {
     status.value = props.initialData.status || 'ACTIVE';
 
     const fullPhone = props.initialData.phone || '';
-    const possibleCodes = ['+251', '+1', '+44', '+91'];
+    const possibleCodes = ['+251'];
     const matchedCode = possibleCodes.find(code => fullPhone.startsWith(code));
     
     if (matchedCode) {
@@ -91,21 +91,21 @@ onMounted(() => {
 });
 
 // File upload handling
-function handleFileUpload(event: Event) {
-  const target = event.target as HTMLInputElement;
+function handleFileUpload(event) {
+  const target = event.target ;
   const file = target.files?.[0];
   if (file) {
     employeePhoto.value = file;
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.value = e.target?.result as string;
+      previewImage.value = e.target?.result ;
     };
     reader.readAsDataURL(file);
   }
 }
 
 function browseFiles() {
-  const fileInput = document.getElementById('employee-photo-upload') as HTMLInputElement;
+  const fileInput = document.getElementById('employee-photo-upload') ;
   fileInput.click();
 }
 
@@ -329,7 +329,7 @@ const statusOptions = ['ACTIVE', 'INACTIVE'];
             <Select
               v-model="countryCode"
               name="countryCode"
-              :options="['+251', '+1', '+44', '+91']"
+              :options="['+251']"
               :attributes="{ 
                 
                 required: true 

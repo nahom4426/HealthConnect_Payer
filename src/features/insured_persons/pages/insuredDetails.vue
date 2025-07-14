@@ -500,7 +500,6 @@
                   </div>
                 </td>
 
-                <input v-model="newDependent.id" type="hidden" />
 
                 <td class="pr-6 py-4 pt-6">
                   <Input

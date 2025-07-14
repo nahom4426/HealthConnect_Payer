@@ -18,9 +18,16 @@ const colors = ref([
   { color: "violet" },
   { color: "forestGreen" },
   { color: "deepskyblue" },
-  { color: "root" },
+  { color: "mediumblue" },
   { color: "indigo" },
-  { color: "#02676B" },
+  { color: "crimson" },
+  { color: "teal" },
+  { color: "coral" },
+  { color: "slateblue" },
+  { color: "emerald" },
+  { color: "ruby" },
+  { color: "turquoise" },
+  { color: "amber" },
 ]);
 const activeColor = ref(
   localStorage.getItem("userColor")
@@ -51,3 +58,6 @@ const activeColor = ref(
     </template>
   </div>
 </template>
+
+
+

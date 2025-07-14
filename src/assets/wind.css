@@ -39,6 +39,30 @@
 .indigo {
   --primary: 75 0 130;
 }
+.crimson {
+  --primary: 220 20 60;
+}
+.teal {
+  --primary: 0 128 128;
+}
+.coral {
+  --primary: 255 127 80;
+}
+.slateblue {
+  --primary: 106 90 205;
+}
+.emerald {
+  --primary: 80 200 120;
+}
+.ruby {
+  --primary: 224 17 95;
+}
+.turquoise {
+  --primary: 64 224 208;
+}
+.amber {
+  --primary: 255 191 0;
+}
 body {
   font-family: "Inter Tight", "Days One", sans-serif;
   font-optical-sizing: auto;
