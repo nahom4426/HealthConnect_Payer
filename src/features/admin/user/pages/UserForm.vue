@@ -1,11 +1,9 @@
 <script setup>
-import { PropType, ref, computed, onMounted } from 'vue';
+import {  ref, computed, onMounted } from 'vue';
 import Input from '@/components/new_form_elements/Input.vue';
-import InputPassword from '@/components/new_form_elements/InputPassword.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Form from '@/components/new_form_builder/Form.vue';
 import { getAllRole } from '../../role/Api/RoleApi';
-import Spinner from '@/components/Spinner.vue';
 import InputLayout from '@/components/new_form_elements/NewInputLayout.vue';
 const props = defineProps({
   initialData: {

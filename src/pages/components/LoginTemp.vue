@@ -5,6 +5,7 @@ import Confirmation from "./Confirmation.vue";
 import ForgetPassword from "./ForgetPassword.vue";
 import NewPasswordConfirm from "./NewPasswordConfirm.vue";
 import Congratulation from "./Congratulation.vue";
+import icons from "@/utils/icons";
 
 const activeForm = ref(0);
 
@@ -50,13 +51,13 @@ function prevous() {
 </script>
 <template>
   <div
-    class="flex flex-col rounded-2xl max-h-[32rem] scrollbar-hide bg-white p-9"
+    class="flex flex-col rounded-2xl max-h-[32rem] scrollbar-hide bg-white  p-9"
   >
     <div
       class="flex gap-2 items-center justify-center mb-6 border-b border-base-clr3 pb-6"
     >
-      <img src="../../assets/logo.svg" alt="HealthConnect Logo" />
-      <h1 class="text-xl font-semibold text-primary">HealthConnect</h1>
+    <span class=" text-primary" v-html="icons.logo"></span>
+      <h1 class="text-3xl font-bold text-primary">HealthConnect</h1>
     </div>
 
     <component

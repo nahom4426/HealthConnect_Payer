@@ -61,32 +61,36 @@ const emit = defineEmits(["user"]);
 </script>
 <template>
   <NewFormLayout v-slot="{ submit }" id="login-form">
-    <div class="space-y-6">
+    <div class=" flex flex-col gap-9 w-full">
       <div class="flex flex-col items-center justify-center gap-4">
-        <h1 class="font-semibold text-xl">Nice to see you again 👋</h1>
+        <!-- <h1 class="font-semibold text-xl">Nice to see you again 👋</h1> -->
         <h2 class="w-[332px] text-center">
           Upon successful authentication, access your role-specific dashboard
           within the platform.
         </h2>
       </div>
-      <Input
-        label="Email"
-        name="email"
-        validation="required|email"
-        :attributes="{ placeholder: 'Enter your email' }"
-      />
+      <div class=" space-y-6">
 
-      <InputPassword
-        label="Password"
-        name="password"
-        validation="required"
-        :attributes="{ placeholder: 'Enter your password' }"
-      />
+        <Input
+          label="Email"
+          name="email"
+          validation="required|email"
+          :attributes="{ placeholder: 'Enter your email' }"
+        />
+  
+        <InputPassword
+          label="Password"
+          name="password"
+          validation="required"
+          :attributes="{ placeholder: 'Enter your password' }"
+        />
+      </div>
       <div class="text-right text-sm">
         <a href="#" @click.prevent="emit('user')" class="hover:underline">
           Forgot password?
         </a>
       </div>
+
       <div class="">
         <div class="flex justify-center">
           <FormSubmitButton
@@ -94,7 +98,10 @@ const emit = defineEmits(["user"]);
             btn-text="Login"
           />
         </div>
+
       </div>
+        <h1 class="text-base-clr text-xs text-center">©HealthConnect 2025</h1>
+
     </div>
   </NewFormLayout>
 </template>

@@ -26,5 +26,11 @@ onMounted(() => {
     >
       <LoginTemp class="mx-auto" />
     </div>
+     <div class="absolute  bottom-10 left-10 text-white z-20 hidden md:block">
+      <p class="text-sm">© 2025 HealthConnect</p>
+      <p class="text-xs opacity-70">
+        Connecting healthcare providers and payers
+      </p>
+    </div>
   </div>
 </template>

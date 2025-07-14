@@ -188,6 +188,6 @@ export default [
   {
     path: "/setting",
     name: "Theme",
-    icon: icons.setting,
+    icon: icons.theme,
   },
 ];

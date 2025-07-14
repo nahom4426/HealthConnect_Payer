@@ -1,45 +1,30 @@
 function validationKeys(validation) {
-  const rules = new String(validation);
-  console.log(validation);
-  
+  const rules = String(validation);
 
   return rules.split("|").reduce((state, rule) => {
-    const [name, args] = rule.split("-");
+    const [name, argsWithMessage] = rule.split("-");
 
-    if (!args) {
+    if (!argsWithMessage) {
       state[name] = {
         args: true,
         message: null,
       };
-
       return state;
     }
 
-    const [params, ...messages] = args.split(" ");
+    const [params, ...messageParts] = argsWithMessage.split(" ");
+    const message = messageParts.join(" ").replace(/[()]/g, "");
 
-    if ((params && params.includes(","))) {
-      const arg = params?.split(",") || true;
-      const message = messages.join(" ").replace(/[()]/g, "");
+    const args = params.includes(",") ? params.split(",") : params;
 
-      state[name] =
-        arg?.length == 1
-          ? {
-              args: arg[0],
-              message,
-            }
-          : {
-              args: arg,
-              message,
-            };
-    }  else {
-      state[name] = {
-        args: true,
-        message: null,
-      };
-    }
+    state[name] = {
+      args,
+      message: message || null,
+    };
 
     return state;
   }, {});
 }
+
 
 export { validationKeys };

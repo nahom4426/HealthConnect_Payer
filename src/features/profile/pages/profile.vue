@@ -111,8 +111,8 @@ function handleUpdateProfile({values}){
 
 </script>
 <template>
-  <div class="max-w-full min-h-full">
-    <div class="relative h-screen overflow-hidden">
+  <div class="max-w-full min-h-full overflow-auto  box-border">
+    <div class="relative">
       <div class="h-56 rounded-2xl bg-primary"></div>
       <div class="flex gap-8 absolute top-28 left-8 right-8">
         <div class="bg-white w-fit h-fit space-y-4 rounded-2xl p-4">
