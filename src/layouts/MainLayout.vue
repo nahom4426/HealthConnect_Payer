@@ -89,9 +89,9 @@ onMounted(() => {
 <template>
   <div
     :class="colorStore.color"
-    class="flex h-full py-3 pl-3 gap-6 w-full bg-[#F6F7FA]"
+    class="flex h-full p-3 box-border gap-6 w-full bg-[#F6F7FA]"
   >
-    <div class="h-screen w-navbar-width rounded-lg transition-all duration-300">
+    <div class="h-full w-navbar-width rounded-lg transition-all duration-300">
       <Drawer
         :is-collapsed="isCollapsed"
         :toggle-sidebar="toggleSidebar"

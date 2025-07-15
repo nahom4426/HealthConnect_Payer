@@ -159,7 +159,7 @@ watch(
 
 <template>
   <div
-    class="bg-white p-3 rounded-lg shadow-sm border border-gray-100"
+    class="bg-white p-3 rounded-2xl shadow-sm border h-full box-border border-gray-100"
     :style="{ width }"
   >
     <div :style="{ height }">

@@ -12,6 +12,7 @@ import icons from '@/utils/icons';
   const text = ref(props.attributes?.type == 'text' ? true : false)
 
   function toggleType() {
+    
     text.value = !text.value
   }
 
@@ -23,14 +24,15 @@ import icons from '@/utils/icons';
     type: text ? 'text' : 'password'
   }" >
   <template #left>
-      <div  class="h-full w-12 grid place-items-center ">
-        <i v-html="icons.password" />
+      <div @click="toggleType"  class="h-full w-12 grid place-items-center ">
+                <span v-html="text ? icons.password : icons.eye" />
+
       </div>
     </template>
-    <template #right>
+    <!-- <template #right>
       <div @click="toggleType" class="h-full w-12 grid place-items-center ">
         <span v-html="text ? icons.eye : icons.eyeSlash" />
       </div>
-    </template>
+    </template> -->
   </Input>
 </template>

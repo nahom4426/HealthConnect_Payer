@@ -75,13 +75,16 @@ onMounted(() => {
 });
 
 function getValidation(validation) {
+
   return validation.toString().includes("[object Object]")
     ? { ...validation }
     : validationKeys(validation);
 }
 
+
 function validate(setError = true) {
   if (!thisValidation.value) return true;
+console.log(getValidation(thisValidation.value));
 
   let validation = getValidation(thisValidation.value);
 

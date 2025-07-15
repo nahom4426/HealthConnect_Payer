@@ -57,26 +57,12 @@ const props = defineProps({
   <div class="hidden md:block">
       <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 rounded-lg shadow-inner">
         <span class="text-indigo-700 font-medium text-sm md:text-base">
-          {{ authStore.auth?.user?.companyName || 'Admin' }}
+          {{ authStore.auth?.user?.companyName || authStore.auth?.user?.roleName || ''}}
         </span>
       </div>
     </div>
     <div class="flex items-center gap-5">
-      <!-- <button class="px-5 py-3 rounded-md bg-base-clr3">
-        <i
-          v-html="
-            icons.notification ||
-            '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path fill=\'currentColor\' d=\'M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z\'/></svg>'
-          "
-        />
-      </button> -->
-
-      <div
-        class="flex items-center gap-2 px-5 py-3 rounded-md bg-base-clr3 cursor-pointer"
-      >
-        <span class="text-md font-light">Eng</span>
-        <i v-html="icons.chevron_down" />
-      </div>
+      
 
       <Dropdown v-slot="{ setRef, toggleDropdown }">
         <div
@@ -94,7 +80,7 @@ const props = defineProps({
             />
          
           </div>
-          <div class="flex flex-col">
+          <div class="flex flex-col ">
             <span class="text-sm font-bold">{{
               authStore.auth.user?.firstName +
                 " " +
@@ -102,7 +88,7 @@ const props = defineProps({
             }}</span>
             <span
               v-if="authStore.auth.user"
-              class="text-xs px-2.5 py-1 rounded-full font-medium"
+              class="text-xs  py-1 rounded-full font-medium"
             >
               {{ authStore.auth?.user?.companyName || authStore.auth?.user?.roleName || ''}}
             </span>

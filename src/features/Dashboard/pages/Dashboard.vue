@@ -121,7 +121,7 @@ onMounted(() => {
           <Cards :data="data" />
         </div>
       </div>
-      <div class="col-span-2">
+      <div class="col-span-2 h-f">
         <LoopChart
           title="Claim Requests (ETB)"
           :labels="['Jan', 'Feb', 'Mar', 'Apr']"

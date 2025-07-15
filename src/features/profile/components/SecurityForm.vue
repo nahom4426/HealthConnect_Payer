@@ -28,7 +28,7 @@ function handleChangePassword({ values }) {
   <div class="w-full flex justify-center">
     <Form
     v-slot="{submit}"
-      class="flex flex-col w-[33rem] rounded-md border px-5 py-8 border-base-clr/20 gap-6"
+      class="flex flex-col w-[33rem] box-border rounded-md border px-5 py-8 border-base-clr/20 gap-6"
       id="SecurityForm"
     >
       <div class="flex-col flex gap-4 text-center w-full">
@@ -60,6 +60,7 @@ function handleChangePassword({ values }) {
         <!-- validation="required|equalTo-newPassword" -->
 
       <InputPassword
+      validation="required|equalTo-newPassword"
         name="confirmPassword"
         label="Confirm Password"
         :attributes="{
@@ -67,7 +68,7 @@ function handleChangePassword({ values }) {
         }"
       />
       <FormSubmitButton
-        class="w-[31rem] h-14"
+        class="w-full  box-border h-14"
         @click.prevent="submit(handleChangePassword)"
         btn-text="Create Password"
       />
