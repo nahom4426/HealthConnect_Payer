@@ -169,12 +169,12 @@ onMounted(() => {
               borderColor: '#FFD665',
               backgroundColor: 'rgba(255, 214, 101, 0.3)',
             },
-            {
-              label: 'Expenses',
-              data: [50, 100, 75],
-              borderColor: '#02676B',
-              backgroundColor: 'rgba(2, 103, 107, 0.3)',
-            },
+            // {
+            //   label: 'Expenses',
+            //   data: [50, 100, 75],
+            //   borderColor: '#02676B',
+            //   backgroundColor: 'rgba(2, 103, 107, 0.3)',
+            // },
           ]"
         />
       </div>
@@ -208,12 +208,12 @@ onMounted(() => {
               borderColor: '#FFD665',
               backgroundColor: 'rgba(255, 214, 101, 0.3)',
             },
-            {
-              label: 'Expenses',
-              data: [50, 100, 75],
-              borderColor: '#02676B',
-              backgroundColor: 'rgba(2, 103, 107, 0.3)',
-            },
+            // {
+            //   label: 'Expenses',
+            //   data: [50, 100, 75],
+            //   borderColor: '#02676B',
+            //   backgroundColor: 'rgba(2, 103, 107, 0.3)',
+            // },
           ]"
         />
       </div>
