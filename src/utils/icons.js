@@ -89,8 +89,87 @@ export default {
 	<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C10.9 2 10 2.9 10 4V18C10 19.1 10.9 20 12 20H20C21.1 20 22 19.1 22 18V8L16 2H12zM12 0H16C18.21 0 20 1.79 20 4V8H22C22.55 8 23 8.45 23 9V18C23 20.21 21.21 22 19 22H12C9.79 22 8 20.21 8 18V4C8 1.79 9.79 0 12 0z"/></svg>
 	`,
   pending_contracts: `
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C10.9 2 10 2.9 10 4V18C10 19.1 10.9 20 12 20H20C21.1 20 22 19.1 22 18V8L16 2H12zM12 0H16C18.21 0 20 1.79 20 4V8H22C22.55 8 23 8.45 23 9V18C23 20.21 21.21 22 19 22H12C9.79 22 8 20.21 8 18V4C8 1.79 9.79 0 12 0z"/></svg>
-	`,
+		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <style>
+    /* Keyframes for drawing paths */
+    @keyframes drawPathSmall {
+      from {
+        stroke-dashoffset: var(--path-length);
+      }
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    /* Keyframes for a bouncy appearance */
+    @keyframes appearScaleSmall {
+      0% {
+        opacity: 0;
+        transform: scale(0.5);
+        transform-origin: center center;
+      }
+      70% {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Base styling for paths */
+    #doc-outline, #doc-line1, #doc-line2, #check-mark {
+      stroke: currentColor;
+      stroke-width: 1.2; /* Slightly thicker stroke for visibility at small size */
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    /* Document outline animation */
+    #doc-outline {
+      --path-length: 60; /* Adjusted length for small scale */
+      stroke-dasharray: var(--path-length);
+      stroke-dashoffset: var(--path-length);
+      animation: drawPathSmall 1.5s ease-out forwards;
+    }
+
+    /* Document lines animation */
+    #doc-line1, #doc-line2 {
+      --path-length: 10; /* Adjusted length */
+      stroke-dasharray: var(--path-length);
+      stroke-dashoffset: var(--path-length);
+      animation: drawPathSmall 0.6s ease-out forwards;
+      opacity: 0; /* Hidden initially */
+    }
+    #doc-line1 {
+      animation-delay: 1.0s;
+      animation-fill-mode: forwards;
+    }
+    #doc-line2 {
+      animation-delay: 1.2s;
+      animation-fill-mode: forwards;
+    }
+
+    /* Check mark animation */
+    #check-mark {
+      fill: currentColor; /* Use currentColor for the check fill */
+      stroke: none; /* No stroke for fill path */
+      opacity: 0; /* Hidden initially */
+      animation: appearScaleSmall 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+      animation-delay: 1.8s; /* Appears after lines are mostly drawn */
+    }
+  </style>
+
+  <path id="doc-outline" d="M5 4.5V19.5H19V7.5L14.5 4.5Z" />
+  <path id="doc-outline-fold" d="M14.5 4.5V7.5H19" />
+
+  <path id="doc-line1" d="M7 10H17" />
+  <path id="doc-line2" d="M7 13H14" />
+
+  <path id="check-mark" d="M9.5 16L12 18.5L17 13.5L16 12.5L12 16.5L10.5 15Z" />
+</svg>	`,
   authorizeClaims: `
 		<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32"><path fill="currentColor" d="M19.431 1.648a1.12 1.12 0 0 0-1.53.416l-.001.002l-3.972 6.88l-.48-.209a5.42 5.42 0 0 0-6.752 2.05l-.007.011l-.007.012l-.002-.001l-5.2 8.68l-.005.007v.008h-.002a3.506 3.506 0 0 0 1.279 4.78a3.44 3.44 0 0 0 2.05.464l-.058.102l-.001.001a2.8 2.8 0 0 0-.366 1.162l-.38 3.443v.008c-.063.813.848 1.326 1.511.87l.01-.006l2.752-2.082c.286-.202.535-.46.725-.754v.01a3.5 3.5 0 0 0 6.322 2.07q.19.18.405.34c1.04.768 2.399 1.09 3.783 1.09h9.24a2.24 2.24 0 0 0 2.226-1.99h.024V27.06h.002V18.2a2.82 2.82 0 0 0-1.704-2.585l-10.75-4.666l3.685-6.387l.002-.003a1.12 1.12 0 0 0-.416-1.53l-.003-.001l-2.375-1.378zm-6.508 9.038l-2.656 4.6a2.85 2.85 0 0 0-1.246 1.169l-3.208 5.551a1.52 1.52 0 0 1-1.308.757a1.45 1.45 0 0 1-.742-.2l-.004-.002A1.5 1.5 0 0 1 3.2 20.5l5.18-8.646a3.42 3.42 0 0 1 4.261-1.289h.004zm2.173 6.238l2.443-4.234L28.5 17.45l-.003-.004a.81.81 0 0 1 .5.753v.794h-.002v8.02h-5.81q-.382-.001-.748-.056l-.643-.141a4.57 4.57 0 0 1-2.421-1.693c-.8-1.094-2.27-1.37-3.414-.735l-.001.001c-.69.385-1.506.84-2.148 1.2l-1.113.62l-.011.007a2.005 2.005 0 0 1-2.735-.734a2.006 2.006 0 0 1 .736-2.735l4.225-2.44a1 1 0 0 0 .663-.857a4.3 4.3 0 0 0-.479-2.526m-9.567 8.58l2.585 1.506a1.8 1.8 0 0 1-.427.424l-.007.005l-1.515 1.146l-1.001-.583l.208-1.884v-.011c.02-.214.073-.418.157-.603M19.392 7.477l-2.6-1.492l.976-1.692l2.595 1.5z"/></svg>
 	`,

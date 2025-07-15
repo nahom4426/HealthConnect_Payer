@@ -51,6 +51,30 @@ function handleEdit(row) {
     props.onEdit(row);
   }
 }
+function handleDetails(row) {
+  console.log('Details Of CreditServices modal opened with row:', row)
+  if (row.dispensingUuid) {
+    openModal('DetailsOfCreditServices', {
+      
+      
+      dispensingUuid: row.dispensingUuid,
+      claim: row, // Pass the row data for immediate display while loading
+      onUpdated: (updatedClaim) => {
+        claimServicesStore.update(updatedClaim.dispensingUuid, updatedClaim);
+        addToast({
+          type: 'success',
+          title: 'Updated',
+          message: 'Claim updated successfully'
+        });
+      },
+      onCancel: () => {
+        // Handle cancel if needed
+      }
+    });
+  } else if (typeof props.onEdit === 'function') {
+    props.onEdit(row);
+  }
+}
 
 function toggleDropdown(event, rowId) {
   event.stopPropagation();
@@ -62,10 +86,13 @@ function toggleDropdown(event, rowId) {
 function closeAllDropdowns() {
   document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
 }
-
 function handleEditWithClose(row) {
   closeAllDropdowns();
   handleEdit(row);
+}
+function handleDetailsWithClose(row) {
+  closeAllDropdowns();
+  handleDetails(row);
 }
 
 async function handleActivateWithClose(insuredId) {
@@ -148,7 +175,7 @@ async function handleDeactivateWithClose(insuredId) {
               </div>
             </button>
             <button 
-              @click.prevent="$router.push(`/insured_list/detail/${row.dispensingUuid}`)"
+              @click.stop="handleDetailsWithClose(row)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               <div class="flex items-center justify-start pl-4 gap-4">

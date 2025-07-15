@@ -68,7 +68,7 @@ export default [
         name: "Add Payers to Contracts",
         icon: icons.pending_contracts,
         category: "Pages",
-        privilege: ["Create Services"],
+        privilege: ["Manage_Kenema"],
       },
     ],
   },

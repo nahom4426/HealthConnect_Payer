@@ -197,12 +197,12 @@ function getTypeStyle(statusOrType) {
 </script>
 
 <template>
-  <tr 
-    v-for="(row, idx) in rowData" 
-    :key="idx"
-    @click.self="onRowClick(row)" 
-    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out" 
-  >  
+<tr 
+  v-for="(row, idx) in rowData.filter(r => r !== null)" 
+  :key="idx"
+  @click.self="onRowClick(row)" 
+  class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out" 
+>
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
@@ -212,9 +212,9 @@ function getTypeStyle(statusOrType) {
       </span>
 
       <!-- Email field -->
-      <span v-else-if="key === 'email'" class="text-gray-600">
-        {{ row.email }}
-      </span>
+   <span v-else-if="key === 'email'" class="text-gray-600">
+  {{ row?.email }}
+</span>
 
       <!-- Mobile Phone field -->
       <span v-else-if="key === 'mobilePhone'" class="text-gray-600">

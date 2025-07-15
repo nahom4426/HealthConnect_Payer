@@ -57,7 +57,7 @@ export default [
 		children: [
 			{
 				path: '',
-				name: 'Provider Contracts List',
+				name: 'Provider Contracts ',
 				component: ProviderContracts,
 			},
 			{

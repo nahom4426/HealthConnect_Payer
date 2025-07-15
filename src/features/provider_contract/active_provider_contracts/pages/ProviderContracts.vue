@@ -3,7 +3,7 @@ import { ref, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import PayerContractsDataProvider from "../components/ProviderContractsDataProvider.vue";
+import ProviderContractsDataProvider from "../components/ProviderContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
 import { changePayerContractStatus, deletePayerContract } from "../api/providerContractApi";
@@ -171,7 +171,7 @@ function handleAddContract() {
     </template> -->
 
     <template #default="{ search }">
-      <PayerContractsDataProvider
+      <ProviderContractsDataProvider
         ref="dataProvider"
         :search="search"
         v-slot="{ contracts, pending, currentPage, itemsPerPage, totalPages }"
@@ -211,7 +211,7 @@ function handleAddContract() {
             <StatusRow
               :rowData="contracts"
               :rowKeys="[
-               'payerName', 
+               'payerNames', 
                'contractName',
                 'contractCode',
                 'providerName',
@@ -237,7 +237,7 @@ function handleAddContract() {
             />
           </template>
         </Table>
-      </PayerContractsDataProvider>
+      </ProviderContractsDataProvider>
     </template>
   </DefaultPage>
 </template>
