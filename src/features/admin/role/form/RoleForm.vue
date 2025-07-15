@@ -1,52 +1,59 @@
 <script setup>
 import Input from '@/components/new_form_elements/Input.vue';
-import Privileges from '../../privilege/pages/Privileges.vue';
 import Textarea from '@/components/new_form_elements/Textarea.vue';
 import Form from '@/components/new_form_builder/Form.vue';
 import SelectPrivilegeInput from '../components/SelectPrivilegeInput.vue';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
-    roles: {
+    role: {
         type: Object,
+        required: true
     },
     privileges: {
         type: Array,
-        Required: true,
+        required: true
     },
     selectPrivilege: {
         type: Array,
+        default: () => []
     }
 });
 
-const selectedPrivileges = ref(props.selectPrivilege || []);
-console.log(selectedPrivileges.value);
-
+const selectedPrivileges = ref(props.selectPrivilege);
 
 watch(() => props.selectPrivilege, (newVal) => {
-    if (newVal) {
-        selectedPrivileges.value = newVal;
-    }
+    selectedPrivileges.value = newVal;
 }, { immediate: true });
-
 </script>
 
 <template>
     <Form class="grid grid-cols-3 gap-4 p-6" :inner="false" id="roleForm">
-        <Input name="roleName" validation="required" label="Role Name" :value="roles?.roleName || ''" :attributes="{
-            placeholder: 'Enter Role Name',
-        }" />
-        <Textarea validation="required" name="roleDescription" :value="roles?.roleDescription || ''"
-            label="Role Description" :attributes="{
+        <Input 
+            name="roleName" 
+            validation="required" 
+            label="Role Name" 
+            :modelValue="role.roleName" 
+            :attributes="{
+                placeholder: 'Enter Role Name',
+            }" 
+        />
+        <Textarea 
+            validation="required" 
+            name="roleDescription" 
+            :modelValue="role.roleDescription" 
+            label="Role Description" 
+            :attributes="{
                 placeholder: 'Enter Role Description',
-            }" />
+            }" 
+        />
         <div class="col-span-3">
             <SelectPrivilegeInput 
                 label="Select Privileges" 
                 validation="required" 
                 name="privilegeUuid"
                 :options="privileges" 
-                :selectedPrivilege="selectPrivilege || []" 
+                :selectedPrivilege="selectPrivilege" 
             />
         </div>
     </Form>

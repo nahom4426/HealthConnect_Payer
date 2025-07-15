@@ -174,6 +174,7 @@ async function handleDeactivateWithClose(insuredId) {
     </div>
       <div v-else-if="key === 'source'" class="relative group">
         <div class="flex items-center gap-2">
+          {{ idx + 1 }}
           <span class="relative flex h-3 w-3">
             <span 
               class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"

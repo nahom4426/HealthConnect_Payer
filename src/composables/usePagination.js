@@ -27,8 +27,8 @@ export function usePagination(options = {}) {
 
   function getPaginationData(next = true, current = false) {
     const data = {
-      searchKey: search.value || undefined,
-      search: search.value || undefined,
+      searchKey: search.value || "",
+      search: search.value || "",
       page: next
         ? !current
           ? searching.value 

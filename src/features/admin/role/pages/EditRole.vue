@@ -19,28 +19,24 @@ const req = useApiRequest()
 const updateReq = useApiRequest()
 const { submit } = useForm('roleForm')
 const router = useRouter();
+
 if (!Object.keys(role.value).length) {
     req.send(
         () => getRoleById(roleUuid),
         (res) => {
             if (res.success) {
                 role.value = res.data;
-                
             }
         }
     );
 }
-console.log(role.value);
-
 
 function update({ values }) {
-  console.log('nahi');
-  
     updateReq.send(
         () => updateRolebyId(roleUuid, values),
         (res) => {
             if (res.success) {
-                roleStore.update(roleUuid, { ...role, ...values });
+                roleStore.update(roleUuid, { ...role.value, ...values });
             }
             toasted(res.success, 'Successfully Updated', res.error);
             router.push('/roles');
@@ -51,33 +47,32 @@ function update({ values }) {
 
 </script>
 <template>
-<NewFormParent
+  <NewFormParent
     :is-modal="false"
-    size="auto "
+    size="auto"
     class="flex justify-center h-full pb-6 bg-white"
     title="Update Role"
   >
     <PrivilegesDataProvider :pre-page="500" v-slot="{ privileges, pending }">
-      <RoleForm v-if="!pending" :selectPrivilege="role?.privilegeList" :privileges="privileges" :roles="roleStore" />
+      <RoleForm 
+        v-if="!pending && Object.keys(role).length" 
+        :selectPrivilege="role.privilegeList" 
+        :privileges="privileges" 
+        :role="role" 
+      />
       <p v-else>Loading...</p>
     </PrivilegesDataProvider>
-      {{ privileges }}
 
     <template #bottom>
-
-        <Button
-          size="sm"
-          type="primary"
-          class="flex justify-center  items-center mt-3 gap-3 p-2 bg-primary"
-          :pending="req.pending.value"
-          @click.prevent="submit(update)"
-        >
-          <!-- <i class="pb-[3px]" v-html="icons.plus" /> -->
-          Update Role
-        </Button>
+      <Button
+        size="sm"
+        type="primary"
+        class="flex justify-center items-center mt-3 gap-3 p-2 bg-primary"
+        :pending="req.pending.value"
+        @click.prevent="submit(update)"
+      >
+        Update Role
+      </Button>
     </template>
-  
   </NewFormParent>
- 
-
 </template>
