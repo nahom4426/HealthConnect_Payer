@@ -23,7 +23,7 @@ processProfilePicture();
 </script>
 
 <template>
-  <div class="flex items-start bg-primary relative rounded-2xl">
+  <div class="flex items-start bg-primary relative  rounded-2xl">
     <div class="flex justify-between w-full">
       <div class="flex flex-col gap-6 p-8">
         <div class="bg-[#DFF1F1] py-1 px-2 w-fit rounded text-primary">

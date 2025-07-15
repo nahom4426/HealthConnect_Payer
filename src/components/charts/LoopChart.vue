@@ -167,7 +167,7 @@ watch(
 </script>
 
 <template>
-  <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+  <div class="bg-white p-4 rounded-2xl h-full box-border shadow-sm border border-gray-100">
     <div :style="{ height }">
       <canvas ref="chartContainer"></canvas>
     </div>

@@ -69,11 +69,8 @@ const toggleMenu = (name) => {
     </div>
     <div class="space-y-4 flex-shrink-0">
       <div class="flex gap-2 py-4 w-full items-center justify-center">
-        <img
-          class="size-8"
-          src="/src/assets/logo.svg"
-          alt="HealthConnect Logo"
-        />
+        <span class=" text-primary" v-html="icons.logo"></span>
+       
         <span
           v-if="!props.isCollapsed"
           class="text-md font-bold days-one text-primary"
