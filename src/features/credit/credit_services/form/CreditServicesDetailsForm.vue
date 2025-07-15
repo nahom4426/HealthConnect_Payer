@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { getDispensingDetail, searchInsuredByInstitution } from '../api/creditServicesApi';
+import { getDispensingDetail } from '../api/creditServicesApi';
+import { searchInsuredByInstitution } from '@/features/insured_persons/api/insuredPersonsApi';
 import EmployeeDetails from '../components/EmployeeDetails.vue';
 import Spinner from '@/components/Spinner.vue';
 
@@ -351,3 +352,4 @@ td {
   @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500;
 }
 </style>
+
