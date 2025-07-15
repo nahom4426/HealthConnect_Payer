@@ -44,13 +44,13 @@ function escListener(e) {
 
 function handleClose() {
   if (isClosing.value) return;
-  
+
   isClosing.value = true;
   // Wait for the animation to complete before actually closing
   setTimeout(() => {
     closeModal();
     isClosing.value = false;
-  }, 300); // Match this duration with your CSS animation duration
+  }, 500); // Match this duration with your CSS animation duration
 }
 
 onMounted(() => {
@@ -71,7 +71,7 @@ onUnmounted(() => {
     ]"
     class="modal-parent p-4 grid place-items-center min-h-full bg-[#292A36]/60"
   >
-    <div class="modal-content">
+    <div class="modal-content animate-fade-in-scale">
       <slot v-bind="modal || {}"></slot>
     </div>
   </div>
@@ -86,44 +86,67 @@ onUnmounted(() => {
   bottom: 0;
   z-index: 9999;
   overflow-y: auto;
-  /* Add transition for the background */
-  transition: background-color 0.3s ease;
+  transition: background-color 0.5s ease;
+  backdrop-filter: blur(4px);
 }
 
 .modal-parent.__closing {
   background-color: transparent;
+  backdrop-filter: none;
 }
 
 .modal-content {
-  animation: slideDown 0.3s ease-out forwards;
+  animation: slideDown 0.5s ease-out forwards, fadeIn 0.5s ease-out forwards;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transform-origin: top center;
 }
 
 .__active .modal-content {
-  animation: slideDown 0.3s ease-out forwards;
+  animation: slideDown 0.5s ease-out forwards, fadeIn 0.5s ease-out forwards;
 }
 
 .__closing .modal-content {
-  animation: slideUp 0.3s ease-in forwards;
+  animation: slideUp 0.5s ease-in forwards, fadeOut 0.5s ease-in forwards;
 }
 
 @keyframes slideDown {
   from {
-    transform: translateY(-20px);
+    transform: translateY(-30px) scale(0.95);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
 }
 
 @keyframes slideUp {
   from {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
   to {
-    transform: translateY(-20px);
+    transform: translateY(-30px) scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
     opacity: 0;
   }
 }

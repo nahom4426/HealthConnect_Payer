@@ -9,7 +9,7 @@ import { toast } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { importInsuredPersons } from "../api/insuredPersonsApi";
 import { insuredMembers } from "../store/insuredPersonsStore";
-import * as XLSX from 'xlsx'; // You'll need to install this: npm install xlsx
+import * as XLSX from 'xlsx';
 
 const props = defineProps({
   data: String,
@@ -24,7 +24,7 @@ const selectedFile = ref(null);
 const fileName = ref("");
 const importing = ref(false);
 const progress = ref(0);
-const message = ref({ type: null, text: null });
+const message = ref({ type: null, text: null, isHtml: false });
 const wasSuccessful = ref(false);
 
 // For Excel preview
@@ -32,15 +32,15 @@ const previewData = ref([]);
 const previewHeaders = ref([]);
 const showPreview = ref(false);
 const previewLoading = ref(false);
-const maxPreviewRows = 3; // Changed to show 3 rows initially
-const maxPreviewHeight = "200px"; // Height for the scrollable container
+const maxPreviewRows = 3;
+const maxPreviewHeight = "200px";
 
 const reset = () => {
   progress.value = 0;
   importing.value = false;
   selectedFile.value = null;
   fileName.value = "";
-  message.value = { type: null, text: null };
+  message.value = { type: null, text: null, isHtml: false };
   wasSuccessful.value = false;
   previewData.value = [];
   previewHeaders.value = [];
@@ -48,7 +48,6 @@ const reset = () => {
   if (fileInput.value) fileInput.value.value = "";
 };
 
-// Parse Excel/CSV file for preview
 const parseFileForPreview = async (file) => {
   if (!file) return;
   
@@ -60,30 +59,25 @@ const parseFileForPreview = async (file) => {
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
     
-    // Convert to JSON with headers
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     
     if (jsonData.length > 0) {
-      // First row is headers
       previewHeaders.value = jsonData[0];
-      
-      // Get all data rows (not just the first few)
       previewData.value = jsonData.slice(1);
-      
       showPreview.value = true;
     }
   } catch (error) {
     console.error('Error parsing file:', error);
     message.value = { 
       type: "error", 
-      text: "Could not parse file for preview. Please ensure it's a valid Excel/CSV file."
+      text: "Could not parse file for preview. Please ensure it's a valid Excel/CSV file.",
+      isHtml: false
     };
   } finally {
     previewLoading.value = false;
   }
 };
 
-// Helper function to read file as ArrayBuffer
 const readFileAsync = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -95,13 +89,13 @@ const readFileAsync = (file) => {
 
 const importFile = () => {
   if (!selectedFile.value) {
-    message.value = { type: "error", text: "Please select a file first" };
+    message.value = { type: "error", text: "Please select a file first", isHtml: false };
     return;
   }
 
   importing.value = true;
   progress.value = 0;
-  message.value = { type: null, text: null };
+  message.value = { type: null, text: null, isHtml: false };
 
   const fd = new FormData();
   fd.append("file", selectedFile.value);
@@ -116,21 +110,27 @@ const importFile = () => {
       importing.value = false;
 
       if (res.success) {
-        const hasErrors = res?.data?.errors?.length > 0;
+        let messageText = `<div class="text-green-700">Successfully imported ${res.data.successfulImports || 0} records</div>`;
+        
+        if (res.data.skippedPayers && res.data.skippedPayers.length > 0) {
+          messageText += `<div class="mt-2 text-left">`;
+          messageText += `<div class="font-medium">Skipped records (${res.data.skippedPayers.length}):</div>`;
+          messageText += `<ul class="list-disc list-inside pl-4 mt-1">`;
+          res.data.skippedPayers.forEach(skipped => {
+            messageText += `<li class="text-sm text-red-600">${skipped}</li>`;
+          });
+          messageText += `</ul></div>`;
+        }
+
         message.value = { 
           type: "success", 
-          text: `Successfully imported ${res.data.successfulImports || 0} records`
+          text: messageText,
+          isHtml: true
         };
         wasSuccessful.value = true;
         
-        // Update store with the importedInsured array merged with existing data (payer)
         if (res.data?.importedInsured && Array.isArray(res.data.importedInsured)) {
-          console.log('Adding imported data to store:', res.data.importedInsured);
-          
-          // Get current data from store
           const currentData = insuredStore.getAll();
-          
-          // Merge and remove duplicates
           const mergedData = [
             ...res.data.importedInsured,
             ...currentData.filter(
@@ -139,22 +139,20 @@ const importFile = () => {
               )
             )
           ];
-          
           insuredStore.setAll(mergedData);
         }
         
         setTimeout(() => {
           if (wasSuccessful.value) {
-            closeModal();
-            reset();
+           
           }
         }, 3500);
       } else {
         message.value = {
           type: "error",
-          text: res.error || res.message || "Import failed"
+          text: res.error || res.message || "Import failed",
+          isHtml: false
         };
-        console.log('Full API response:', res);
       }
     }
   );
@@ -171,15 +169,13 @@ const handleFile = (e) => {
   ];
 
   if (!validTypes.includes(file.type)) {
-    message.value = { type: "error", text: "Please upload Excel/CSV file" };
+    message.value = { type: "error", text: "Please upload Excel/CSV file", isHtml: false };
     return;
   }
 
   selectedFile.value = file;
   fileName.value = file.name;
-  message.value = { type: null, text: null };
-  
-  // Generate preview when file is selected
+  message.value = { type: null, text: null, isHtml: false };
   parseFileForPreview(file);
 };
 
@@ -244,7 +240,6 @@ const title = props.data === "dependant" ? "Import Dependant Data" : "Import Pay
             />
           </div>
 
-          <!-- File Preview Section -->
           <div v-if="previewLoading" class="my-4 text-center">
             <div class="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
             <p class="mt-2 text-sm text-gray-600">Loading preview...</p>
@@ -283,12 +278,13 @@ const title = props.data === "dependant" ? "Import Dependant Data" : "Import Pay
             </div>
           </div>
 
-          <div v-if="message.text" class="mb-4 p-3 rounded-md text-sm" :class="{
-            'bg-red-50 text-red-700': message.type === 'error',
-            'bg-green-50 text-green-700': message.type === 'success',
-            'bg-blue-50 text-blue-700': !message.type
+          <div v-if="message.text" class="mb-4 p-3 rounded-md" :class="{
+            'bg-red-50': message.type === 'error',
+            'bg-green-50': message.type === 'success',
+            'bg-blue-50': !message.type
           }">
-            {{ message.text }}
+            <div v-if="message.isHtml" v-html="message.text" class="text-sm"></div>
+            <template v-else class="text-sm">{{ message.text }}</template>
           </div>
 
           <div v-if="importing" class="mb-4">
@@ -328,7 +324,7 @@ const title = props.data === "dependant" ? "Import Dependant Data" : "Import Pay
               <Button
                 v-if="selectedFile && !importing && message.type !== 'success'"
                 @click="importFile"
-                class="bg-blue-600 text-white hover:bg-blue-700"
+                class="bg-primary text-white hover:bg-[#235080]"
                 size="md"
               >
                 Import Now
@@ -342,7 +338,6 @@ const title = props.data === "dependant" ? "Import Dependant Data" : "Import Pay
 </template>
 
 <style scoped>
-/* Custom scrollbar styles */
 .custom-scrollbar::-webkit-scrollbar {
   height: 6px;
   width: 6px;

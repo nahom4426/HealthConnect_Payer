@@ -117,12 +117,25 @@ const importFile = () => {
 
       if (res.success) {
         const hasErrors = res?.data?.errors?.length > 0;
+        let messageText = `<div class="text-green-700">Successfully imported ${res.data.successfulImports || 0} records</div>`;
+        
+        // Add skipped payers information if they exist
+        if (res.data.skippedPayers && res.data.skippedPayers.length > 0) {
+          messageText += `<div class="mt-2 text-left">`;
+          messageText += `<div class="font-medium">Skipped records (${res.data.skippedPayers.length}):</div>`;
+          messageText += `<ul class="list-disc list-inside pl-4 mt-1">`;
+          res.data.skippedPayers.forEach(skipped => {
+            messageText += `<li class="text-sm text-red-600">${skipped}</li>`;
+          });
+          messageText += `</ul></div>`;
+        }
+
         message.value = { 
           type: "success", 
-          text: `Successfully imported ${res.data.successfulImports || 0} records`
+          text: messageText,
+          isHtml: true
         };
         wasSuccessful.value = true;
-        
         // Update store with the importedInsured array merged with existing data (payer)
         if (res.data?.importedInsured && Array.isArray(res.data.importedInsured)) {
           console.log('Adding imported data to store:', res.data.importedInsured);
@@ -145,8 +158,7 @@ const importFile = () => {
         
         setTimeout(() => {
           if (wasSuccessful.value) {
-            closeModal();
-            reset();
+           
           }
         }, 3500);
       } else {
@@ -283,13 +295,14 @@ const title = props.data === "dependant" ? "Import Dependant Data" : "Import Pay
             </div>
           </div>
 
-          <div v-if="message.text" class="mb-4 p-3 rounded-md text-sm" :class="{
-            'bg-red-50 text-red-700': message.type === 'error',
-            'bg-green-50 text-green-700': message.type === 'success',
-            'bg-blue-50 text-blue-700': !message.type
-          }">
-            {{ message.text }}
-          </div>
+        <div v-if="message.text" class="mb-4 p-3 rounded-md" :class="{
+    'bg-red-50': message.type === 'error',
+    'bg-green-50': message.type === 'success',
+    'bg-blue-50': !message.type
+  }">
+    <div v-if="message.isHtml" v-html="message.text" class="text-sm"></div>
+    <template v-else class="text-sm">{{ message.text }}</template>
+  </div>
 
           <div v-if="importing" class="mb-4">
             <div class="flex justify-between text-sm text-gray-600 mb-1">

@@ -656,7 +656,7 @@ watch(selectedContract, async (newContractId) => {
             v-model="prescriptionNumber"
             name="prescriptionNumber"
             label="Prescription Number"
-            validation="required"
+            
             :attributes="{
               placeholder: 'Enter prescription number',
             }"
@@ -667,7 +667,7 @@ watch(selectedContract, async (newContractId) => {
             v-model="pharmacyTransactionId"
             name="pharmacyTransactionId"
             label="Pharmacy Transaction ID"
-            validation="required"
+       
             :attributes="{
               placeholder: 'Enter pharmacy transaction ID',
             }"

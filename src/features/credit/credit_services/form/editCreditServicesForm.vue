@@ -49,6 +49,7 @@ const dispensingDate = ref(new Date().toISOString().split('T')[0]);
 const loading = ref(true);
 const claimData = ref({});
 const remarks = ref({});
+const drugSearchTimeout =ref(null);
 
 const employeeDetails = computed(() => {
   if (!selectedEmployee.value) return null;

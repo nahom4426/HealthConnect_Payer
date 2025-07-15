@@ -1,0 +1,140 @@
+<!-- AddCreditServices.vue (page component) -->
+<script setup lang="ts">
+import CreditServicesForm from "../form/creditServicesForm.vue";
+import { useApiRequest } from "@/composables/useApiRequest";
+import { claimServices } from "../store/creditClaimsStore";
+import { toasted } from "@/utils/utils";
+import { createCreditService } from "../api/creditServicesApi";
+import { useRouter } from "vue-router";
+import Button from "@/components/Button.vue";
+import { ref } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import creditServicesFormDataProvider from "../form/creditServicesFormDataProvider.vue";
+
+const req = useApiRequest();
+const claimServicesStore = claimServices();
+const router = useRouter();
+const auth = useAuthStore();
+const formDataProvider = ref();
+const formRef = ref();
+
+async function handleSubmit(values: any) {
+  try {
+    // Validate required fields
+    if (!values.payerUuid || !values.dispensingDate || 
+        (!values.insuredUuid && !values.dependantUuid)) {
+      throw new Error('Please fill all required fields');
+    }
+
+    if (!values.medicationItems || values.medicationItems.length === 0) {
+      throw new Error('Please add at least one medication item');
+    }
+
+    const payload = {
+      providerUuid: auth.auth?.user?.providerUuid || "",
+      payerUuid: values.payerUuid,
+      insuredUuid: values.insuredUuid,
+      contractHeaderUuid: values.contractHeaderUuid,
+      dependantUuid: values.dependantUuid,
+      phone: values.phone,
+      patientName: values.patientName || `${values.employeeId} - ${values.phone}`,
+      employeeId: values.employeeId,
+      dispensingDate: values.dispensingDate,
+      prescriptionNumber: values.prescriptionNumber || '',
+      pharmacyTransactionId: values.pharmacyTransactionId || '',
+      primaryDiagnosis: values.primaryDiagnosis || '',
+      secondaryDiagnosis: values.secondaryDiagnosis || '',
+      medicationItems: values.medicationItems.map((item: any) => ({
+        contractDetailUuid: item.contractDetailUuid || '',
+        itemType: item.itemType,
+        remark: item.remark || '',
+        price: item.price || 
+              (item.itemType === 'SERVICE' 
+                ? (typeof item.paymentAmount === 'string' 
+                    ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
+                    : Number(item.paymentAmount) || 0)
+                : item.price || 0),
+        quantity: Number(item.quantity) || 1,
+        ...(item.itemType === 'DRUG' ? {
+          route: item.route || 'oral',
+          frequency: item.frequency || 'daily',
+          dose: item.dose || '1',
+          duration: item.duration || '7 days'
+        } : {})
+      }))
+    };
+
+    const result = await createCreditService(payload);
+
+    if (result.success) {
+      const storeData = {
+        ...payload,
+        invoiceNumber: result.data?.invoiceNumber || `TEMP-${Date.now()}`,
+        dispensingUuid: result.data?.dispensingUuid || `TEMP-${Date.now()}`,
+        totalAmount: payload.medicationItems.reduce((sum: number, item: any) => 
+          sum + ((item.price || 0) * (Number(item.quantity) || 1)), 0),
+        patientResponsibility: 0,
+        insuranceCoverage: 0,
+        branchName: null,
+        createdAt: new Date().toISOString(),
+        items: payload.medicationItems.map((item: any) => ({
+          ...item,
+          name: item.itemType === 'SERVICE' ? item.serviceName : item.drugName,
+          code: item.itemType === 'SERVICE' ? item.serviceCode : item.drugCode,
+        }))
+      };
+
+      claimServicesStore.add(storeData);
+      toasted(true, 'Success', result.data?.message || 'Credit claim added successfully');
+      router.push('/credit_services');
+    } else {
+      throw new Error(result.data?.message || 'Submission failed');
+    }
+  } catch (error: any) {
+    console.error('Submission error:', error);
+    const errorMessage = error.response?.data?.message || 
+                       error.message || 
+                       'Failed to process credit request';
+    toasted(false, 'Error', errorMessage);
+  }
+}
+
+function submitForm() {
+  if (formRef.value) {
+    formRef.value.submit();
+  }
+}
+</script>
+
+<template>
+  <div class="bg-white p-4 rounded-xl space-y-6 box-border">
+    <h1 class="border-b font-semibold p-4">Add New Credit Claim</h1>
+    
+    <div class="bg-white rounded-lg">
+      <creditServicesFormDataProvider ref="formDataProvider">
+        <template #default="{ pending: dataProviderPending }">
+          <CreditServicesForm
+            ref="formRef"
+            :pending="req.pending.value || dataProviderPending"
+            @submit="handleSubmit"
+          />
+        </template>
+      </creditServicesFormDataProvider>
+    </div>
+
+    <div class="mt-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-md">
+      <p class="text-sm text-blue-700">
+        <strong>Note:</strong> Please ensure all required fields are filled and medication items are added before submission.
+      </p>
+    </div>
+
+    <!-- <Button
+      size="md"
+      class="flex justify-center w-full items-center mt-3 gap-3 box-border text-white bg-primary"
+      :pending="req.pending.value"
+      @click="submitForm"
+    >
+      Submit Credit Claim
+    </Button> -->
+  </div>
+</template>

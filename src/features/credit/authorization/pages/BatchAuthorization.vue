@@ -83,7 +83,6 @@ function remove(id) {
               'status',
             ],
           }"
-          ,
           :cells="{
             requestedOn: (requestedOn) => {
               const date = new Date(requestedOn);

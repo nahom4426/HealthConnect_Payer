@@ -62,10 +62,10 @@ const search = ref("");
 <button
   v-if="active === 0"
             class="flex gap-2 bg-primary items-center px-6 py-4 rounded-md whitespace-nowrap text-white"
-            @click="openModal('payerListImport')"
+            @click="openModal('employeeImport')"
           >
             <i v-html="icons.plus_circle" class=""></i>
-            Import Payers
+            Import Employees
           </button>
         <button
           v-if="active === 0"

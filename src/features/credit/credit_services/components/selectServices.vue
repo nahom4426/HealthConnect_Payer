@@ -414,12 +414,12 @@ defineExpose({ setSearchResults });
       </table>
 
       <!-- Diagnosis Fields -->
-      <div v-if="activeTab === 'services' && displayedItems.length > 0" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div v-if="activeTab === 'services' && displayedItems.length > 0" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Primary Diagnosis</label>
           <input
             v-model="localPrimaryDiagnosis"
-            class="w-full px-3 py-3 bg-[#F6F7FA]"
+            class="w-[95%] pl-2  py-3 bg-[#F6F7FA]"
             placeholder="Enter primary diagnosis"
           />
         </div>
@@ -427,7 +427,7 @@ defineExpose({ setSearchResults });
           <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Diagnosis</label>
           <input
             v-model="localSecondaryDiagnosis"
-            class="w-full px-3 py-3 bg-[#F6F7FA]"
+            class="w-[95%] pl-3 py-3 bg-[#F6F7FA]"
             placeholder="Enter secondary diagnosis"
           />
         </div>

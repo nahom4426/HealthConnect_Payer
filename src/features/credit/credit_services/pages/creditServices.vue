@@ -50,7 +50,7 @@ const { claimServices: services } = storeToRefs(claimServicesStore); // Destruct
     </template>
       <template #add-action>
          <button
-        @click.prevent="openModal('AddCreditServices')"
+        @click.prevent="$router.push('/create')"
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
       >
         <i v-html="icons.plus_circle"></i>
@@ -68,22 +68,25 @@ const { claimServices: services } = storeToRefs(claimServicesStore); // Destruct
       :pending="pending"
       :headers="{
         head: [
-      
+    
           'Invoice ID',
           'Payer',
           'Patient Name',
           'Encounter Date',
           'Branch',
+           'Total Services',
           'Credit Amount',
+         
           'Actions',
         ],
         row: [
-        
+        'source',
           'invoiceNumber',
           'payerName',  
           'patientName',
           'dispensingDate',
           'branchName',
+          'medicationItems',
           'totalAmount',
         ],
       }"

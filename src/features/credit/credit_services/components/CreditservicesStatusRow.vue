@@ -26,7 +26,31 @@ const insuredStore = claimServices();
 function handleImageError(event) {
   event.target.src = '/assets/placeholder-profile.png';
 }
-
+function getSourceStyle(source) {
+  switch (source) {
+    case 'INPUT':
+      return {
+        bgColor: 'bg-green-100',
+        textColor: 'text-green-800',
+        dotColor: 'bg-green-500',
+        tooltip: 'Input'
+      };
+    case 'SYSTEM':
+      return {
+        bgColor: 'bg-blue-100',
+        textColor: 'text-blue-800',
+        dotColor: 'bg-blue-500',
+        tooltip: 'System'
+      };
+    default:
+      return {
+        bgColor: 'bg-gray-100',
+        textColor: 'text-gray-800',
+        dotColor: 'bg-gray-500',
+        tooltip: source || 'Unknown'
+      };
+  }
+}
 function handleEdit(row) {
   console.log('EditCreditServices modal opened with row:', row)
   if (row.dispensingUuid) {
@@ -132,7 +156,7 @@ async function handleDeactivateWithClose(insuredId) {
     @click.self="props.onRowClick(row)" 
     class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out"
   >  
-    <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
+    <!-- <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>   -->
 
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <div v-if="key === 'totalAmount'" class="truncate">  
@@ -140,14 +164,43 @@ async function handleDeactivateWithClose(insuredId) {
           ETB {{ row.totalAmount }}
         </span>
       </div>
+      <div v-else-if="key === 'medicationItems'" class="truncate">
       
-     
+       <span 
+        class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-800 text-xs font-medium"
+      >
+        {{ row.medicationItems ? row.medicationItems.length : 0 }}
+      </span>
+    </div>
+      <div v-else-if="key === 'source'" class="relative group">
+        <div class="flex items-center gap-2">
+          <span class="relative flex h-3 w-3">
+            <span 
+              class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+              :class="getSourceStyle(row.source).dotColor"
+            ></span>
+            <span 
+              class="relative inline-flex rounded-full h-3 w-3"
+              :class="getSourceStyle(row.source).dotColor"
+            ></span>
+          </span>
+          <span 
+            class="text-xs font-medium px-2 py-1 rounded-full"
+            :class="[getSourceStyle(row.source).bgColor, getSourceStyle(row.source).textColor]"
+          >
+            {{ row.source }}
+          </span>
+        </div>
+        <div class="absolute z-10 hidden group-hover:block bottom-full mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap">
+          {{ getSourceStyle(row.source).tooltip }}
+        </div>
+      </div>
 
       <span v-else class="text-gray-700">
         {{ row[key] }}
       </span>
-    </td>  
-
+    </td> 
+ 
     <td class="p-3">
       <div class="dropdown-container relative">
         <button 
@@ -166,6 +219,7 @@ async function handleDeactivateWithClose(insuredId) {
         >
           <div class="py-1">
             <button 
+            v-if="row.source === 'INPUT' || row.source === 'Input'"
               @click.stop="handleEditWithClose(row)"
               class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
             >

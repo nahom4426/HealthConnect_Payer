@@ -1,3 +1,4 @@
+import AddCreditServices from "@/features/credit/credit_services/components/AddCreditServices.vue";
 import CreditServices from "@/features/credit/credit_services/pages/creditServices.vue";
 import CreditServicesIndex from "@/features/credit/credit_services/pages/creditServicesIndex.vue";
 
@@ -16,6 +17,11 @@ export default [
             name: 'Credit Services List',
             component: CreditServices,
           },
+          {
+            path: '/create',
+            name: 'Create Credit Service',
+             component: AddCreditServices,
+          }
           
         ]
       },
