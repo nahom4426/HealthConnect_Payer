@@ -112,12 +112,24 @@ const importFile = () => {
       if (res.success) {
         let messageText = `<div class="text-green-700">Successfully imported ${res.data.successfulImports || 0} records</div>`;
         
-        if (res.data.skippedPayers && res.data.skippedPayers.length > 0) {
-          messageText += `<div class="mt-2 text-left">`;
-          messageText += `<div class="font-medium">Skipped records (${res.data.skippedPayers.length}):</div>`;
-          messageText += `<ul class="list-disc list-inside pl-4 mt-1">`;
-          res.data.skippedPayers.forEach(skipped => {
-            messageText += `<li class="text-sm text-red-600">${skipped}</li>`;
+        // Handle skipped insured
+        if (res.data.skippedInsured && res.data.skippedInsured.length > 0) {
+          messageText += `<div class="mt-3 text-left">`;
+          messageText += `<div class="font-medium">Skipped records (${res.data.skippedInsured.length}):</div>`;
+          messageText += `<ul class="list-disc list-inside pl-4 mt-1 max-h-40 overflow-y-auto">`;
+          res.data.skippedInsured.forEach(skipped => {
+            messageText += `<li class="text-sm text-yellow-600">${skipped}</li>`;
+          });
+          messageText += `</ul></div>`;
+        }
+        
+        // Handle errors
+        if (res.data.errors && res.data.errors.length > 0) {
+          messageText += `<div class="mt-3 text-left">`;
+          messageText += `<div class="font-medium">Errors (${res.data.errors.length}):</div>`;
+          messageText += `<ul class="list-disc list-inside pl-4 mt-1 max-h-40 overflow-y-auto">`;
+          res.data.errors.forEach(error => {
+            messageText += `<li class="text-sm text-red-600">${error}</li>`;
           });
           messageText += `</ul></div>`;
         }
@@ -141,12 +153,6 @@ const importFile = () => {
           ];
           insuredStore.setAll(mergedData);
         }
-        
-        setTimeout(() => {
-          if (wasSuccessful.value) {
-           
-          }
-        }, 3500);
       } else {
         message.value = {
           type: "error",
@@ -188,7 +194,7 @@ const removeFile = () => {
   fileInput.value.value = "";
 };
 
-const title = props.data === "dependant" ? "Import Dependant Data" : "Import Payer Data";
+const title = props.data === "dependant" ? "Import Dependant Data" : "Import Employee Data";
 </script>
 
 <template>
@@ -336,7 +342,6 @@ const title = props.data === "dependant" ? "Import Dependant Data" : "Import Pay
     </ModalParent>
   </div>
 </template>
-
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar {
   height: 6px;
@@ -355,5 +360,13 @@ const title = props.data === "dependant" ? "Import Dependant Data" : "Import Pay
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
+}
+
+.max-h-40 {
+  max-height: 10rem;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
 }
 </style>

@@ -87,24 +87,28 @@ watch(
   }
 );
 
-const nextPage = inject("next", null);
-const previousPage = inject("previous", null);
-// const send = inject("send", () => {});
+const nextPage = inject("next", () => {});
+const previousPage = inject("previous", () => {});
 const sendPagination = inject("sendPagination", () => {});
-
 const page = inject("page", 1);
-const searchTotalPages = inject("searchTotalPages",null);
+const searchTotalPages = inject("searchTotalPages", null);
 const totalPages = inject("totalPages", 1);
-
 const perPage = inject("perPage", 25);
-const totalElements = inject("totalElements",null) ;
-const pageChanger = inject("pageChanger", () => {});
+const totalElements = inject("totalElements", null);
+const pageChanger = inject("pageChanger", (page) => {
+  sendPagination(perPage, page - 1);
+});
 
 const selectedValue = ref(25);
 const active = ref(1);
 
 function handleRowSelection(payerUuid) {
   emit('select-payer', payerUuid);
+}
+
+function handlePageChange(newPage) {
+  active.value = newPage;
+  pageChanger(newPage);
 }
 
 // Computed property to check if we have data to display
@@ -116,14 +120,19 @@ const hasData = computed(() => {
 const showEmptyState = computed(() => {
   return !props.pending && !hasData.value;
 });
-</script>
-<template>
-  <div class=" space-y-6 bg-white">
 
+// Range utility for pagination numbers
+const range = (start, end) => {
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+};
+</script>
+
+<template>
+  <div class="space-y-6 bg-white">
     <DataTable
       :lastCol="props.lastCol"
       :firstCol="props.firstCol"
-      class="bg-white border border-white/10 "
+      class="bg-white border border-white/10"
       :headers="spec.head"
     >
       <template v-if="lastCol" #lastColHeader="{ row }">
@@ -198,49 +207,174 @@ const showEmptyState = computed(() => {
         />
       </template>
     </DataTable>
-      <!-- Pagination -->
-  <div
-    v-if="!pending && showPagination && hasData"
-    class="flex justify-between p-4 items-center"
-  >
-    <div class="flex gap-5 items-center">
-      <span class="text-base-clr">Showing</span>
-      <select
-        @change="sendPagination(parseInt($event.target.value))"
-        class="px-3 py-2 rounded-md bg-base-clr3"
-        v-model="selectedValue"
-      >
-        <option selected value="25">25</option>
-        <option value="50">50</option>
-        <option value="75">75</option>
-        <option value="100">100</option>
-      </select>
-    </div>
-    <div class="text-base-clr">
-      Showing {{ rows?.length || 0 }} out of {{ totalElements || 0 }} records
-    </div>
-    <div class="flex gap-6 items-center justify-between">
-      <div @click="previousPage" class="cursor-pointer">
-        <i class="" v-html="icons.chevron_left"></i>
-      </div>
-      <div
-        @click="
-          sendPagination(value, key - 1);
-          active = key;
-        "
-        v-for="(key, index) in totalPages"
-        :key="index"
-        class="font-semibold rounded py-1 px-3 cursor-pointer"
-        :class="[active === key ? 'border border-base-clr' : ' ']"
-      >
-        {{ key }}
-      </div>
-      <div class="cursor-pointer" @click="nextPage">
-        <i class="" v-html="icons.chevron_right"></i>
-      </div>
-    </div>
-  </div>
-  </div>
-  
 
+    <!-- Pagination -->
+    <div
+      v-if="!pending && showPagination && hasData"
+      class="flex justify-between p-4 items-center flex-wrap gap-4"
+    >
+      <div class="flex gap-5 items-center">
+        <span class="text-gray-600">Show</span>
+        <select
+          @change="sendPagination(parseInt($event.target.value), 0)"
+          class="px-3 py-2 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          v-model="selectedValue"
+        >
+          <option selected value="25">25</option>
+          <option value="50">50</option>
+          <option value="75">75</option>
+          <option value="100">100</option>
+        </select>
+        <span class="text-gray-600">entries</span>
+      </div>
+      
+      <div class="text-gray-600">
+        Showing {{ rows?.length || 0 }} of {{ totalElements || 0 }} records
+      </div>
+      
+      <div class="flex gap-2 items-center justify-center flex-wrap">
+        <button
+          @click="previousPage"
+          class="pagination-button"
+          :disabled="page === 1 || pending"
+        >
+          <i v-html="icons.chevron_left"></i>
+        </button>
+        
+        <template v-if="totalPages <= 7">
+          <button
+            v-for="pageNum in totalPages"
+            :key="pageNum"
+            @click="handlePageChange(pageNum)"
+            class="pagination-button"
+            :class="{ 'active-page': page === pageNum }"
+          >
+            {{ pageNum }}
+          </button>
+        </template>
+        
+        <template v-else>
+          <button
+            @click="handlePageChange(1)"
+            class="pagination-button"
+            :class="{ 'active-page': page === 1 }"
+          >
+            1
+          </button>
+          
+          <template v-if="page < 4">
+            <button
+              v-for="pageNum in range(2, 4)"
+              :key="pageNum"
+              @click="handlePageChange(pageNum)"
+              class="pagination-button"
+              :class="{ 'active-page': page === pageNum }"
+            >
+              {{ pageNum }}
+            </button>
+            <span class="px-2">...</span>
+          </template>
+          
+          <template v-else-if="page > totalPages - 3">
+            <span class="px-2">...</span>
+            <button
+              v-for="pageNum in range(totalPages - 3, totalPages - 1)"
+              :key="pageNum"
+              @click="handlePageChange(pageNum)"
+              class="pagination-button"
+              :class="{ 'active-page': page === pageNum }"
+            >
+              {{ pageNum }}
+            </button>
+          </template>
+          
+          <template v-else>
+            <span class="px-2">...</span>
+            <button
+              v-for="pageNum in [page - 1, page, page + 1]"
+              :key="pageNum"
+              @click="handlePageChange(pageNum)"
+              class="pagination-button"
+              :class="{ 'active-page': page === pageNum }"
+            >
+              {{ pageNum }}
+            </button>
+            <span class="px-2">...</span>
+          </template>
+          
+          <button
+            @click="handlePageChange(totalPages)"
+            class="pagination-button"
+            :class="{ 'active-page': page === totalPages }"
+          >
+            {{ totalPages }}
+          </button>
+        </template>
+        
+        <button
+          @click="nextPage"
+          class="pagination-button"
+          :disabled="page === totalPages || pending"
+        >
+          <i v-html="icons.chevron_right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.pagination-button {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  background-color: white;
+  color: #4a5568;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.active-page {
+  background-color: #4299e1;
+  color: white;
+  border-color: #4299e1;
+}
+
+@media (max-width: 768px) {
+  .pagination-wrapper {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .pagination-controls {
+    order: 3;
+    margin-top: 1rem;
+  }
+  
+  .pagination-info {
+    order: 2;
+  }
+  
+  .pagination-button {
+    min-width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.875rem;
+  }
+}
+</style>

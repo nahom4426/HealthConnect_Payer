@@ -24,30 +24,27 @@ export function usePagination(options = {}) {
   const searching = ref(false);
   const searchPagination = useTablePagination(perPage.value);
   const pagination = useTablePagination(perPage.value);
-
-  function getPaginationData(next = true, current = false) {
-    const data = {
-      searchKey: search.value || "",
-      search: search.value || "",
-      page: next
-        ? !current
-          ? searching.value 
-            ? ++searchPagination.page.value 
-            : ++pagination.page.value
-          : searching.value
-            ? searchPagination.page.value
-            : pagination.page.value
+function getPaginationData(next = true, current = false) {
+  const data = {
+    searchKey: search.value || "",
+    search: search.value || "",
+    page: next
+      ? !current
+        ? searching.value 
+          ? ++searchPagination.page.value 
+          : ++pagination.page.value
         : searching.value
-          ? --searchPagination.page.value
-          : --pagination.page.value,
-      limit: searching.value 
-        ? searchPagination.limit.value 
-        : pagination.limit.value || 25,
-    };
-    
-    console.log('Generated pagination data:', data);
-    return data;
-  }
+          ? searchPagination.page.value
+          : pagination.page.value
+      : searching.value
+        ? --searchPagination.page.value
+        : --pagination.page.value,
+    limit: perPage.value, // Use the current perPage value directly
+  };
+  
+  console.log('Generated pagination data:', data);
+  return data;
+}
 function extractPaginationData(response) {
   console.group('Extracting pagination data from response');
   console.log('Full response:', response);
@@ -241,17 +238,17 @@ function extractPaginationData(response) {
     immediate: paginationOptions.value.auto,
   });
 
-  watch(perPage, () => {
-    pagination.reset(perPage.value);
-    searchPagination.reset(perPage.value);
-    if (search.value) {
-      searching.value = true;
-      fetchSearch(true, true);
-    } else {
-      searching.value = false;
-      fetch(true, true, paginationOptions.value.cache);
-    }
-  });
+  // watch(perPage, () => {
+  //   pagination.reset(perPage.value);
+  //   searchPagination.reset(perPage.value);
+  //   if (search.value) {
+  //     searching.value = true;
+  //     fetchSearch(true, true);
+  //   } else {
+  //     searching.value = false;
+  //     fetch(true, true, paginationOptions.value.cache);
+  //   }
+  // });
 
   provide("next", next);
   provide("previous", previous);
@@ -284,19 +281,18 @@ function extractPaginationData(response) {
     fetch();
   }
 
-  function sendPagination(limit, page) {
-    if (page) {
-      pagination.reset();
-      searchPagination.reset();
-      pagination.page.value = page;
-    } else {
-      pagination.reset();
-      searchPagination.reset();
-      pagination.limit.value = limit;
-    }
-
-    fetch();
+function sendPagination(limit, page) {
+  if (page) {
+    pagination.reset(perPage.value); // Pass current perPage
+    searchPagination.reset(perPage.value);
+    pagination.page.value = page;
+  } else {
+    perPage.value = limit; // Update the source of truth
+    pagination.reset(limit);
+    searchPagination.reset(limit);
   }
+  fetch();
+}
 
   return {
     page: computed(() => {

@@ -1,13 +1,14 @@
-<script setup >
+<script setup>
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import UserForm from "./UserForm.vue";
 import { closeModal } from "@customizer/modal-x";
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { updateUserById, getUserById } from "../Api/UserApi";
 import { useUsers } from "../store/userStore";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { useToast } from '@/toast/store/toast';
+import { institutions } from "@/features/instution_settings/store/InstitutionsStore";
 
 const props = defineProps({
   data: {
@@ -16,28 +17,51 @@ const props = defineProps({
   }
 });
 
+const { addToast } = useToast();
+const userStore = useUsers();
+const institutionsStore = institutions();
+const req = useApiRequest();
+
+// Reactive state
 const userUuid = ref(props.data?.userUuid || '');
 const userData = ref(props.data?.user || {});
 const pending = ref(false);
 const error = ref('');
-const userStore = useUsers();
-const { addToast } = useToast();
-const req = useApiRequest();
+
+// Determine if this is a payer admin user
+const isPayerAdmin = computed(() => {
+  return props.data?.payerUuid && props.data?.roleName?.startsWith('PA_');
+});
+
+// Computed payer data for admin users
+const payerData = computed(() => {
+  if (!isPayerAdmin.value) return null;
+  return institutionsStore.institutions.find(
+    p => p.payerUuid === props.data?.payerUuid
+  );
+});
+
+// Computed role name
+const roleName = computed(() => {
+  return props.data?.roleName || userData.value?.roleName || '';
+});
 
 onMounted(async () => {
-  console.log('EditUser modal received data:', props.data);
+  console.log('EditUser modal mounted with data:', props.data);
   
-  if (props.data && props.data.userUuid) {
+  if (props.data?.userUuid) {
     userUuid.value = props.data.userUuid;
     userData.value = props.data.user || {};
     
-    if (userUuid.value && (!userData.value || Object.keys(userData.value).length === 0)) {
+    // If we don't have complete user data, fetch it
+    if (userUuid.value && Object.keys(userData.value).length === 0) {
       await fetchUserData();
     }
   }
 });
 
 watch(() => props.data, (newData) => {
+  console.log('EditUser modal props updated:', newData);
   if (newData) {
     userUuid.value = newData.userUuid || '';
     userData.value = newData.user || {};
@@ -47,6 +71,7 @@ watch(() => props.data, (newData) => {
 async function fetchUserData() {
   try {
     pending.value = true;
+    error.value = '';
     
     req.send(
       () => getUserById(userUuid.value),
@@ -62,7 +87,6 @@ async function fetchUserData() {
             message: error.value
           });
         }
-        pending.value = false;
       }
     );
   } catch (err) {
@@ -72,6 +96,7 @@ async function fetchUserData() {
       title: 'Error',
       message: error.value
     });
+  } finally {
     pending.value = false;
   }
 }
@@ -79,42 +104,58 @@ async function fetchUserData() {
 async function handleSubmit(formValues) {
   try {
     pending.value = true;
-    console.log('Form submitted with values:', formValues);
+    error.value = '';
+    console.log('Updating user with values:', formValues);
     
-    // Format the gender to lowercase for the API if needed
-    const userPayload = {
+    // Prepare payload - preserve roleName for payer admins
+    const payload = {
       ...formValues,
-      gender: formValues.gender?.toLowerCase(), // Convert to lowercase for API
+      // For payer admins, preserve the original roleName
+      ...(isPayerAdmin.value && { roleName: roleName.value })
     };
     
-    console.log('Sending user payload:', userPayload);
-    
+    // Format gender to lowercase for API
+    if (payload.gender) {
+      payload.gender = payload.gender.toLowerCase();
+    }
+
     req.send(
-      () => updateUserById(userUuid.value, userPayload),
-      (res) => {
+      () => updateUserById(userUuid.value, payload),
+      async (res) => {
         if (res.success) {
           const updatedUser = {
             ...userData.value,
             ...formValues,
             userUuid: userUuid.value,
-            // Preserve the original roleName
-            roleName: userData.value.roleName
+            // Preserve the role name for payer admins
+            ...(isPayerAdmin.value && { roleName: roleName.value })
           };
-          
-          // Update the store
+
+          // Update the user in the store
           userStore.update(userUuid.value, updatedUser);
           
+          // If this is a payer admin user, update the payer in institutions store
+          if (isPayerAdmin.value && payerData.value) {
+            const updatedUsers = payerData.value.users?.map(user => 
+              user.userUuid === userUuid.value ? updatedUser : user
+            ) || [];
+            
+            institutionsStore.update(props.data.payerUuid, {
+              users: updatedUsers
+            });
+          }
+
           addToast({
             type: 'success',
             title: 'Success',
             message: 'User updated successfully'
           });
-          
+
           // Call the onUpdated callback if provided
-          if (props.data.onUpdated && typeof props.data.onUpdated === 'function') {
+          if (props.data?.onUpdated) {
             props.data.onUpdated(updatedUser);
           }
-          
+
           closeModal();
         } else {
           error.value = res.error || 'Failed to update user';
@@ -124,7 +165,6 @@ async function handleSubmit(formValues) {
             message: error.value
           });
         }
-        pending.value = false;
       }
     );
   } catch (err) {
@@ -134,6 +174,7 @@ async function handleSubmit(formValues) {
       title: 'Error',
       message: error.value
     });
+  } finally {
     pending.value = false;
   }
 }
@@ -144,7 +185,7 @@ async function handleSubmit(formValues) {
     <NewFormParent 
       class="" 
       size="lg" 
-      title="Edit User" 
+      :title="`Edit ${userData.firstName || 'User'}`" 
       subtitle="Update the user information in the fields below."
     >
       <div class="bg-white rounded-lg">
@@ -152,23 +193,25 @@ async function handleSubmit(formValues) {
           {{ error }}
         </div>
         
-        <div v-if="!userUuid || Object.keys(userData).length === 0" class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
+        <div v-if="pending && Object.keys(userData).length === 0" class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
           Loading user data...
         </div>
         
         <UserForm
-          v-else
+          v-else-if="Object.keys(userData).length > 0"
           :initial-data="userData"
           :is-edit="true"
           :pending="pending || req.pending.value"
+          :role-name="roleName"
+          :payer-uuid="props.data?.payerUuid"
           :onSubmit="handleSubmit"
           :onCancel="() => closeModal()"
         />
+        
+        <div v-else class="p-4 text-center text-gray-500">
+          No user data available
+        </div>
       </div>
     </NewFormParent>
   </ModalParent>
 </template>
-
-<style scoped>
-/* Additional styling if needed */
-</style>

@@ -14,40 +14,42 @@ export const useUserStore = defineStore("userStore", () => {
   }
 
   function add(data) {
-    return users.value.push(data);
+    users.value.push(data); // ✅ fixed from pushing "add"
   }
 
   function update(id, data) {
-    const idx = users.value.findIndex((el) => el.userUuid == id);
-    if (idx == -1) return;
-
-    users.value.splice(idx, 1, data);
+    const idx = users.value.findIndex((el) => el.userUuid === id);
+    if (idx !== -1) {
+      users.value.splice(idx, 1, data);
+    }
   }
 
   function remove(id) {
-    const idx = users.value.findIndex((el) => el.userUuid == id);
-    if (idx == -1) return;
-    users.value.splice(idx, 1);
+    const idx = users.value.findIndex((el) => el.userUuid === id);
+    if (idx !== -1) {
+      users.value.splice(idx, 1);
+    }
   }
 
   function updateStatus(id, status) {
-    const idx = users.value.findIndex((el) => el.userUuid == id);
-    if (idx == -1) return;
-
-    users.value[idx].userStatus = status;
+    const idx = users.value.findIndex((el) => el.userUuid === id);
+    if (idx !== -1) {
+      users.value[idx].userStatus = status;
+    }
   }
 
-  // Add fetchUsers function to load users from API
-  async function fetchUsers() {
+  async function fetchUsers(params = {}) {
     try {
-      const response = await getAllUser();
+      const response = await getAllUser(params);
       if (response.success) {
         set(response.data);
       } else {
         throw new Error(response.error || "Failed to fetch users");
       }
       return response;
-    } catch (error) {}
+    } catch (error) {
+      console.error("Fetch users failed:", error);
+    }
   }
 
   return {
@@ -62,5 +64,5 @@ export const useUserStore = defineStore("userStore", () => {
   };
 });
 
-// For backward compatibility
+// Optional alias for backward compatibility
 export const useUsers = useUserStore;

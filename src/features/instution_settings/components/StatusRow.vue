@@ -1,11 +1,10 @@
 <script setup>
-import { defineProps, onMounted, onUnmounted } from 'vue';
+import { defineProps, onMounted, onUnmounted, computed } from 'vue';
+import { storeToRefs } from 'pinia';
 import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
 import { institutions } from "@/features/instution_settings/store/InstitutionsStore";
 import icons from "@/utils/icons";
-import { changeInstutionStatus } from '../api/institutionsApi';
-
 
 const props = defineProps({
   rowData: {
@@ -43,20 +42,41 @@ const props = defineProps({
 });
 
 const { addToast } = useToast();
-const payersStore = institutions();
+const institutionsStore = institutions();
+const { institutions: storeInstitutions } = storeToRefs(institutionsStore);
+
+// Enhanced hasAdminUser function
+function hasAdminUser(row) {
+  if (!row) {
+    console.warn('Row is null/undefined');
+    return false;
+  }
+
+  // Check both possible properties (users or userList)
+  const userArray = row.users || row.userList || [];
+  
+  if (!Array.isArray(userArray)) {
+    console.warn('User data is not an array:', userArray);
+    return false;
+  }
+
+  const hasAdmin = userArray.length > 0 && userArray.some(user => user?.userUuid);
+  console.log(`Admin check for ${row.payerName}:`, {
+    hasUsers: userArray.length > 0,
+    hasValidUser: userArray.some(user => user?.userUuid),
+    result: hasAdmin
+  });
+  
+  return hasAdmin;
+}
 
 function getStatusStyle(status) {
   if (status === 'ACTIVE' || status === 'Active') {
     return 'bg-[#DFF1F1] text-[#02676B]';
   } else if (status === 'INACTIVE' || status === 'Inactive') {
     return 'bg-red-100 text-red-800';
-  } else {
-    return 'bg-gray-100 text-gray-800';
   }
-}
-
-function getBaseUrl() {
-  return import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+  return 'bg-gray-100 text-gray-800';
 }
 
 function handleImageError(event) {
@@ -64,59 +84,75 @@ function handleImageError(event) {
 }
 
 function handleEdit(row) {
-  console.log('Edit button clicked with row data:', row);
-  
   openModal('EditPayer', { 
     payerUuid: row.payerUuid, 
     payer: row,
     onUpdated: (updatedPayer) => {
-      console.log('Payer updated:', updatedPayer);
-      payersStore.update(updatedPayer.payerUuid, updatedPayer);
+      institutionsStore.update(updatedPayer.payerUuid, updatedPayer);
+    }
+  });
+}
+
+function handleEditAdmin(row) {
+  const payerName = row.payerName || '';
+  const roleName = `PA_${payerName}_Manager`;
+  
+  // Get the first admin user if exists
+  const adminUser = hasAdminUser(row) ? row.users.find(u => u.userUuid) : null;
+  
+  openModal('EditUser', {
+    payerUuid: row.payerUuid,
+    payer: row,
+    user: adminUser, // Pass existing user data if available
+    userUuid: adminUser?.userUuid || '', // Required for EditUser modal
+    roleName: roleName,
+    onUpdated: (updatedPayer) => {
+      institutionsStore.update(updatedPayer.payerUuid, updatedPayer);
     }
   });
 }
 function handleAddAdmin(row) {
-  console.log('Add Admin button clicked with row data:', JSON.stringify(row, null, 2));
-  
-  // Create the role name based on payer name
   const payerName = row.payerName || '';
-  console.log('Payer name:', payerName);
-  
-  // IMPORTANT: Don't modify the original role name format
-  // Instead, use the exact format that's in the database
   const roleName = `PA_${payerName}_Manager`;
-  console.log('Generated role name:', roleName);
   
-  // Log the modal parameters
-  const modalData = {
+  openModal('AddUser', {
     payerUuid: row.payerUuid,
     payer: row,
     roleName: roleName,
     onUpdated: (updatedPayer) => {
-      console.log('Payer updated:', updatedPayer);
-      payersStore.update(updatedPayer.payerUuid, updatedPayer);
+      institutionsStore.update(updatedPayer.payerUuid, updatedPayer);
     }
-  };
-  
-  console.log('Opening modal with data:', modalData);
-  
-  // Pass the data as a single object
-  openModal('AddUser', modalData);
+  });
 }
 
+
+// Dropdown functions
 function toggleDropdown(event, rowId) {
   event.stopPropagation();
   closeAllDropdowns();
   const dropdown = document.getElementById(`dropdown-${rowId}`);
-  if (dropdown) {
-    dropdown.classList.toggle('hidden');
-  }
+  if (dropdown) dropdown.classList.toggle('hidden');
 }
 
 function closeAllDropdowns() {
   document.querySelectorAll('.dropdown-menu').forEach(el => {
     el.classList.add('hidden');
   });
+}
+
+// Wrapper functions with dropdown close
+function handleEditWithClose(row) {
+  closeAllDropdowns();
+  handleEdit(row);
+}
+
+function handleAddAdminWithClose(row) {
+  closeAllDropdowns();
+  handleAddAdmin(row);
+}
+function handleEditAdminWithClose(row) {
+  closeAllDropdowns();
+  handleEditAdmin(row);
 }
 
 onMounted(() => {
@@ -126,65 +162,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('click', closeAllDropdowns);
 });
-
-function handleEditWithClose(row) {
-  closeAllDropdowns();
-  handleEdit(row);
-}
-function handleAddAdminWithClose(row) {
-  closeAllDropdowns();
-  handleAddAdmin(row);
-}
-function handleViewWithClose(rowId) {
-  closeAllDropdowns();
-  props.onView(rowId);
-}
-
-async function handleActivateWithClose(payerUuid) {
-  closeAllDropdowns();
-  try {
-    const response = await changeInstutionStatus(payerUuid, 'ACTIVE');
-    if (response.success) {
-      addToast({
-        type: 'success',
-        title: 'Status Updated',
-        message: 'Payer has been activated successfully'
-      });
-      payersStore.update(payerUuid, { status: 'ACTIVE' });
-    } else {
-      throw new Error(response.error || 'Failed to activate payer');
-    }
-  } catch (error) {
-    addToast({
-      type: 'error',
-      title: 'Activation Failed',
-      message: error.message || 'An error occurred while activating the payer'
-    });
-  }
-}
-
-async function handleDeactivateWithClose(payerUuid) {
-  closeAllDropdowns();
-  try {
-    const response = await changeInstutionStatus(payerUuid, 'INACTIVE');
-    if (response.success) {
-      addToast({
-        type: 'success',
-        title: 'Status Updated',
-        message: 'Payer has been deactivated successfully'
-      });
-      payersStore.update(payerUuid, { status: 'INACTIVE' });
-    } else {
-      throw new Error(response.error || 'Failed to deactivate payer');
-    }
-  } catch (error) {
-    addToast({
-      type: 'error',
-      title: 'Deactivation Failed',
-      message: error.message || 'An error occurred while deactivating the payer'
-    });
-  }
-}
 </script>
 
 <template>
@@ -192,12 +169,23 @@ async function handleDeactivateWithClose(payerUuid) {
     v-for="(row, idx) in rowData" 
     :key="idx"
     @click.self="onRowClick(row)" 
-    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out" 
+    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out"
   >  
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
 
-    <!-- Payer Logo Column (added to match provider) -->
+    <!-- Debug row for specific payer -->
+    <!-- <td v-if="row.payerName === 'ZEMEZM BANK'" class="debug-info p-2 text-xs bg-yellow-50">
+      <div class="font-bold">Debug Info for {{ row.payerName }}:</div>
+      <div>Has users property: {{ 'users' in row }}</div>
+      <div>Users is array: {{ Array.isArray(row.users) }}</div>
+      <div>User count: {{ row.users?.length || 0 }}</div>
+      <div>First user UUID: {{ row.users?.[0]?.userUuid || 'none' }}</div>
+      <div>Store has users: {{ 
+        storeInstitutions.find(p => p.payerUuid === row.payerUuid)?.users?.length > 0 
+      }}</div>
+    </td> -->
 
+    <!-- Payer Logo Column -->
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <div v-if="key === 'status'" class="truncate">  
         <span 
@@ -213,43 +201,36 @@ async function handleDeactivateWithClose(payerUuid) {
         </span>
       </div>
       
-      <div v-else-if="key === 'payerName'" class="text-gray-700 flex items-center gap-2.5 ">
-       
-      <div class="flex justify-center items-center">
-        <img 
-          v-if="row.logoBase64" 
-          :src="row.logoBase64" 
-          alt="Payer Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-        />
-        <img 
-          v-else-if="row.logoUrl" 
-          :src="row.logoUrl" 
-          alt="Payer Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-        />
-        <!-- <img 
-          v-else-if="row.logoPath" 
-          :src="`${getBaseUrl()}/payer/logo/${row.logoPath}`" 
-          alt="Payer Logo" 
-          class="h-10 w-10 object-contain rounded-full border border-gray-200"
-          @error="handleImageError"
-        /> -->
-        <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
-          <span class="text-gray-500 text-xs">No Logo</span>
+      <div v-else-if="key === 'payerName'" class="text-gray-700 flex items-center gap-2.5">
+        <div class="flex justify-center items-center">
+          <img 
+            v-if="row.logoBase64" 
+            :src="row.logoBase64" 
+            alt="Payer Logo" 
+            class="h-10 w-10 object-contain rounded-full border border-gray-200"
+          />
+          <img 
+            v-else-if="row.logoUrl" 
+            :src="row.logoUrl" 
+            alt="Payer Logo" 
+            class="h-10 w-10 object-contain rounded-full border border-gray-200"
+            @error="handleImageError"
+          />
+          <div v-else class="h-10 w-10 text-center bg-gray-200 rounded-full flex items-center justify-center">
+            <span class="text-gray-500 text-xs">No Logo</span>
+          </div>
         </div>
+        <div>{{ row.payerName }}</div>
       </div>
-       <div>
-        {{ row.payerName }}
-      </div>
-      </div>
+      
       <span v-else class="text-gray-700">
         {{ row[key] }}
       </span>
     </td>  
 
-    <td class="p-3" >  
-      <div class="dropdown-container relative ">
+    <!-- Actions Column -->
+    <td class="p-3">  
+      <div class="dropdown-container relative">
         <button 
           @click.stop="toggleDropdown($event, row.payerUuid || row.id)"
           class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
@@ -263,7 +244,7 @@ async function handleDeactivateWithClose(payerUuid) {
         <div 
           :id="`dropdown-${row.payerUuid || row.id}`"
           class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-                >
+        >
           <div class="py-1" role="none">
             <button 
               @click.stop="handleEditWithClose(row)"
@@ -274,26 +255,31 @@ async function handleDeactivateWithClose(payerUuid) {
                 Edit
               </div>
             </button>
-            <button 
-              @click.stop="handleAddAdminWithClose(row)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <div class="flex items-center text-primary justify-start pl-4 gap-4">
-                <i v-html="icons.assign" />
-                Assign Admin
-              </div>
-            </button>
-          
             
-            <!-- <button 
-              @click.stop="handleViewWithClose(row.payerUuid || row.id)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <div class="flex items-center justify-start pl-4 gap-4">
-                <i v-html="icons.details" />
-                Detail
-              </div>
-            </button> -->
+           <!-- Show Assign Admin if NO admin user -->
+<button
+  v-if="!hasAdminUser(row)"
+  @click.stop="handleAddAdminWithClose(row)"
+  class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+>
+  <div class="flex items-center justify-start pl-4 gap-4">
+    <i v-html="icons.assign" />
+    Assign Admin
+  </div>
+</button>
+
+<!-- Show Edit Admin if admin user exists -->
+<button
+  v-if="hasAdminUser(row)"
+  @click.stop="handleEditAdminWithClose(row)"
+  class="block w-full text-center py-2 text-sm text-primary hover:bg-gray-100"
+>
+  <div class="flex items-center justify-start pl-4 gap-4">
+    <i v-html="icons.edits" />
+    Edit Admin
+  </div>
+</button>
+
             
             <template v-if="row.status">
               <button 
@@ -347,7 +333,8 @@ async function handleDeactivateWithClose(payerUuid) {
   transform: scale(1);
 }
 
-.dropdown-container button {
-  width: 100%;
+.debug-info {
+  font-family: monospace;
+  white-space: pre;
 }
 </style>

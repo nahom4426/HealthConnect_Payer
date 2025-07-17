@@ -108,7 +108,6 @@ watch(profilePicture, () => {
             'status',
           ],
         }"
-        ,
         :cells="{
           requestedOn: (requestedOn) => {
             const date = new Date(requestedOn);
