@@ -64,11 +64,7 @@ async function handleSubmit(formValues) {
     }
   } catch (error) {
     console.error('Error creating user:', error);
-    addToast({
-      type: 'error',
-      title: 'Error',
-      message: error.message || 'Failed to create user'
-    });
+    
   } finally {
     formPending.value = false;
   }

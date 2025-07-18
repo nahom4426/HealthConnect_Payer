@@ -29,7 +29,8 @@ async function handleSubmit(formValues) {
 
     const missingFields = requiredFields.filter((field) => !formValues[field]);
     if (missingFields.length > 0) {
-      throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+      toasted(false, "Validation Error", `Missing required fields: ${missingFields.join(", ")}`);
+      return;
     }
 
     const formData = new FormData();
@@ -59,15 +60,11 @@ async function handleSubmit(formValues) {
 
     formData.append("provider", JSON.stringify(providerData));
 
-    console.log("Submitting provider data:", providerData);
-
     const result = await formDataProvider.value.register(formData);
 
     if (result.success) {
-      // Process the provider data to include logo information
       const newProvider = {
         ...result.data,
-        // If the API returns logoPath but no logoUrl, create a URL
         logoUrl:
           result.data.logoUrl ||
           (result.data.logoPath
@@ -77,29 +74,43 @@ async function handleSubmit(formValues) {
             : null),
       };
 
-      // Add the new provider to the store
       providersStore.add(newProvider);
 
-      // Show success message
-
-      // Call the onAdded callback if it exists
       if (
         formDataProvider.value.props &&
         formDataProvider.value.props.data &&
-        formDataProvider.value.props.data.onAdded &&
-        typeof formDataProvider.value.props.data.onAdded === "function"
+        formDataProvider.value.props.data.onAdded
       ) {
         formDataProvider.value.props.data.onAdded(newProvider);
       }
 
       closeModal();
       router.push("/provider_list");
+      toasted(true, "Success", "Provider created successfully!");
     } else {
-      throw new Error(result.error || "Registration failed");
+      // Handle API error response - don't throw, just show toast
+      let errorMsg = "Registration failed";
+      try {
+        const errorObj = typeof result.error === 'string' ? JSON.parse(result.error) : result.error;
+        errorMsg = Object.values(errorObj).join(", ");
+      } catch (e) {
+        errorMsg = result.error?.message || result.error || errorMsg;
+      }
+      toasted(false, "Error", errorMsg);
     }
   } catch (error) {
     console.error("Submission error:", error);
-    toasted(false, "Failed to submit form", error.message);
+    // Only show toast if not already shown
+    if (!error.handled) {
+      let errorMsg = error.message;
+      try {
+        const errorObj = typeof error.message === 'string' ? JSON.parse(error.message) : error.message;
+        errorMsg = Object.values(errorObj).join(", ");
+      } catch (e) {
+        errorMsg = error.message;
+      }
+      // toasted(false, "Error", errorMsg);
+    }
   } finally {
     pending.value = false;
   }

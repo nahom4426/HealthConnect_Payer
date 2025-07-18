@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import ModalParent from "@/components/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import InsuredMemberForm from "../form/InsuredMemberForm.vue";
@@ -43,7 +43,7 @@ watch(() => props.data, (newData) => {
   }
 }, { deep: true });
 
-async function handleSubmit(formValues: any) {
+async function handleSubmit(formValues) {
   try {
     pending.value = true;
     error.value = '';
@@ -54,7 +54,6 @@ async function handleSubmit(formValues: any) {
 
     const formData = new FormData();
 
-    // Append the photo file if exists
     if (formValues.employeePhoto) {
       formData.append('photo', formValues.employeePhoto);
     }
@@ -65,6 +64,7 @@ async function handleSubmit(formValues: any) {
       fatherName: formValues.fatherName,
       grandFatherName: formValues.grandFatherName || formValues.grandfatherName,
       birthDate: formValues.birthDate ? `${formValues.birthDate}T00:00:00.000Z` : '',
+      inactiveDate: formValues.inactiveDate ? `${formValues.inactiveDate}T00:00:00.000Z` : '',
       phone: `${formValues.phone}`,
       woreda: formValues.woreda || "",
       subcity: formValues.subcity || "",
@@ -79,7 +79,6 @@ async function handleSubmit(formValues: any) {
       insuredUuid: insuredUuid.value
     };
 
-    // If we have existing photo data and no new photo file, include it in the payload
     if (!formValues.employeePhoto) {
       if (insuredData.value.photoBase64) {
         insuredPayload.photoBase64 = insuredData.value.photoBase64;
@@ -91,7 +90,6 @@ async function handleSubmit(formValues: any) {
     formData.append('insured', JSON.stringify(insuredPayload));
 
     const result = await updateInsured(insuredUuid.value, formData);
-
     const isSuccess = result && (result.success || result.status === 200 || result.status === 'success');
 
     if (isSuccess) {
@@ -101,7 +99,6 @@ async function handleSubmit(formValues: any) {
         insuredUuid: insuredUuid.value
       };
 
-      // Preserve photo information if not changed
       if (!formValues.employeePhoto) {
         if (insuredData.value.photoBase64) {
           updatedInsured.photoBase64 = insuredData.value.photoBase64;
@@ -122,8 +119,6 @@ async function handleSubmit(formValues: any) {
       }
 
       closeModal();
-    } else {
-      // throw new Error(result?.error || 'Update failed');
     }
   } catch (err) {
     console.error('Update error:', err);
@@ -138,7 +133,6 @@ async function handleSubmit(formValues: any) {
 <template>
   <ModalParent>
     <NewFormParent 
-      class="" 
       size="lg" 
       title="Edit Insured Member" 
       subtitle="Update the insured member information in the fields below."
@@ -147,11 +141,11 @@ async function handleSubmit(formValues: any) {
         <div v-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
           {{ error }}
         </div>
-        
+
         <div v-if="!insuredUuid || Object.keys(insuredData).length === 0" class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
           Loading insured member data...
         </div>
-        
+
         <InsuredMemberForm
           v-else
           :initial-data="insuredData"

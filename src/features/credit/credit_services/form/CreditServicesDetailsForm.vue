@@ -71,7 +71,7 @@ async function fetchInsuredDetails() {
   try {
     fetchPending.value = true;
     const response = await searchInsuredByInstitution(claimData.value.payerUuid, {
-      search: claimData.value.insuredUuid
+      search: ""
     });
     
     const employeesData = Array.isArray(response) ? response :

@@ -41,6 +41,7 @@ const grandFatherName = ref("");
 const gender = ref("");
 const role = ref("");
 const dateOfBirth = ref("");
+const inactiveDate = ref("");
 const employeeId = ref("");
 const phoneNumber = ref("");
 const countryCode = ref("+251");
@@ -50,6 +51,7 @@ const city = ref(""); // City
 const state = ref("Addis Ababa");
 const email = ref("");
 const status = ref("ACTIVE");
+const hasInactiveDate = ref("no");
 const previewImage = ref("");
 const payerId = ref("");
 const groupUuid = ref(""); // 💡 NEW
@@ -93,6 +95,7 @@ onMounted(() => {
     gender.value = props.initialData.gender || "";
     role.value = props.initialData.position || "";
     dateOfBirth.value = props.initialData.birthDate?.split("T")[0] || "";
+    inactiveDate.value = props.initialData.inactiveDate?.split("T")[0] || "";
     employeeId.value = props.initialData.idNumber || "";
     state.value = props.initialData.state || "Addis Ababa";
     city.value = props.initialData.city || ""; // City
@@ -150,6 +153,7 @@ function handleSubmit() {
     grandFatherName: grandFatherName.value,
     gender: gender.value,
     birthDate: dateOfBirth.value ? `${dateOfBirth.value}T00:00:00.000Z` : "",
+    inactiveDate: inactiveDate.value ? `${inactiveDate.value}T00:00:00.000Z` : "",
     idNumber: employeeId.value,
     phone: `${countryCode.value}${phoneNumber.value}`,
     state: state.value,
@@ -352,6 +356,7 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
         </div>
       </div>
 
+
       <!-- Middle section: Employee ID and Address -->
       <div
         class="grid grid-cols-1 border border-[#75778B33] md:grid-cols-2 gap-6 p-5"
@@ -498,41 +503,119 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
       </div>
 
       <!-- Bottom section: Insurance Status -->
-      <div class="border border-[#75778B33] col-span-3 w-[33%] p-5">
-        <label class="[#75778B33] block text-sm font-medium text-gray-700 mb-3">
-          Start insurance status as
+    <div class="flex gap-6 mt-6">
+  <!-- Status Selection -->
+  <div class="border border-[#75778B33] rounded-lg w-[33%] p-5 bg-white shadow-sm">
+    <label class="block text-sm font-medium text-gray-700 mb-3">
+      Insurance Status
+    </label>
+    <div class="flex space-x-4">
+      <!-- Active Option -->
+      <label
+        class="inline-flex items-center p-3 rounded-md cursor-pointer transition-all"
+        :class="{ 
+          'text-[#02676B] bg-[#DFF1F1] border-2 border-[#02676B]': status === 'ACTIVE',
+          'border border-gray-200 hover:bg-gray-50': status !== 'ACTIVE'
+        }"
+      >
+        <input
+          type="radio"
+          v-model="status"
+          value="ACTIVE"
+          class="form-radio h-5 w-5 text-[#02676B] focus:ring-[#DFF1F1]"
+        />
+        <span class="ml-2 font-medium">Active</span>
+      </label>
+      
+      <!-- Inactive Option -->
+      <label
+        class="inline-flex items-center p-3 rounded-md cursor-pointer transition-all"
+        :class="{ 
+          'text-[#D92D20] bg-[#FEE4E2] border-2 border-[#D92D20]': status === 'INACTIVE',
+          'border border-gray-200 hover:bg-gray-50': status !== 'INACTIVE'
+        }"
+      >
+        <input
+          type="radio"
+          v-model="status"
+          value="INACTIVE"
+          class="form-radio h-5 w-5 text-[#D92D20] focus:ring-[#FEE4E2]"
+          @change="hasInactiveDate = 'no'"
+        />
+        <span class="ml-2 font-medium">Inactive</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Active Options (only shown when status is ACTIVE) -->
+  <div 
+    v-if="status === 'ACTIVE'"
+    class="border border-[#75778B33] rounded-lg w-[33%] p-5 bg-white shadow-sm transition-all"
+  >
+    <!-- Inactive Date Question -->
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Does this Employee have an inactive date?
+      </label>
+      <div class="flex space-x-4">
+        <label 
+          class="inline-flex items-center p-2 px-3 rounded-md cursor-pointer"
+          :class="{
+            'bg-[#DFF1F1] border border-[#02676B]': hasInactiveDate === 'yes',
+            'border border-gray-200 hover:bg-gray-50': hasInactiveDate !== 'yes'
+          }"
+        >
+          <input
+            type="radio"
+            v-model="hasInactiveDate"
+            value="yes"
+            class="form-radio h-4 w-4 text-[#02676B]"
+          />
+          <span class="ml-2">Yes</span>
         </label>
-        <div class="flex space-x-4">
-          <label
-            class="inline-flex items-center p-3 rounded-md"
-            :class="{ 'text-[#02676B] bg-[#DFF1F1] ': status === 'ACTIVE' }"
-          >
-            <input
-              type="radio"
-              v-model="status"
-              value="ACTIVE"
-              class="form-radio h-5 w-5 text-[#02676B] focus:ring-[#DFF1F1]"
-              :checked="status === 'ACTIVE'"
-            />
-            <span class="ml-2">Active</span>
-          </label>
-          <label
-            class="inline-flex items-center p-3 rounded-md bg-gray-50"
-            :class="{
-              'bg-red-200 text-red-400': status === 'INACTIVE', // Add this line to change background
-            }"
-          >
-            <input
-              type="radio"
-              v-model="status"
-              value="INACTIVE"
-              class="form-radio h-5 w-5 focus:ring-[#DFF1F1]"
-            />
-            <span class="ml-2">InActive</span>
-          </label>
-        </div>
+        <label 
+          class="inline-flex items-center p-2 px-3 rounded-md cursor-pointer"
+          :class="{
+            'bg-gray-100 border border-gray-400': hasInactiveDate === 'no',
+            'border border-gray-200 hover:bg-gray-50': hasInactiveDate !== 'no'
+          }"
+        >
+          <input
+            type="radio"
+            v-model="hasInactiveDate"
+            value="no"
+            class="form-radio h-4 w-4 text-gray-600"
+          />
+          <span class="ml-2">No</span>
+        </label>
       </div>
     </div>
+
+    <!-- Inactive Date Field (only shown when 'yes' is selected) -->
+   
+  </div> 
+  <div v-if="hasInactiveDate === 'yes'"
+    class="border border-[#75778B33] rounded-lg w-[33%] p-5 bg-white shadow-sm transition-all"
+  >
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Future Inactive Date
+      </label>
+      <Input
+        v-model="inactiveDate"
+        name="inactiveDate"
+        type="date"
+        :attributes="{
+          class: 'w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#02676B]',
+          min: new Date().toISOString().split('T')[0]
+        }"
+        @input="validateFutureDate(inactiveDate)"
+      />
+      <p v-if="dateError" class="text-red-500 text-xs mt-1">{{ dateError }}</p>
+      <p v-else class="text-gray-500 text-xs mt-1">Must be a future date</p>
+    </div>
+</div>
+    </div>
+    
 
     <!-- Form Actions -->
     <div

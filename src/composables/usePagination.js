@@ -3,8 +3,8 @@ import { useTablePagination } from "./useTablePagination";
 import { useApiRequest } from "./useApiRequest";
 
 export function usePagination(options = {}) {
-  console.log('Initializing usePagination with options:', options);
-  
+  console.log("Initializing usePagination with options:", options);
+
   const paginationOptions = ref({
     cb: (f) => f,
     store: null,
@@ -20,147 +20,98 @@ export function usePagination(options = {}) {
   const totalElements = ref(paginationOptions.value.totalElements || 0);
 
   const req = useApiRequest();
-
   const searching = ref(false);
   const searchPagination = useTablePagination(perPage.value);
   const pagination = useTablePagination(perPage.value);
+
 function getPaginationData(next = true, current = false) {
+  const pageValue = next
+    ? !current
+      ? searching.value
+        ? ++searchPagination.page.value
+        : ++pagination.page.value
+      : searching.value
+      ? searchPagination.page.value
+      : pagination.page.value
+    : searching.value
+    ? --searchPagination.page.value
+    : --pagination.page.value;
+
+  const limitValue = Number(perPage.value); // ✅ Convert to number in case it's reactive
+
   const data = {
     searchKey: search.value || "",
     search: search.value || "",
-    page: next
-      ? !current
-        ? searching.value 
-          ? ++searchPagination.page.value 
-          : ++pagination.page.value
-        : searching.value
-          ? searchPagination.page.value
-          : pagination.page.value
-      : searching.value
-        ? --searchPagination.page.value
-        : --pagination.page.value,
-    limit: perPage.value, // Use the current perPage value directly
+    page: pageValue,
+    limit: limitValue || 25, // ✅ fallback to 25
   };
-  
-  console.log('Generated pagination data:', data);
+
+  console.log("Generated pagination data:", data);
   return data;
 }
-function extractPaginationData(response) {
-  console.group('Extracting pagination data from response');
-  console.log('Full response:', response);
-  
-  // First check if we have a success-wrapper response
-  if (response?.success) {
-    console.log('Detected success-wrapper format');
-    const data = response.data;
+
+
+  function extractPaginationData(response) {
+    console.group("Extracting pagination data from response");
+    console.log("Full response:", response);
+
+    let data;
+    if (response?.success) {
+      data = response.data;
+    } else {
+      data = response;
+    }
+
     const elementsCount = data?.numberOfElements ?? data?.totalElements ?? 0;
-    console.log(`Using ${data?.numberOfElements !== undefined ? 'numberOfElements' : 'totalElements'}:`, elementsCount);
-    
+
     const result = {
       content: data?.content || [],
       totalElements: elementsCount,
       totalPages: data?.totalPages || 1,
-      perPage: data?.size || data?.pageable?.pageSize || perPage.value
+      perPage: data?.size || data?.pageable?.pageSize || perPage.value,
     };
-    console.log('Extracted data:', result);
+
+    console.log("Extracted data:", result);
     console.groupEnd();
     return result;
   }
-  
-  // Check for direct pagination response (insured API)
-  if (response?.totalElements !== undefined || response?.numberOfElements !== undefined) {
-    console.log('Detected direct pagination format');
-    const elementsCount = response?.numberOfElements ?? response?.totalElements ?? 0;
-    console.log(`Using ${response?.numberOfElements !== undefined ? 'numberOfElements' : 'totalElements'}:`, elementsCount);
-    
-    const result = {
-      content: response.content || [],
-      totalElements: elementsCount,
-      totalPages: response.totalPages || 1,
-      perPage: response.size || perPage.value
-    };
-    console.log('Extracted data:', result);
-    console.groupEnd();
-    return result;
-  }
-  
-  // Fallback for other formats
-  console.log('Using fallback extraction');
-  const elementsCount = response?.numberOfElements ?? response?.totalElements ?? 0;
-  console.log(`Using ${response?.numberOfElements !== undefined ? 'numberOfElements' : response?.totalElements !== undefined ? 'totalElements' : 'fallback (0)'}:`, elementsCount);
-  
-  const result = {
-    content: response?.content || [],
-    totalElements: elementsCount,
-    totalPages: response?.totalPages || 1,
-    perPage: response?.size || response?.limit || perPage.value
-  };
-  console.log('Extracted data:', result);
-  console.groupEnd();
-  return result;
-}
 
   function fetch(next = true, current = false, cache = false) {
-    console.log(`Fetch called - next: ${next}, current: ${current}, cache: ${cache}`);
-    
-    if (req.pending.value) {
-      console.log('Aborting fetch - request already pending');
-      return;
-    }
-    
-    if (next && pagination.done.value) {
-      console.log('Aborting fetch - pagination done');
-      return;
-    }
-    
-    if (pagination.page.value >= pagination.totalPages.value) {
-      console.log('Aborting fetch - page exceeds total pages');
-      return;
-    }
+    if (req.pending.value) return;
+
+    if (next && pagination.done.value) return;
 
     const paginationData = getPaginationData(next, current);
-    console.log('Sending request with data:', paginationData);
+   paginationData.limit = Number(perPage.value) || 25;
+// ✅ Ensure limit is number
 
-  req.send(
-    () => paginationOptions.value.cb(paginationData),
-    (res) => {
-      console.group('Request completed');
-      console.log('Full response:', res);
-      
-      const { content, totalElements: total, totalPages, perPage: pageSize } = 
-        extractPaginationData(res?.data || res); // Handle both wrapped and direct responses
+    req.send(
+      () => paginationOptions.value.cb(paginationData),
+      (res) => {
+        const { content, totalElements: total, totalPages, perPage: pageSize } =
+          extractPaginationData(res?.data || res);
 
-      if (paginationOptions.value.store) {
-        console.log('Updating store with content');
-        paginationOptions.value.store.set(content);
-      }
+        if (paginationOptions.value.store) {
+          paginationOptions.value.store.set(content);
+        }
 
-      console.log('Updating pagination state:', {
-        oldTotalElements: totalElements.value,
-        newTotalElements: total,
-        oldTotalPages: pagination.totalPages.value,
-        newTotalPages: totalPages,
-        oldPerPage: perPage.value,
-        newPerPage: pageSize
-      });
+        pagination.totalPages.value = totalPages;
+        totalElements.value = total;
+        paginationOptions.value.totalElements = total;
+        perPage.value = pageSize;
 
-      pagination.totalPages.value = totalPages;
-      totalElements.value = total;
-      paginationOptions.value.totalElements = total;
-      perPage.value = pageSize;
+        // ✅ Only mark as done if we’re truly at the end
+        pagination.done.value =
+          pagination.page.value >= totalPages ||
+          content.length < pagination.limit.value;
+      },
+      true
+    );
+  }
 
-      if (content.length < pagination.limit.value) {
-        console.log('Marking pagination as done - content length < limit');
-        pagination.done.value = true;
-      }
-      
-      console.groupEnd();
-    },
-    true
-  );
-}
   let controller;
   let timeout;
+
   function fetchSearch(next = true, current = false) {
     if (next && searchPagination.done.value) return;
 
@@ -173,15 +124,20 @@ function extractPaginationData(response) {
     }
 
     timeout = setTimeout(() => {
+      const paginationData = getPaginationData(next, current);
+     paginationData.limit = Number(perPage.value) || 25;
+
+
       req.send(
         () => ({
-          ...getPaginationData(next, current),
+          ...paginationData,
           signal: controller.signal,
         }),
         (res) => {
           if (!res?.success) return;
 
-          const { content, totalElements: total, totalPages } = extractPaginationData(res.data);
+          const { content, totalElements: total, totalPages } =
+            extractPaginationData(res.data);
 
           if (paginationOptions.value.store) {
             paginationOptions.value.store.set(content);
@@ -190,16 +146,16 @@ function extractPaginationData(response) {
           searchPagination.totalPages.value = totalPages;
           totalElements.value = total;
 
-          if (content.length < searchPagination.limit.value) {
-            searchPagination.done.value = true;
-          }
+          searchPagination.done.value =
+            searchPagination.page.value >= totalPages ||
+            content.length < searchPagination.limit.value;
         },
         true
       );
     }, 20);
   }
 
- function next() {
+  function next() {
     if (searching.value) {
       fetchSearch();
     } else {
@@ -208,13 +164,12 @@ function extractPaginationData(response) {
   }
 
   function previous() {
-    if (searching.value && searchPagination.page.value == 1) return;
-    if (!searching.value && pagination.page.value == 1) return;
-
     if (searching.value) {
-      fetchSearch(false);
+      if (searchPagination.page.value <= 1) return;
       searchPagination.done.value = false;
+      fetchSearch(false);
     } else {
+      if (pagination.page.value <= 1) return;
       pagination.done.value = false;
       fetch(false, false, paginationOptions.value.cache);
     }
@@ -223,6 +178,7 @@ function extractPaginationData(response) {
   watch(search, () => {
     searchPagination.done.value = false;
     searchPagination.page.value = 0;
+
     if (search.value) {
       searching.value = true;
       fetchSearch(true, false);
@@ -238,18 +194,6 @@ function extractPaginationData(response) {
     immediate: paginationOptions.value.auto,
   });
 
-  // watch(perPage, () => {
-  //   pagination.reset(perPage.value);
-  //   searchPagination.reset(perPage.value);
-  //   if (search.value) {
-  //     searching.value = true;
-  //     fetchSearch(true, true);
-  //   } else {
-  //     searching.value = false;
-  //     fetch(true, true, paginationOptions.value.cache);
-  //   }
-  // });
-
   provide("next", next);
   provide("previous", previous);
   provide("searchPage", searchPagination.page);
@@ -259,15 +203,8 @@ function extractPaginationData(response) {
   provide("searching", searching);
   provide("send", send);
   provide("sendPagination", sendPagination);
-  provide(
-    "perPage",
-    computed(() => perPage.value)
-  );
-
-  provide(
-    "totalElements",
-    computed(() => totalElements.value)
-  );
+  provide("perPage", computed(() => perPage.value));
+  provide("totalElements", computed(() => totalElements.value));
 
   const page = computed(() => {
     return searching.value
@@ -276,44 +213,43 @@ function extractPaginationData(response) {
   });
 
   function send() {
-    pagination.reset();
-    searchPagination.reset();
+    pagination.reset(perPage.value);
+    searchPagination.reset(perPage.value);
     fetch();
   }
 
-function sendPagination(limit, page) {
-  if (page) {
-    pagination.reset(perPage.value); // Pass current perPage
-    searchPagination.reset(perPage.value);
-    pagination.page.value = page;
-  } else {
-    perPage.value = limit; // Update the source of truth
-    pagination.reset(limit);
-    searchPagination.reset(limit);
+  function sendPagination(limit, pageValue) {
+    if (pageValue) {
+      pagination.reset(perPage.value);
+      searchPagination.reset(perPage.value);
+      pagination.page.value = pageValue;
+    } else {
+      perPage.value = limit;
+      pagination.reset(limit);
+      searchPagination.reset(limit);
+    }
+
+    fetch();
   }
-  fetch();
-}
 
   return {
     page: computed(() => {
-      const p = searching.value ? searchPagination.page.value : pagination.page.value;
-      console.log('Current page:', p);
+      const p = searching.value
+        ? searchPagination.page.value
+        : pagination.page.value;
       return p;
     }),
     search,
     perPage,
-    totalElements: computed(() => {
-      console.log('Current totalElements:', totalElements.value);
-      return totalElements.value;
-    }),
+    totalElements: computed(() => totalElements.value),
     send,
     sendPagination,
-    totalPages: computed(() => 
-      searching.value 
-        ? searchPagination.totalPages.value 
+    totalPages: computed(() =>
+      searching.value
+        ? searchPagination.totalPages.value
         : pagination.totalPages.value
     ),
-    data: computed(() => 
+    data: computed(() =>
       paginationOptions.value.store && !searching.value
         ? paginationOptions.value.store.getAll()
         : req.response.value?.content || req.response.value?.data || []

@@ -23,7 +23,7 @@ function register(formData) {
   const providerJson = formData.get('provider');
   if (!providerJson) {
     const errorMsg = 'Missing provider data';
-    toasted(false, errorMsg);
+    toasted(false,'', errorMsg);
     return Promise.reject(new Error(errorMsg));
   }
 
@@ -45,7 +45,7 @@ function register(formData) {
     if (missingFields.length > 0) {
       const errorMsg = `Missing required Provider fields: ${missingFields.join(', ')}`;
       console.error('Validation failed:', errorMsg);
-      toasted(false, errorMsg);
+      // toasted(false,'', errorMsg);
       return Promise.reject(new Error(errorMsg));
     }
 
@@ -71,7 +71,7 @@ function sendRegistrationRequest(formData) {
         } else {
           console.error('Registration failed:', response.error);
           const errorMsg = response.error || 'Failed to register provider';
-          toasted(false, errorMsg);
+          // toasted(false,'', errorMsg);
           reject(new Error(errorMsg));
         }
       }

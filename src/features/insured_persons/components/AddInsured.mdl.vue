@@ -29,7 +29,9 @@ async function handleSubmit(formValues) {
 
     const missingFields = requiredFields.filter((field) => !formValues[field]);
     if (missingFields.length > 0) {
-      throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+      // throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+      toasted(false, "Validation Error ", `Missing required fields: ${missingFields.join(", ")}`);
+
     }
 
     const formData = new FormData();
@@ -45,6 +47,7 @@ async function handleSubmit(formValues) {
       grandFatherName: formValues.grandFatherName,
       groupUuid:formValues.groupUuid,
       birthDate: formValues.birthDate,
+      inactiveDate: formValues.inactiveDate || "",
       phone: formValues.phone,
       woreda: formValues.woreda || "",
       state: formValues.state || "Addis Ababa",
@@ -118,6 +121,7 @@ async function handleSubmit(formValues) {
         <InsuredPersonFormDataProvider ref="formDataProvider">
           <InsuredForm
             :onSubmit="handleSubmit"
+            :pending="pending"
             :onCancel="() => closeModal()"
           />
         </InsuredPersonFormDataProvider>

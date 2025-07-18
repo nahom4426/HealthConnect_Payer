@@ -9,6 +9,7 @@ import { useRouter } from "vue-router";
 import NewFormParent from "../components/NewFormParent.vue";
 import Button from "@/components/Button.vue";
 import { useForm } from "@/components/new_form_builder/useForm";
+
 const { submit } = useForm("roleForm");
 const roleStore = useRoles();
 const req = useApiRequest();
@@ -21,8 +22,11 @@ function create({ values }) {
       if (res.success) {
         roleStore.add(res.data);
         router.push("/roles");
+        toasted(res.success, "Role Created", res.error);
       }
-      toasted(res.success, "Role Created", res.error);
+      console.log('jjjj');
+      
+      //  
     }
   );
 }
@@ -31,15 +35,21 @@ const goBack = () => {
   router.go(-1);
 };
 </script>
+
 <template>
   <NewFormParent
     :is-modal="false"
-    size="auto "
+    size="auto"
     class="flex justify-center h-full pb-6 bg-white"
     title="Add Role"
   >
     <PrivilegesDataProvider :pre-page="500" v-slot="{ privileges, pending }">
-      <RoleForm v-if="!pending" :privileges="privileges" :roles="roleStore" />
+      <RoleForm
+        v-if="!pending"
+        :privileges="privileges"
+        :selectPrivilege="[]"
+        :role="{ roleName: '', roleDescription: '' }"
+      />
       <p v-else>Loading...</p>
     </PrivilegesDataProvider>
 

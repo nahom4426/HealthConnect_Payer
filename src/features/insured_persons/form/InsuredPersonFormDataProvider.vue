@@ -26,7 +26,7 @@ function register(formData) {
   const insuredJson = formData.get("insured");
   if (!insuredJson) {
     const errorMsg = "Missing insured data";
-    toasted(false, errorMsg);
+    toasted(false,'', errorMsg);
     return Promise.reject(new Error(errorMsg));
   }
 
@@ -75,7 +75,7 @@ function sendRegistrationRequest(formData) {
           console.error("Registration failed:", response.error);
           const errorMsg =
             response.error || "Failed to register insured member";
-          toasted(false, errorMsg);
+          // toasted(false, '',errorMsg);
           reject(new Error(errorMsg));
         }
       }

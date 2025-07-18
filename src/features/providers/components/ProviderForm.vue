@@ -12,7 +12,7 @@ import {
   getCitiesByRegion, 
   getSubCitiesByCity 
 } from '@/features/instution_settings/utils/ethiopianLocations';
-
+import { toasted } from "@/utils/utils";
 const props = defineProps({
   initialData: {
     type: Object ,
@@ -37,7 +37,7 @@ const props = defineProps({
 });
 
 // Form data
-const providerLogo = ref<File | null>(null);
+const providerLogo = ref(null); 
 const providerName = ref('');
 const threeDigitAcronym = ref('');
 const category = ref('');
@@ -117,18 +117,52 @@ onMounted(() => {
 
 // File upload handling
 function handleFileUpload(event) {
-  const target = event.target ;
-  const file = target.files?.[0];
-  if (file) {
-    providerLogo.value = file;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImage.value = e.target?.result ;
-    };
-    reader.readAsDataURL(file);
-  }
+  try {
+    // First ensure we have a proper event with files
+    if (!event || !event.target || !event.target.files) {
+      toasted(false, "File Upload Error", "Invalid file upload event");
+      return;
+    }
+
+    const file = event.target.files[0];
+    
+    // Check if file was selected
+    if (!file) {
+      toasted(false, "File Upload Error", "No file selected");
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      toasted(false, "Invalid File Type", "Please upload only JPG, PNG or GIF images");
+      return;
+    }
+
+    // Validate size (e.g.,  1MB max)
+   if (file.size > 1 * 1024 * 1024) { // 1MB
+  toasted(false, "File Too Large", "Maximum file size is 1MB");
+  return;
 }
 
+providerLogo.value = file;
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImage.value = e.target?.result || '';
+    };
+    reader.onerror = (error) => {
+      toasted(false, "File Read Error", "Failed to process the image");
+      console.error("Error reading file:", error);
+    };
+    reader.readAsDataURL(file);
+
+  } catch (error) {
+    toasted(false, "Unexpected Error", "An error occurred during file upload");
+    console.error("File upload error:", error);
+  }
+}
 function browseFiles() {
   const fileInput = document.getElementById('file-upload') ;
   fileInput.click();
