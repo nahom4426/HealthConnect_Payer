@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { searchInsuredByInstitution, addInsuredToContract } from '../api/payerContractApi';
+import { searchInsuredByInstitution, addInsuredToContract } from '../api/payerContractApi.js';
 import { toasted } from '@/utils/utils';
 import { closeModal } from "@customizer/modal-x";
 import { useAuthStore } from "@/stores/auth";
