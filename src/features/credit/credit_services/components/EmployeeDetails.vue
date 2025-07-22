@@ -19,18 +19,18 @@ const props = defineProps<{
 
 <template>
   <div class="bg-[#F6F7FA] p-4 flex">
-    <div class="flex flex-col md:flex-row gap-4 p-4 bg-[#F6F7FA] rounded-xl shadow-sm w-full">
+    <div class="flex flex-col md:flex-row gap-4 py-4 px-8 bg-[#F6F7FA] rounded-xl shadow-sm w-full">
       <!-- Profile Photo -->
-      <div class="w-[10rem] h-[10rem] flex items-center justify-center rounded-lg overflow-hidden">
+      <div class="w-[15rem] h-[15rem] flex items-center justify-center rounded-lg overflow-hidden">
         <img 
-          :src="employee.profilePicture || 'https://randomuser.me/api/portraits/men/75.jpg'" 
+          :src="employee.profilePicture || '/src/assets/img/profile.png'" 
           alt="Profile" 
           class="w-full h-full object-cover"
         />
       </div>
 
       <!-- Left Info Section -->
-      <div class="bg-white rounded-lg p-4 w-full md:w-[20rem] space-y-2">
+      <div class="bg-white rounded-lg p-4 w-full md:w-[35.5rem] space-y-2">
         <div class="flex">
           <span class="text-xs text-[#75778B] w-28">Full Name</span>
           <span class="text-sm font-medium text-[#373946]">{{ employee.fullName }}</span>
@@ -50,7 +50,7 @@ const props = defineProps<{
       </div>
 
       <!-- Right Info Section -->
-      <div class="bg-white rounded-lg p-4 w-full md:w-[20rem] space-y-2">
+      <div class="bg-white rounded-lg p-4 w-full md:w-[35.5rem] space-y-2">
         <div class="flex">
           <span class="text-xs text-[#75778B] w-28">Employee ID</span>
           <span class="text-sm font-medium text-[#373946]">{{ employee.employeeId }}</span>
@@ -66,7 +66,7 @@ const props = defineProps<{
       </div>
 
       <!-- Status & Level Section -->
-      <div class="bg-white rounded-lg p-4 w-full md:w-[20rem] space-y-2">
+      <div class="bg-white rounded-lg p-4 w-full md:w-[35.5rem] space-y-2">
         <div class="flex p-2 gap-2 bg-[#DFF1F1]">
           <span class="text-xs font-medium bg-primary py-2 rounded-lg px-3 flex items-center gap-2 text-white">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">

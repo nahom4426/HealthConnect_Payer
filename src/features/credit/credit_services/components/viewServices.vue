@@ -271,6 +271,7 @@ defineExpose({ setSearchResults });
           <input
             v-model="localSearchQuery"
             :placeholder="`Search ${activeTab}...`"
+            hidden
             class="w-full p-4 rounded-md focus:ring-teal-500 focus:border-teal-500"
             @keyup.enter="$emit('search-items', { 
               type: activeTab, 
@@ -341,7 +342,6 @@ defineExpose({ setSearchResults });
             <th v-if="activeTab === 'drugs'" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosage</th>
             <th v-if="activeTab === 'drugs'" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
             <th v-if="activeTab === 'drugs'" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -364,6 +364,7 @@ defineExpose({ setSearchResults });
               <input
                 type="text"
                 :value="localRemarks[item.contractDetailUuid]"
+                disabled
                 @input="handleUpdateRemark(index, item.contractDetailUuid, $event.target.value)"
                 class="w-full px-3 py-3 bg-[#F6F7FA]"
                 placeholder="Service remark"
@@ -379,6 +380,7 @@ defineExpose({ setSearchResults });
                 <input
                   type="number"
                   min="1"
+                  disabled
                   :value="item.quantity"
                   @input="handleUpdateItem(index, 'quantity', $event.target.value)"
                   class="w-20 px-3 py-3 bg-[#F6F7FA]"
@@ -395,15 +397,7 @@ defineExpose({ setSearchResults });
               </td>
             </template>
             
-            <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
-              <button
-                type="button"
-                @click="handleRemoveItem(index)"
-                class="bg-[#F14545] text-white px-3 rounded-md py-1 hover:bg-red-900"
-              >
-                Remove
-              </button>
-            </td>
+           
           </tr>
           <tr v-if="displayedItems.length === 0">
             <td :colspan="activeTab === 'services' ? 5 : 8" class="px-3 py-4 text-center text-sm text-gray-500">
@@ -419,6 +413,7 @@ defineExpose({ setSearchResults });
           <label class="block text-sm font-medium text-gray-700 mb-1">Primary Diagnosis</label>
           <input
             v-model="localPrimaryDiagnosis"
+            disabled
             class="w-[95%] pl-2  py-3 bg-[#F6F7FA]"
             placeholder="Enter primary diagnosis"
           />
@@ -427,6 +422,7 @@ defineExpose({ setSearchResults });
           <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Diagnosis</label>
           <input
             v-model="localSecondaryDiagnosis"
+            disabled
             class="w-[95%] pl-3 py-3 bg-[#F6F7FA]"
             placeholder="Enter secondary diagnosis"
           />

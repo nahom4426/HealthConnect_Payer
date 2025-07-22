@@ -50,7 +50,7 @@ const { claimServices: services } = storeToRefs(claimServicesStore); // Destruct
     </template>
       <template #add-action>
          <button
-        @click.prevent="$router.push('/create')"
+        @click.prevent="$router.push('/create_credit_service')"
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-primary text-white"
       >
         <i v-html="icons.plus_circle"></i>

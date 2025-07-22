@@ -380,12 +380,14 @@ watch(contractData, (newVal) => {
           </button>
         </div>
 
-     <button
+    <button
+  v-if="activeTab === 'employees'"
   class="bg-primary hover:bg-[#014F4F] text-white px-5 py-4 rounded-md text-sm"
   @click="handleOpenModal"
 >
-  {{ activeTab === 'groups' ? 'Add Group' : 'Add Employee' }}
+  Add Employee
 </button>
+
 
 
       </div>
@@ -574,7 +576,7 @@ watch(contractData, (newVal) => {
             <tr>
               <th class="py-3">#</th>
               <th class="py-3">Service Name / Drug Name</th>
-              <th class="py-3">Negotiated Price (ETB)</th>
+              <th class="py-3"> Price (ETB)</th>
               <th class="py-3">Action</th>
             </tr>
           </thead>

@@ -2,10 +2,7 @@
 import { computed, ref, watch } from "vue";
 import Table from "@/components/Table.vue";
 import Button from "@/components/Button.vue";
-import icons from "@/utils/icons";
 import DefaultPage from "@/components/DefaultPage.vue";
-import AuthorizationBatchDataProvider from "../components/AuthorizationBatchDataProvider.vue";
-import Dropdown from "@/components/Dropdown.vue";
 import {
   convertBase64Image,
   formatCurrency,
@@ -13,46 +10,65 @@ import {
 } from "@/utils/utils";
 import { useRoute } from "vue-router";
 import { usePagination } from "@/composables/usePagination";
-import AboutPayerForm from "../form/AboutPayerForm.vue";
-import { getAuthorizationDetail } from "../api/authorizationApi";
 import DynamicForm from "../form/DynamicForm.vue";
 import { openModal } from "@customizer/modal-x";
+import { getAuthorizationDetail } from "../api/authorizationApi";
+
 const route = useRoute();
 const id = ref(route.params?.id);
 
 const pagination = usePagination({
   cb: (data) => getAuthorizationDetail(route.params?.id),
 });
+
+// Get the actual data content from pagination
+const contentData = computed(() => {
+  return pagination.data?.value || [];
+});
+
+// Get first item for summary cards
+const firstItem = computed(() => contentData.value[0] || {});
+
 const aboutPayer = computed(() => [
-  { title: "Payer Name", value: pagination.data?.value?.payerName || "N/A" },
-  { title: "Category", value: pagination.data?.value?.providerName || "N/A" },
-  { title: "Contact", value: "123-456-7890" },
+  { title: "payer Name", value: firstItem.value.payerName || "N/A" },
+  { title: "catagory", value: firstItem.value.catagory || "N/A" },
+  { title: "Contact", value: firstItem.value.payerPhoneNumber || "N/A" },
 ]);
+
 const claimSummary = computed(() => [
-  { title: "Claim Amount", value: pagination.data?.value?.employeeId || "N/A" },
-  {
-    title: "Number of claims",
-    value: pagination.data?.value?.address || "N/A",
+  { 
+    title: "Claim Amount", 
+    value: firstItem.value.totalAmount 
+      ? formatCurrency(firstItem.value.totalAmount) 
+      : "N/A" 
   },
-  { title: "Time Range", value: pagination.data?.value?.gender || "N/A" },
+  {
+    title: "Medication Items",
+    value: firstItem.value.medicationItems?.length || "0",
+  },
+  { 
+    title: "Dispensing Date", 
+    value: firstItem.value.dispensingDate 
+      ? formatDateToYYMMDD(new Date(firstItem.value.dispensingDate)) 
+      : "N/A" 
+  },
 ]);
-const profilePicture = computed(() => pagination.data?.value?.profileLogo);
+
+const profilePicture = computed(() => firstItem.value.profileLogo);
+
 async function processProfilePicture() {
-  if (!profilePicture.value) {
-    return;
-  }
-
+  if (!profilePicture.value) return;
+  
   try {
-    if (profilePicture.value.startsWith("data:image/jpeg")) {
-      return;
-    }
-
+    if (profilePicture.value.startsWith("data:image/jpeg")) return;
     profilePicture.value = await convertBase64Image(
       profilePicture.value,
       "image/jpeg",
       0.85
     );
-  } catch (error) {}
+  } catch (error) {
+    console.error("Error processing profile picture:", error);
+  }
 }
 
 watch(profilePicture, () => {
@@ -63,61 +79,65 @@ watch(profilePicture, () => {
 <template>
   <DefaultPage :first="false">
     <template #first>
-      <div class="grid grid-cols-3 gap-4 w-full">
-        <div class="p-2 bg-base-clr3 rounded-lg">
+      <div class="flex w-full gap-4">
+        <!-- Profile Picture (20%) -->
+        <div class="w-1/5 bg-base-clr3 rounded-lg p-4 flex flex-col items-center justify-center">
           <img
             v-if="profilePicture"
             :src="profilePicture"
             alt="Profile picture"
-            class="profile-image"
+            class="w-full h-auto max-h-40 object-contain"
           />
-          <div v-else class="no-image-placeholder">No profile picture</div>
+          <div v-else class="text-gray-500 text-center">No logo available</div>
         </div>
-        <DynamicForm
-          header="About Payer"
-          customClass="bg-base-clr3 "
-          :data="aboutPayer"
-        />
-        <DynamicForm
-          header="Claim Summary"
-          customClass="bg-base-clr3 ml-4"
-          :data="claimSummary"
-        />
+
+        <!-- About Payer (40%) -->
+        <div class="w-2/5 bg-base-clr3 rounded-lg p-4">
+          <DynamicForm
+            header="About Payer"
+            customClass="h-full"
+            :data="aboutPayer"
+          />
+        </div>
+
+        <!-- Claim Summary (40%) -->
+        <div class="w-2/5 bg-base-clr3 rounded-lg p-4">
+          <DynamicForm
+            header="Claim Summary"
+            customClass="h-full"
+            :data="claimSummary"
+          />
+        </div>
       </div>
     </template>
-    <div class="bg-base-clr3 rounded-md p-4">
+
+    <div class="bg-base-clr3 rounded-md p-4 mt-4">
       <Table
         :pending="pagination.pending.value"
-        :rows="pagination.data?.value"
+        :rows="contentData"
         :headers="{
           head: [
             'Invoice ID',
             'Patient Name',
-            'Encounter Date',
+            'Dispensing Date',
             'Branch',
             'Credit Amount',
             'Status',
             'Actions',
           ],
           row: [
-            'batchCode',
+            'invoiceNumber',
             'insuredName',
-            'recordedAt',
+            'dispensingDate',
             'branchName',
             'totalAmount',
-            'status',
+            'claimStatus'
           ],
         }"
         :cells="{
-          requestedOn: (requestedOn) => {
-            const date = new Date(requestedOn);
-            if (!isNaN(date.getTime())) {
-              return formatDateToYYMMDD(date);
-            }
-          },
-          totalAmount: (totalAmount) => {
-            return formatCurrency(totalAmount);
-          },
+          dispensingDate: (date) => formatDateToYYMMDD(new Date(date)),
+          totalAmount: (amount) => formatCurrency(amount),
+          claimStatus: (status) => status?.toUpperCase() || 'N/A'
         }"
       >
         <template #actions="{ row }">
@@ -136,3 +156,10 @@ watch(profilePicture, () => {
     </div>
   </DefaultPage>
 </template>
+
+<style scoped>
+.profile-image {
+  max-height: 160px;
+  object-fit: contain;
+}
+</style>

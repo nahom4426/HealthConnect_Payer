@@ -115,7 +115,6 @@ watch(profilePicture, () => {
             'claimStatus',
           ],
         }"
-        ,
         :row-com="Clinical_Row"
       >
       </Table>

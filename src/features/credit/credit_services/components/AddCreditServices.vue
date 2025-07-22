@@ -1,5 +1,5 @@
 <!-- AddCreditServices.vue (page component) -->
-<script setup lang="ts">
+<script setup>
 import CreditServicesForm from "../form/creditServicesForm.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { claimServices } from "../store/creditClaimsStore";
@@ -18,7 +18,7 @@ const auth = useAuthStore();
 const formDataProvider = ref();
 const formRef = ref();
 
-async function handleSubmit(values: any) {
+async function handleSubmit(values) {
   try {
     // Validate required fields
     if (!values.payerUuid || !values.dispensingDate || 
@@ -44,7 +44,7 @@ async function handleSubmit(values: any) {
       pharmacyTransactionId: values.pharmacyTransactionId || '',
       primaryDiagnosis: values.primaryDiagnosis || '',
       secondaryDiagnosis: values.secondaryDiagnosis || '',
-      medicationItems: values.medicationItems.map((item: any) => ({
+      medicationItems: values.medicationItems.map(item => ({
         contractDetailUuid: item.contractDetailUuid || '',
         itemType: item.itemType,
         remark: item.remark || '',
@@ -71,13 +71,13 @@ async function handleSubmit(values: any) {
         ...payload,
         invoiceNumber: result.data?.invoiceNumber || `TEMP-${Date.now()}`,
         dispensingUuid: result.data?.dispensingUuid || `TEMP-${Date.now()}`,
-        totalAmount: payload.medicationItems.reduce((sum: number, item: any) => 
+        totalAmount: payload.medicationItems.reduce((sum, item) => 
           sum + ((item.price || 0) * (Number(item.quantity) || 1)), 0),
         patientResponsibility: 0,
         insuranceCoverage: 0,
         branchName: null,
         createdAt: new Date().toISOString(),
-        items: payload.medicationItems.map((item: any) => ({
+        items: payload.medicationItems.map(item => ({
           ...item,
           name: item.itemType === 'SERVICE' ? item.serviceName : item.drugName,
           code: item.itemType === 'SERVICE' ? item.serviceCode : item.drugCode,
@@ -90,7 +90,7 @@ async function handleSubmit(values: any) {
     } else {
       throw new Error(result.data?.message || 'Submission failed');
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Submission error:', error);
     const errorMessage = error.response?.data?.message || 
                        error.message || 

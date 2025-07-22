@@ -36,7 +36,7 @@ const api = useApiRequest();
 const activeTab = ref(0); // 0 for Services, 1 for Drugs
 const tabs = [
   { name: 'Services', value: 0 },
-  { name: 'Drugs', value: 1 }
+  // { name: 'Drugs', value: 1 }
 ];
 
 // Data states

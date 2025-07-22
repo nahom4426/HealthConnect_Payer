@@ -124,7 +124,6 @@ onMounted(() => {
             'claimStatus',
           ],
         }"
-        ,
         :row-com="Financial_row"
       >
         <template #actions="{ row }">

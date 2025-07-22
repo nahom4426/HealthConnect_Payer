@@ -36,7 +36,7 @@ const filteredData = computed(() => {
         :show-pagination="false"
         :rows="filteredData"
         :headers="{
-          head: ['Service ID', 'Service NAme', 'Unit Price', 'Total Price'],
+          head: ['Service ID', 'Service Name', 'Unit Price', 'Total Price'],
           row: ['medicationCode', 'medicationName', 'unitPrice', 'totalPrice'],
         }"
         :cells="{

@@ -17,13 +17,14 @@ export default [
             name: 'Credit Services List',
             component: CreditServices,
           },
-          {
-            path: '/create',
-            name: 'Create Credit Service',
-             component: AddCreditServices,
-          }
+         
           
         ]
       },
+       {
+            path: '/create_credit_service',
+            name: 'Create Credit Service',
+             component: AddCreditServices,
+          },  
    
 ]

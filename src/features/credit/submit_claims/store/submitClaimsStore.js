@@ -1,54 +1,18 @@
-import { getActiveInstitutions } from "@/features/instution_settings/api/institutionSettingsApi";
+import { getActiveInstitutions, getPayersWithContractForLoggedInProvider } from "@/features/instution_settings/api/institutionSettingsApi";
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 
-// Medication Item interface
-export interface MedicationItem {
-  medicationName: string;
-  quantity: number;
-  unitOfMeasure: string;
-  unitPrice: number;
-  totalPrice: number;
-}
-
-// Claim Service interface
-export interface ClaimService {
-  invoiceNumber: string;
-  dispensingUuid: string;
-  payerUuid: string;
-  payerName?: string;
-  patientName: string;
-  insuranceId: string | null;
-  dispensingDate: string;
-  prescriptionNumber: string;
-  pharmacyTransactionId: string;
-  totalAmount: number;
-  patientResponsibility: number;
-  insuranceCoverage: number;
-  branchName: string | null;
-  createdAt: string;
-  medicationItems: MedicationItem[];
-}
-
-// Institution interface based on your API response
-interface Institution {
-  payerUuid: string;
-  payerName: string;
-  email?: string;
-  telephone?: string;
-  // Add other fields as needed
-}
-
 export const claimServices = defineStore("submitServicesStore", () => {
-  const claimServices = ref<ClaimService[]>([]);
-  const institutions = ref<Institution[]>([]);
+  const claimServices = ref([]);
+  const institutions = ref([]);
   const loadingInstitutions = ref(false);
-
-  // Fetch active institutions from API
+  const fetchPending = ref(false);
+  const error = ref(null);
+  const payers = ref([]);
   const fetchActiveInstitutions = async () => {
     loadingInstitutions.value = true;
     try {
-      const response = await getActiveInstitutions();
+     const response = await getPayersWithContractForLoggedInProvider({ page: 1, limit: 1000 });
       
       // Handle the nested content array in the response
       if (response?.data?.content && Array.isArray(response.data.content)) {
@@ -68,30 +32,56 @@ export const claimServices = defineStore("submitServicesStore", () => {
       loadingInstitutions.value = false;
     }
   };
+  async function fetchActiveInstitution() {
+    try {
+      fetchPending.value = true;
+      error.value = null;
+      const response = await getPayersWithContractForLoggedInProvider({ page: 1, limit: 1000 });
+      
+      if (!response?.data?.content || !Array.isArray(response.data.content)) {
+        throw new Error('Invalid data format: missing content array');
+      }
 
-  // Get payer options with proper mapping
+      payers.value = response.data.content.map(item => ({
+        payerUuid: item.payerUuid,
+        payerName: item.payerName || `Unnamed Payer (${item.email})`,
+        email: item.email,
+        telephone: item.telephone,
+        contracts: item.contracts || []
+      }));
+
+      if (payers.value.length === 0) {
+        error.value = 'No payers available';
+      }
+    } catch (err) {
+      console.error('Error fetching payers:', err);
+      error.value = 'Failed to load payers. Please try again.';
+    } finally {
+      fetchPending.value = false;
+    }
+  }
+
   const payerOptions = computed(() => {
     return institutions.value.map(inst => ({
       label: inst.name,
       value: inst.uuid,
-      originalData: inst  // Include original data if needed
+      originalData: inst
     }));
   });
 
-  // Standard store methods
-  function getAll(): ClaimService[] {
+  function getAll() {
     return claimServices.value;
   }
 
-  function set(data: ClaimService[]): void {
+  function set(data) {
     claimServices.value = Array.isArray(data) ? data : [];
   }
 
-  function add(data: ClaimService): void {
+  function add(data) {
     claimServices.value.unshift(data);
   }
 
-  function update(id: string, data: Partial<ClaimService>): void {
+  function update(id, data) {
     const idx = claimServices.value.findIndex(el => el.dispensingUuid === id);
     if (idx !== -1) {
       claimServices.value.splice(idx, 1, {
@@ -101,7 +91,7 @@ export const claimServices = defineStore("submitServicesStore", () => {
     }
   }
 
-  function remove(id: string): void {
+  function remove(id) {
     claimServices.value = claimServices.value.filter(el => el.dispensingUuid !== id);
   }
 

@@ -92,22 +92,29 @@ export default [
     icon: icons.Services,
     privilege: ["Create Services"],
   },
-
-  {
-    name: "Credits",
-    icon: icons.Credits,
-    privilege: ["Create Services"],
-    //  category: "Payers",
-    navs: [
-      {
-        path: "/credit_services",
+   {
+        path: "/create_credit_service",
         name: "Credits Services",
         icon: icons.creditservices,
         // category: "main",
         privilege: ["Create Services"],
       },
+
+  {
+    name: "Credit Invoice",
+    icon: icons.Credits,
+    privilege: ["Create Services"],
+    //  category: "Payers",
+    navs: [
+     {
+        path: "/credit_services",
+        name: "Completed Services",
+        icon: icons.creditservices,
+        // category: "main",
+        privilege: ["Create Services"],
+      },
       {
-        path: "/submit_claims",
+        path: "/create_claims",
         name: "Create Claims",
         icon: icons.approveClaims,
         category: "Pages",
