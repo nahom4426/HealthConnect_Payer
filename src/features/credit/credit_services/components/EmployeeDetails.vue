@@ -19,9 +19,9 @@ const props = defineProps<{
 
 <template>
   <div class="bg-[#F6F7FA] p-4 flex">
-    <div class="flex flex-col md:flex-row gap-4 py-4 px-8 bg-[#F6F7FA] rounded-xl shadow-sm w-full">
+    <div class="flex flex-col md:flex-row gap-4 py-4 px-4 bg-[#F6F7FA] rounded-xl shadow-sm w-full">
       <!-- Profile Photo -->
-      <div class="w-[15rem] h-[15rem] flex items-center justify-center rounded-lg overflow-hidden">
+      <div class="w-[12rem] h-[12rem] flex items-center justify-center rounded-lg overflow-hidden">
         <img 
           :src="employee.profilePicture || '/src/assets/img/profile.png'" 
           alt="Profile" 

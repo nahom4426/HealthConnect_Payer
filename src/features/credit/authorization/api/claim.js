@@ -8,3 +8,7 @@ const baseUrl = import.meta.env.v_API_URI;
 export function claimApproval(id) {
   return api.addAuthenticationHeader().post(`${path}/createBatchClaim/${id}`);
 }
+
+export function claimRejection(id, data) {
+  return api.addAuthenticationHeader().post(`${path}/reject/${id}`, data);
+}

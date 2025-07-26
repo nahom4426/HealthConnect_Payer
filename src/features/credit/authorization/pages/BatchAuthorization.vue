@@ -124,7 +124,7 @@ function remove(id) {
                   <span>Approve</span>
                 </button>
                 <button
-                  @click="remove(row?.batchCode)"
+                   @click="openModal('ClaimRejection', row?.batchCode)"
                   class="p-2 flex items-center text-red-500 bg-[#FFE8E8] gap-2 rounded-lg hover:bg-gray-100"
                 >
                   <i v-html="icons.deactivate" />

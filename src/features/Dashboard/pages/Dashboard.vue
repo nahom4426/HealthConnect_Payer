@@ -1,6 +1,6 @@
 <script setup>
 import icons from "@/utils/icons";
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import Cards from "../components/Cards.vue";
 import Button from "@/components/Button.vue";
 import ChartCard from "@/components/charts/ChartCard.vue";
@@ -12,11 +12,53 @@ import Progress_row from "../components/Progress_row.vue";
 import StackedBarChart from "@/components/charts/StackedBarChart.vue";
 import CardDashboard from "../components/CardDashboard.vue";
 import { useAuthStore } from "@/stores/auth";
-import { getReports } from "../api/dashboardApi"; 
+import { getReports } from "../api/dashboardApi";
 
+const authStore = useAuthStore();
 const dashboardData = ref(null);
 const loading = ref(true);
 const error = ref(null);
+
+// Computed property to get filtered data based on user's role
+const filteredData = computed(() => {
+  if (!dashboardData.value) return null;
+  
+  // If user has payerUuid, filter payer-specific data
+  if (authStore.payerUuid) {
+    const payer = dashboardData.value.payerSummaries.find(
+      p => p.payerUuid === authStore.payerUuid
+    );
+    
+    return {
+      ...dashboardData.value,
+      totalInsured: payer?.totalInsured || 0,
+      totalClaims: payer?.totalClaims || 0,
+      totalGroups: payer?.totalGroups || 0,
+      payerSummaries: [payer].filter(Boolean),
+      providerSummaries: dashboardData.value.providerSummaries,
+      claimStatistics: dashboardData.value.claimStatistics,
+      monthlyClaimTotals: dashboardData.value.monthlyClaimTotals
+    };
+  }
+  
+  // If user has providerUuid, filter provider-specific data
+  if (authStore.providerUuid) {
+    const provider = dashboardData.value.providerSummaries.find(
+      p => p.providerUuid === authStore.providerUuid
+    );
+    
+    return {
+      ...dashboardData.value,
+      totalClaims: provider?.totalClaims || 0,
+      providerSummaries: [provider].filter(Boolean),
+      claimStatistics: dashboardData.value.claimStatistics,
+      monthlyClaimTotals: dashboardData.value.monthlyClaimTotals
+    };
+  }
+  
+  // Otherwise return all data (for super admin)
+  return dashboardData.value;
+});
 
 // Fetch dashboard data
 const fetchDashboardData = async () => {
@@ -24,8 +66,6 @@ const fetchDashboardData = async () => {
     loading.value = true;
     const response = await getReports();
     dashboardData.value = response.data;
-    
-    // Update your data structures with the API response
     updateDataStructures();
   } catch (err) {
     error.value = err.message || "Failed to fetch dashboard data";
@@ -36,64 +76,90 @@ const fetchDashboardData = async () => {
 };
 
 const updateDataStructures = () => {
-  if (!dashboardData.value) return;
+  if (!filteredData.value) return;
 
-  // Update cards data
-  data.value = [
-    {
-      title: "Number of Employee",
-      Image: icons.no_emolpoyee,
-      amount: dashboardData.value.totalInsured.toString(),
-      today: icons.no_emolpoyee,
-      percent: "8.5%", // You might want to calculate this
-      customClass: "bg-[#FFE2E5]",
-    },
-    // {
-    //   title: "Group of Employee",
-    //   Image: icons.product_sold,
-    //   amount: dashboardData.value.totalGroups.toString(),
-    //   today: icons.product_sold,
-    //   percent: "8.5%",
-    //   customClass: "bg-[#D2FFDA]",
-    // },
-    {
-      title: "Total Payers",
-      Image: icons.policy2,
-      amount: dashboardData.value.totalPayers.toString(),
-      today: icons.new_customer,
-      percent: "8.5%",
-      customClass: "bg-[#F3E8FF]",
-    },
-    {
-      title: "Total Providers",
-      Image: icons.policy2,
-      amount: dashboardData.value.totalProviders.toString(),
-      today: icons.product_sold,
-      percent: "8.5%",
-      customClass: "bg-[#D2FFDA]",
-    },
-  ];
+  // Update cards data based on user type
+  if (authStore.providerUuid) {
+    // Provider-specific cards
+    data.value = [
+      {
+        title: "Total Claims",
+        Image: icons.policy2,
+        amount: filteredData.value.totalClaims.toString(),
+        today: icons.policy2,
+        percent: "N/A",
+        customClass: "bg-[#F3E8FF]",
+      }
+    ];
+  } else {
+    // Default cards (for payer or super admin)
+    data.value = [
+      {
+        title: "Number of Insured",
+        Image: icons.no_emolpoyee,
+        amount: filteredData.value.totalInsured.toString(),
+        today: icons.no_emolpoyee,
+        percent: "8.5%",
+        customClass: "bg-[#FFE2E5]",
+      },
+      {
+        title: "Number of Groups",
+        Image: icons.product_sold,
+        amount: filteredData.value.totalGroups.toString(),
+        today: icons.product_sold,
+        percent: "8.5%",
+        customClass: "bg-[#D2FFDA]",
+      },
+       {
+        title: "numberOfPayersWithInsured",
+        Image: icons.policy2,
+        amount: filteredData.value.numberOfPayersWithInsured.toString(),
+        today: icons.new_customer,
+        percent: "2.5%",
+        customClass: "bg-[#F3E8EF]",
+      },
+      {
+        title: "Total Claims",
+        Image: icons.policy2,
+        amount: filteredData.value.totalClaims.toString(),
+        today: icons.new_customer,
+        percent: "8.5%",
+        customClass: "bg-[#F3E8FF]",
+      }
+    ];
+    
+    // Add payers card only for super admin
+    if (!authStore.payerUuid) {
+      data.value.push({
+        title: "Number of Payers",
+        Image: icons.policy2,
+        amount: filteredData.value.totalPayers.toString(),
+        today: icons.new_customer,
+        percent: "8.5%",
+        customClass: "bg-[#E0F2FE]",
+      });
+    }
+  }
 
   // Update claim statuses for the table
-  claimStatuses.value = dashboardData.value.providerSummaries.map(provider => ({
+  claimStatuses.value = filteredData.value.providerSummaries.map(provider => ({
     status: provider.providerName,
     count: provider.totalClaims,
-    total: provider.totalClaims, // Adjust as needed
-    percentage: 100, // Calculate based on your needs
+    total: provider.totalClaims,
+    percentage: 100,
     color: "#02676B",
   }));
 
-  // If you need to show top payers instead of providers in the table
-  // claimStatuses.value = dashboardData.value.payerSummaries
-  //   .filter(payer => payer.totalClaims > 0)
-  //   .slice(0, 4) // Take top 4
-  //   .map(payer => ({
-  //     status: payer.payerName,
-  //     count: payer.totalClaims,
-  //     total: payer.totalClaims,
-  //     percentage: 100,
-  //     color: "#02676B",
-  //   }));
+  // If user is a payer, show their groups in the table
+  if (authStore.payerUuid && filteredData.value.payerSummaries[0]?.groupSummaries?.length) {
+    claimStatuses.value = filteredData.value.payerSummaries[0].groupSummaries.map(group => ({
+      status: group.groupName,
+      count: group.totalInsured,
+      total: group.totalInsured,
+      percentage: 100,
+      color: "#02676B",
+    }));
+  }
 };
 
 const claimStatuses = ref([]);
@@ -130,10 +196,10 @@ onMounted(() => {
 
 // Helper function to format monthly claim data for charts
 const getMonthlyClaimData = () => {
-  if (!dashboardData.value?.monthlyClaimTotals) return { labels: [], data: [] };
+  if (!filteredData.value?.monthlyClaimTotals) return { labels: [], data: [] };
   
-  const months = Object.keys(dashboardData.value.monthlyClaimTotals);
-  const claims = Object.values(dashboardData.value.monthlyClaimTotals);
+  const months = Object.keys(filteredData.value.monthlyClaimTotals);
+  const claims = Object.values(filteredData.value.monthlyClaimTotals);
   
   return {
     labels: months,
@@ -154,27 +220,29 @@ const getMonthlyClaimData = () => {
       {{ error }}
     </div>
     
-    <template v-else>
+    <template v-else-if="filteredData">
       <div class="grid grid-cols-5 gap-5">
         <div class="flex flex-col col-span-3 gap-6 bg-white px-5 py-4 rounded-2xl">
           <div class="flex items-center justify-between">
             <div class="flex flex-col gap-2">
-              <p class="font-semibold">Total Report</p>
-              <p class="text-xs">Sales Summary</p>
+              <p class="font-semibold">Summary Report</p>
+              <p class="text-xs">
+                {{ authStore.providerUuid ? 'Provider' : authStore.payerUuid ? 'Payer' : 'System' }} Overview
+              </p>
             </div>
             <Button class="border flex gap-2 font-medium items-center" type="">
               <i v-html="icons.export"></i>
               Export
             </Button>
           </div>
-          <div class="grid grid-cols-3 gap-6">
+          <div class="grid gap-6" :class="authStore.providerUuid ? 'grid-cols-1' : 'grid-cols-3'">
             <Cards :data="data" />
           </div>
         </div>
         
         <div class="col-span-2 h-f">
           <LoopChart
-            title="Monthly Claims"
+            :title="authStore.providerUuid ? 'Your Monthly Claims' : 'Monthly Claims'"
             :labels="getMonthlyClaimData().labels"
             :datasets="[
               {
@@ -209,10 +277,10 @@ const getMonthlyClaimData = () => {
               {
                 label: 'Claims',
                 data: [
-                  dashboardData.claimStatistics.pendingClaims,
-                  dashboardData.claimStatistics.approvedClaims,
-                  dashboardData.claimStatistics.rejectedClaims,
-                  dashboardData.claimStatistics.underReviewClaims
+                  filteredData.claimStatistics.pendingClaims,
+                  filteredData.claimStatistics.approvedClaims,
+                  filteredData.claimStatistics.rejectedClaims,
+                  filteredData.claimStatistics.underReviewClaims
                 ],
                 borderColor: '#FFD665',
                 backgroundColor: 'rgba(255, 214, 101, 0.3)',
@@ -225,12 +293,14 @@ const getMonthlyClaimData = () => {
       <div class="grid grid-cols-7 gap-6">
         <div class="bg-white col-span-3 rounded-2xl px-5 py-4 border border-[#F8F9FA]">
           <div class="space-y-2 flex flex-col gap-4">
-            <p class="font-semibold text-[#373946]">Top Providers</p>
+            <p class="font-semibold text-[#373946]">
+              {{ authStore.payerUuid ? 'Your Groups' : 'Top Providers' }}
+            </p>
             <Table
               :showPagination="false"
               :headers="{
-                head: ['Name', 'Total Claims', 'Sales'],
-                row: ['status', 'totalClaim', 'sales'],
+                head: ['Name', 'Total', 'Percentage'],
+                row: ['status', 'total', 'percentage'],
               }"
               :row-com="Progress_row"
               :rows="claimStatuses"
@@ -238,17 +308,21 @@ const getMonthlyClaimData = () => {
           </div>
         </div>
         
-        <div class="col-span-2">
+        <div class="col-span-2" v-if="!authStore.providerUuid">
           <LoopChart
-            title="Payer Distribution"
-            :labels="['With Groups', 'Without Groups']"
+            :title="authStore.payerUuid ? 'Your Insured Distribution' : 'Payer Distribution'"
+            :labels="authStore.payerUuid ? 
+              ['Active', 'Inactive'] : 
+              ['With Groups', 'Without Groups']"
             :datasets="[
               {
-                label: 'Payers',
-                data: [
-                  dashboardData.payerSummaries.filter(p => p.totalGroups > 0).length,
-                  dashboardData.payerSummaries.filter(p => p.totalGroups === 0).length
-                ],
+                label: authStore.payerUuid ? 'Insured' : 'Payers',
+                data: authStore.payerUuid ? 
+                  [filteredData.totalInsured, 0] : // Adjust with actual active/inactive data if available
+                  [
+                    filteredData.payerSummaries.filter(p => p.totalGroups > 0).length,
+                    filteredData.payerSummaries.filter(p => p.totalGroups === 0).length
+                  ],
                 borderColor: '#FFD665',
                 backgroundColor: 'rgba(255, 214, 101, 0.3)',
               }
@@ -256,22 +330,22 @@ const getMonthlyClaimData = () => {
           />
         </div>
         
-        <div class="col-span-2">
+        <div class="col-span-2" v-if="!authStore.providerUuid">
           <StackedBarChart
-            :labels="['Providers', 'Payers', 'Insured']"
+            :labels="authStore.payerUuid ? 
+              ['Insured', 'Groups', 'Claims'] : 
+              ['Providers', 'Payers', 'Insured']"
             :datasets="[
               {
                 label: 'Count',
-                data: [
-                  dashboardData.totalProviders,
-                  dashboardData.totalPayers,
-                  dashboardData.totalInsured
-                ],
+                data: authStore.payerUuid ? 
+                  [filteredData.totalInsured, filteredData.totalGroups, filteredData.totalClaims] :
+                  [filteredData.totalProviders, filteredData.totalPayers, filteredData.totalInsured],
                 backgroundColor: '#02676B',
                 borderRadius: 1,
               }
             ]"
-            title="Entity Distribution"
+            :title="authStore.payerUuid ? 'Your Coverage' : 'Entity Distribution'"
             :show-values="true"
             :border-radius="8"
           />

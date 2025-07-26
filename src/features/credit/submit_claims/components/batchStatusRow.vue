@@ -8,7 +8,6 @@ import { useToast } from '@/toast/store/toast';
 import icons from "@/utils/icons";
 import { watch } from 'vue';
 
-
 const props = defineProps({
   rowData: { type: Array, required: true },
   rowKeys: { type: Array, required: true },
@@ -23,8 +22,23 @@ const props = defineProps({
 const { addToast } = useToast();
 const insuredStore = claimServices();
 const payerNames = ref<Record<string, string>>({});
+const activeDropdown = ref<string | null>(null);
 
-
+function getStatusStyle(status) {
+  if (status === "APPROVED" || status === "Active") {
+    return "bg-[#DFF1F1] text-[#02676B]";
+  } else if (status === "SUBMITTED" || status === "Inactive") {
+    return "bg-yellow-100 text-yellow-800";
+  } else if (status === "PENDING" || status === "Pending") {
+    return "bg-[#FFD665] text-[#75778B]";
+  } else if (status === "ACCEPTED" || status === "Accepted") {
+    return "bg-primary text-white";
+  } else if (status === "REJECTED" || status === "Rejected") {
+    return "bg-[#DB2E48] text-white";
+  } else {
+    return "bg-[#FFD665] text-gray-800";
+  }
+}
 
 function handleImageError(event) {
   event.target.src = '/assets/placeholder-profile.png';
@@ -44,18 +58,28 @@ function handleEdit(row) {
 
 function toggleDropdown(event, rowId) {
   event.stopPropagation();
-  closeAllDropdowns();
-  const dropdown = document.getElementById(`dropdown-${rowId}`);
-  if (dropdown) dropdown.classList.toggle('hidden');
+  if (activeDropdown.value === rowId) {
+    activeDropdown.value = null;
+  } else {
+    activeDropdown.value = rowId;
+  }
 }
 
 function closeAllDropdowns() {
-  document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
+  activeDropdown.value = null;
 }
 
-function handleEditWithClose(row) {
+async function handleDetails(row) {
   closeAllDropdowns();
-  handleEdit(row);
+  try {
+    if (row.insuredUuid) {
+      openModal('DetailsOfInsured', { insuredUuid: row.insuredUuid, insured: row });
+    } else {
+      throw new Error('Insured UUID not found');
+    }
+  } catch (error) {
+    addToast({ type: 'error', title: 'Error', message: error.message });
+  }
 }
 
 async function handleActivateWithClose(insuredId) {
@@ -87,12 +111,28 @@ async function handleDeactivateWithClose(insuredId) {
     addToast({ type: 'error', title: 'Deactivation Failed', message: error.message });
   }
 }
+
+// Close dropdowns when clicking outside
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.dropdown-container')) {
+    closeAllDropdowns();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 </script>
+
 <template>
   <tr 
     v-for="(row, idx) in rowData" 
     :key="idx"
-    @click.self="props.onRowClick(row)" 
+    @click="props.onRowClick(row)" 
     class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out"
   >  
     <td class="p-4 font-medium text-gray-500">{{ idx + 1 }}</td>  
@@ -100,16 +140,18 @@ async function handleDeactivateWithClose(insuredId) {
     <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
       <div v-if="key === 'totalAmount'" class="truncate">  
         <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#DFF1F1] text-[#02676B]">
-          ETB {{ row.totalAmount.toFixed(2) }}
+          ETB {{ row.totalAmount?.toFixed(2) || '0.00' }}
         </span>
       </div>
       
- <div v-else-if="key === 'status'" >  
-  <span class="px-2.5 py-0.5 text-xs font-small rounded-sm bg-[#F6F7FA] text-[#75778B] border border-[#75778B] border-opacity-20" 
-        style="border-width: 0.2px">
-    {{ row.status }}
-  </span>
-</div>
+      <div v-else-if="key === 'status'" class="truncate">
+        <span
+          class="px-2.5 py-1 rounded-md text-xs font-medium"
+          :class="getStatusStyle(row.status)"
+        >
+          {{ row.status }}
+        </span>
+      </div>
 
       <span v-else class="text-gray-700">
         {{ row[key] }}
@@ -130,11 +172,15 @@ async function handleDeactivateWithClose(insuredId) {
 
         <div 
           :id="`dropdown-${row.insuredUuid || row.id}`"
-          class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+          class="dropdown-menu absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+          :class="{ 'hidden': activeDropdown !== (row.insuredUuid || row.id) }"
         >
-          <div class="py-1">
+        <div class="py-1">
             <button 
-              @click.stop="handleEditWithClose(row)"
+            v-if="row.status !== 'APPROVED' && row.status !== 'Appproved'"
+               @click="
+                    $router.push(`create_claims/edit/${row.batchCode}`)
+                  "
               class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               <div class="flex items-start justify-start pl-4 gap-4">
@@ -144,7 +190,7 @@ async function handleDeactivateWithClose(insuredId) {
             </button>
             <button
                   @click="
-                    $router.push(`claim-approval/detail/${row.batchCode}`)
+                    $router.push(`create_claims/detail/${row.batchCode}`)
                   "
                   class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
@@ -154,7 +200,7 @@ async function handleDeactivateWithClose(insuredId) {
           </div>
                 </button>
        
-            <template v-if="row.status">
+            <!-- <template v-if="row.status">
               <button 
                 v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
                 @click.stop="handleActivateWithClose(row.insuredUuid || row.id)"
@@ -176,7 +222,7 @@ async function handleDeactivateWithClose(insuredId) {
                   Deactivate
                 </div>
               </button>
-            </template>
+            </template> -->
           </div>
         </div>
       </div>

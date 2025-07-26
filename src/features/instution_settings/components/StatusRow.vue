@@ -5,6 +5,7 @@ import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
 import { institutions } from "@/features/instution_settings/store/InstitutionsStore";
 import icons from "@/utils/icons";
+import { changeInstutionStatus } from '../api/institutionsApi';
 
 const props = defineProps({
   rowData: {
@@ -44,6 +45,7 @@ const props = defineProps({
 const { addToast } = useToast();
 const institutionsStore = institutions();
 const { institutions: storeInstitutions } = storeToRefs(institutionsStore);
+
 
 // Enhanced hasAdminUser function
 function hasAdminUser(row) {
@@ -162,6 +164,52 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('click', closeAllDropdowns);
 });
+async function handleActivateWithClose(payerUuid) {
+  closeAllDropdowns();
+  try {
+    const response = await changeInstutionStatus(payerUuid, 'ACTIVE');
+    if (response.success) {
+      addToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: 'Payer has been activated successfully'
+      });
+      institutionsStore.update(payerUuid, { status: 'ACTIVE' });
+    } else {
+      throw new Error(response.error || 'Failed to activate payer');
+    }
+  } catch (error) {
+    addToast({
+      type: 'error',
+      title: 'Activation Failed',
+      message: error.message || 'An error occurred while activating the payer'
+    });
+  }
+}
+
+async function handleDeactivateWithClose(payerUuid) {
+  closeAllDropdowns();
+  try {
+    const response = await changeInstutionStatus(payerUuid, 'INACTIVE');
+    if (response.success) {
+      addToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: 'Payer has been deactivated successfully'
+      });
+      institutionsStore.update(payerUuid, { status: 'INACTIVE' });
+    } else {
+      throw new Error(response.error || 'Failed to deactivate payer');
+    }
+  } catch (error) {
+    addToast({
+      type: 'error',
+      title: 'Deactivation Failed',
+      message: error.message || 'An error occurred while deactivating the payer'
+    });
+  }
+}
+
 </script>
 
 <template>

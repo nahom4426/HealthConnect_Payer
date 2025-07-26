@@ -51,7 +51,7 @@ export function getPayerbyPayerUuid(id: string, query = {}, config = {}) {
 	});
 }
 export function getInsuredById(id: string, query = {}, config = {}) {
-	return api.addAuthenticationHeader().get(`${path}/${id}`, {
+	return api.addAuthenticationHeader().get(`${path}/medications/${id}`, {
 		params: query,
 		...config
 	}).then(response => {

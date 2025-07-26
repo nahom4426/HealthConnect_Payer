@@ -14,9 +14,12 @@ import Select from '@/components/new_form_elements/Select.vue';
 import Input from '@/components/new_form_elements/Input.vue';
 import { getAllServices } from '@/features/service/api/serviceApi';
 import { getAllDrugs } from '@/features/service/api/drugApi';
-import selectServices from '../components/selectServices.vue';
+import selectServices from '../components/EditSelectServices.vue';
 import EmployeeDetails from '../components/EmployeeDetails.vue';
-import { getDispensingDetail, updateDispensingRecord } from '../api/creditServicesApi';
+import { getDispensingDetail, getEligibleServicesAndDrugs, updateDispensingRecord } from '../api/creditServicesApi';
+import icons from '@/utils/icons';
+import { debounce } from '@/utils/debounce';
+
 
 const props = defineProps({
   dispensingUuid: { type: String, required: true },
@@ -24,6 +27,7 @@ const props = defineProps({
   onCancel: { type: Function, required: true }
 });
 
+const selectServicesRef = ref(null);
 const payers = ref([]);
 const employees = ref([]);
 const selectedPayer = ref(null);
@@ -35,8 +39,6 @@ const fetchPending = ref(false);
 const error = ref(null);
 const currentStep = ref('selectEmployee');
 const activeTab = ref('services');
-const availableServices = ref([]);
-const availableDrugs = ref([]);
 const addedServices = ref([]);
 const addedDrugs = ref([]);
 const primaryDiagnosis = ref('');
@@ -49,7 +51,6 @@ const dispensingDate = ref(new Date().toISOString().split('T')[0]);
 const loading = ref(true);
 const claimData = ref({});
 const remarks = ref({});
-const drugSearchTimeout =ref(null);
 
 const employeeDetails = computed(() => {
   if (!selectedEmployee.value) return null;
@@ -158,82 +159,81 @@ async function fetchEmployees() {
 
 function selectEmployee(employee) {
   if (!employee.eligible) return;
-  selectedEmployee.value = employee;
+  
+  selectedEmployee.value = {
+    ...employee,
+    items: {
+      contractHeaderUuid: selectedEmployee.value?.items?.contractHeaderUuid || null
+    }
+  };
 }
 
 function continueToServices() {
   if (selectedEmployee.value) currentStep.value = 'selectServices';
 }
 
-async function fetchServices(query) {
+const debouncedSearch = debounce(async (type, query) => {
+  if (!query.trim() || !selectedEmployee.value) return;
+  
   try {
     fetchPending.value = true;
-    const response = await getAllServices(providerUuid.value, { search: query, page: 1, limit: 25 });
-    availableServices.value = response.data.content.map(service => ({
-      id: service.serviceUuid,
-      serviceUuid: service.serviceUuid,
-      serviceCode: service.serviceCode,
-      serviceName: service.serviceName,
-      paymentAmount: `ETB ${service.price?.toFixed(2) || '0.00'}`,
-      status: service.status || 'UNKNOWN',
-      quantity: 1
-    }));
-  } catch (error) {
-    console.error('Error fetching services:', error);
-    availableServices.value = [];
+    const response = await getEligibleServicesAndDrugs(
+      selectedEmployee.value.items.contractHeaderUuid,
+      selectedEmployee.value.isDependant ? selectedEmployee.value.employeeUuid : selectedEmployee.value.insuredUuid,
+      selectedEmployee.value.isDependant,
+      query
+    );
+
+    if (response.data) {
+      selectServicesRef.value?.setSearchResults(response.data);
+    } else {
+      selectServicesRef.value?.setSearchResults([]);
+    }
+  } catch (err) {
+    console.error('Error searching items:', err);
+    toasted(false, 'Error', 'Failed to search items');
+    selectServicesRef.value?.setSearchResults([]);
   } finally {
     fetchPending.value = false;
   }
-}
+}, 300);
 
-async function fetchDrugs(query) {
-  try {
-    fetchPending.value = true;
-    const response = await getAllDrugs(providerUuid.value, { search: query, page: 1, limit: 25 });
-    availableDrugs.value = response.data.content.map(drug => ({
-      id: drug.drugUuid || `temp-${Math.random().toString(36).substr(2, 9)}`,
-      drugUuid: drug.drugUuid,
-      drugCode: drug.drugCode,
-      drugName: drug.drugName,
-      price: drug.price || 0,
-      status: drug.status || 'UNKNOWN',
-      quantity: 1,
-      route: 'oral',
-      frequency: 'daily',
-      dose: drug.dosage || '1',
-      duration: '7 days'
-    }));
-  } catch (error) {
-    console.error('Error fetching drugs:', error);
-    availableDrugs.value = [];
-  } finally {
-    fetchPending.value = false;
+watch([searchServiceQuery, searchDrugQuery], ([serviceQuery, drugQuery]) => {
+  if (activeTab.value === 'services' && serviceQuery.trim()) {
+    debouncedSearch('services', serviceQuery);
+  } else if (activeTab.value === 'drugs' && drugQuery.trim()) {
+    debouncedSearch('drugs', drugQuery);
+  } else {
+    selectServicesRef.value?.setSearchResults([]);
   }
-}
+});
 
-function handleSearchItems({ type, query }) {
-  type === 'services' ? fetchServices(query) : fetchDrugs(query);
-}
 function handleUpdateRemarks(newRemarks) {
   remarks.value = newRemarks;
 }
+
 function handleAddItem(item) {
   (activeTab.value === 'services' ? addedServices : addedDrugs).value.push(item);
 }
+
 function handleRemoveItem(index) {
   (activeTab.value === 'services' ? addedServices : addedDrugs).value.splice(index, 1);
 }
+
 function handleUpdateQuantity({ index, value }) {
   (activeTab.value === 'services' ? addedServices : addedDrugs).value[index].quantity = value;
 }
+
 function handleUpdateDiagnosis({ index, primaryDiagnosis: primary, secondaryDiagnosis: secondary }) {
   const list = addedServices;
   if (primary !== undefined) list.value[index].primaryDiagnosis = primary;
   if (secondary !== undefined) list.value[index].secondaryDiagnosis = secondary;
 }
+
 function handleUpdateItem({ index, item }) {
   addedDrugs.value[index] = { ...addedDrugs.value[index], ...item };
 }
+
 function handleClearItems(tab) {
   if (tab === 'services') {
     addedServices.value = [];
@@ -277,9 +277,12 @@ async function handleSubmit() {
       dependantUuid: selectedEmployee.value.isDependant ? selectedEmployee.value.dependantUuid : null,
       primaryDiagnosis: primaryDiagnosis.value,
       secondaryDiagnosis: secondaryDiagnosis.value,
+      prescriptionNumber: prescriptionNumber.value,
+      pharmacyTransactionId: pharmacyTransactionId.value,
       medicationItems: [
         ...addedServices.value.map(item => ({
-          contractDetailUuid: item.serviceUuid,
+          contractDetailUuid: item.contractDetailUuid,
+          itemUuid: item.itemUuid,
           itemType: 'SERVICE',
           remark: item.remark || '',
           price: typeof item.paymentAmount === 'string'
@@ -290,7 +293,8 @@ async function handleSubmit() {
           secondaryDiagnosis: item.secondaryDiagnosis || secondaryDiagnosis.value
         })),
         ...addedDrugs.value.map(item => ({
-          contractDetailUuid: item.drugUuid,
+          contractDetailUuid: item.contractDetailUuid,
+          itemUuid: item.itemUuid ,
           itemType: 'DRUG',
           remark: item.remark || '',
           price: item.price || 0,
@@ -316,7 +320,6 @@ async function handleSubmit() {
   } catch (err) {
     const errorMessage = err.response?.data?.message || err.message || 'Failed to update claim';
     error.value = errorMessage;
-    toasted(false, 'Error', errorMessage);
   } finally {
     fetchPending.value = false;
   }
@@ -336,6 +339,8 @@ onMounted(async () => {
       primaryDiagnosis.value = claimData.value.primaryDiagnosis || '';
       secondaryDiagnosis.value = claimData.value.secondaryDiagnosis || '';
 
+      const contractHeaderUuid = claimData.value.items[0]?.contractHeaderUuid;
+
       if (claimData.value.insuredUuid) {
         await fetchEmployees();
         const employee = employees.value.find(e =>
@@ -343,15 +348,20 @@ onMounted(async () => {
           (e.isDependant && e.dependantUuid === claimData.value.dependantUuid)
         );
         if (employee) {
-          selectedEmployee.value = employee;
+          selectedEmployee.value = {
+            ...employee,
+            items: {
+              contractHeaderUuid: contractHeaderUuid
+            }
+          };
           currentStep.value = 'selectServices';
         }
       }
-
       if (claimData.value.items) {
         for (const item of claimData.value.items) {
           const baseItem = {
-            id: item.itemUuid,
+            id: item.contractDetailUuid,
+            itemUuid: item.itemUuid,
             remark: item.remark || '',
             quantity: item.quantity || 1,
             primaryDiagnosis: item.primaryDiagnosis || claimData.value.primaryDiagnosis || '',
@@ -362,7 +372,8 @@ onMounted(async () => {
             addedServices.value.push({
               ...baseItem,
               itemType: 'SERVICE',
-              serviceUuid: item.itemUuid,
+              contractDetailUuid: item.contractDetailUuid,
+              itemUuid: item.itemUuid,
               serviceCode: item.medicationCode,
               serviceName: item.medicationName,
               paymentAmount: `ETB ${item.unitPrice?.toFixed(2) || '0.00'}`
@@ -371,7 +382,8 @@ onMounted(async () => {
             addedDrugs.value.push({
               ...baseItem,
               itemType: 'DRUG',
-              drugUuid: item.itemUuid,
+              contractDetailUuid: item.contractDetailUuid,
+              itemUuid: item.itemUuid,
               drugCode: item.medicationCode,
               drugName: item.medicationName,
               price: item.unitPrice || 0,
@@ -399,29 +411,18 @@ onMounted(async () => {
   }
 });
 
-watch(searchEmployeeQuery, () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    if (selectedPayer.value) fetchEmployees();
-  }, 300);
-});
+watch(searchEmployeeQuery, debounce(() => {
+  if (selectedPayer.value) fetchEmployees();
+}, 300));
 
 watch(selectedPayer, () => {
   if (selectedPayer.value) fetchEmployees();
 });
-
-watch(searchDrugQuery, () => {
-  clearTimeout(drugSearchTimeout);
-  drugSearchTimeout = setTimeout(() => {
-    if (searchDrugQuery.value.trim().length > 0) {
-      fetchDrugs(searchDrugQuery.value);
-    }
-  }, 500);
-});
 </script>
 
-
 <template>
+
+  
   <Form
     ref="formEl"
     :inner="false"
@@ -435,16 +436,15 @@ watch(searchDrugQuery, () => {
       <Spinner class="h-8 w-8 text-teal-600" />
     </div>
 
-    <!-- Error state -->
-    <!-- <div v-else-if="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-      {{ error }}
-    </div> -->
-
     <!-- Edit form -->
     <template v-else>
       <!-- Step 1: Select Employee -->
       <div v-if="currentStep === 'selectEmployee'" class="py-3 space-y-6">  
-         {{ error }}
+        <div v-if="error" class="flex items-center p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+          <i v-html="icons.warning" class="mr-2 text-red-500"></i>
+          {{ error }}
+        </div>
+        
         <div class="flex gap-4 mt-4">
           <div class="w-72">
             <Select     
@@ -633,7 +633,11 @@ watch(searchDrugQuery, () => {
       <!-- Step 2: Select Services -->
       <div v-else-if="employeeDetails" class="py-3 space-y-6">
         <!-- Employee Details -->
-          {{ error }} 
+        <div v-if="error" class="flex items-center p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+          <i v-html="icons.warning" class="mr-2 text-red-500"></i>
+          {{ error }}
+        </div>
+        
         <EmployeeDetails :employee="employeeDetails" />
 
         <!-- Credit Service Details -->
@@ -677,25 +681,20 @@ watch(searchDrugQuery, () => {
 
         <!-- Services/Drugs Section -->
         <selectServices
+          ref="selectServicesRef"
           v-model:activeTab="activeTab"
           :search-query="activeTab === 'services' ? searchServiceQuery : searchDrugQuery"
           :pending="fetchPending"
-          :available-items="activeTab === 'services' ? availableServices : availableDrugs"
           :added-items="activeTab === 'services' ? addedServices : addedDrugs"
-          :remarks="remarks"
-          @update:remarks="handleUpdateRemarks"
-          :primary-diagnosis="primaryDiagnosis"
-          :secondary-diagnosis="secondaryDiagnosis"
+          :insured-uuid="selectedEmployee?.insuredUuid"
+          :contract-header-uuid="selectedEmployee?.items?.contractHeaderUuid"
           @update:search-query="activeTab === 'services' ? searchServiceQuery = $event : searchDrugQuery = $event"
           @add-item="handleAddItem"
           @remove-item="handleRemoveItem"
           @update-quantity="handleUpdateQuantity"
           @update-diagnosis="handleUpdateDiagnosis"
           @update-item="handleUpdateItem"
-          @search-items="handleSearchItems"
-          @clear-items="handleClearItems"
-          @update:primary-diagnosis="primaryDiagnosis = $event"
-          @update:secondary-diagnosis="secondaryDiagnosis = $event"
+          @update:remarks="handleUpdateRemarks"
         />
 
         <!-- Form Actions -->

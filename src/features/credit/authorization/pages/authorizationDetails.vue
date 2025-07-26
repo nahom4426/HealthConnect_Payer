@@ -25,7 +25,30 @@ const pagination = usePagination({
 const contentData = computed(() => {
   return pagination.data?.value || [];
 });
-
+function handleDetails(row) {
+  console.log('Details Of CreditServices modal opened with row:', row)
+  if (row.dispensingUuid) {
+    openModal('DetailsOfCreditServices', {
+      
+      
+      dispensingUuid: row.dispensingUuid,
+      claim: row, // Pass the row data for immediate display while loading
+      onUpdated: (updatedClaim) => {
+        claimServicesStore.update(updatedClaim.dispensingUuid, updatedClaim);
+        addToast({
+          type: 'success',
+          title: 'Updated',
+          message: 'Claim updated successfully'
+        });
+      },
+      onCancel: () => {
+        // Handle cancel if needed
+      }
+    });
+  } else if (typeof props.onEdit === 'function') {
+    props.onEdit(row);
+  }
+}
 // Get first item for summary cards
 const firstItem = computed(() => contentData.value[0] || {});
 
@@ -143,7 +166,7 @@ watch(profilePicture, () => {
         <template #actions="{ row }">
           <div class="flex gap-2">
             <Button
-              @click.prevent="openModal('BatchDetail', row)"
+              @click.prevent="handleDetails(row)"
               class="!text-white"
               type="primary"
               size="xs"

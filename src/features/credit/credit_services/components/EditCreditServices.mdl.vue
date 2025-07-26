@@ -330,7 +330,7 @@ async function handleSubmit(formValues: any) {
   <ModalParent>
     <NewFormParent
       class=""
-      size="xl"
+      size="xlg"
       :title="`Edit Credit ${
         claimData.type === 'service' ? 'Service' : 'Drug'
       }`"

@@ -1,25 +1,24 @@
 import ApiService from "@/service/ApiService";
-import type { AsyncResponse } from "@/types/interface";
-import type { ActiveInstitution } from "../store/InstitutionsStore";
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
 import { getQueryFormObject } from "@/utils/utils";
 
 const api = new ApiService();
-const basePath = '/payer'; // Corrected base path
+const basePath = '/payer';
 
-export function getActiveInstitutions(params: { page: number; limit: number; search?: string }): Promise<AsyncResponse<ActiveInstitution[]>> {
+export function getActiveInstitutions(params) {
   return api.addAuthenticationHeader().get(`${basePath}/list`, { params });
 }
-export function updateInstitutionStatus(id: string, status: string): Promise<AsyncResponse<any>> {
+
+export function updateInstitutionStatus(id, status) {
   return api.addAuthenticationHeader().put(`${basePath}/${id}/status`, { status });
 }
 
-export function getInstitutionById(id: string): Promise<AsyncResponse<ActiveInstitution>> {
+export function getInstitutionById(id) {
   return api.addAuthenticationHeader().get(`${basePath}/${id}`);
 }
 
-export function registerInstitution(formData: FormData): Promise<AsyncResponse<ActiveInstitution>> {
+export function registerInstitution(formData) {
   return api.addAuthenticationHeader().post(`${basePath}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -27,17 +26,7 @@ export function registerInstitution(formData: FormData): Promise<AsyncResponse<A
   });
 }
 
-// In your institution-related or contract-related API file
-// adjust path if needed
-
-export function getPayersWithContractForLoggedInProvider(
-  params: {
-    page: number;
-    size: number;
-    sortBy?: string;
-    sortDir?: 'asc' | 'desc';
-  }
-): Promise<AsyncResponse<any>> {
+export function getPayersWithContractForLoggedInProvider(params) {
   const auth = useAuthStore();
   const providerUuid = auth.auth?.user?.providerUuid;
 
@@ -49,8 +38,7 @@ export function getPayersWithContractForLoggedInProvider(
   return api.addAuthenticationHeader().get(url, { params });
 }
 
-
-export async function updateInstitution(uuid: string, formData: FormData) {
+export async function updateInstitution(uuid, formData) {
   try {
     const response = await api.addAuthenticationHeader().put(`${basePath}/${uuid}`, formData, {
       headers: {
@@ -63,7 +51,7 @@ export async function updateInstitution(uuid: string, formData: FormData) {
       data: response.data,
     };
 
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
       error: error?.response?.data?.message || error.message || 'Unknown error'
@@ -71,17 +59,19 @@ export async function updateInstitution(uuid: string, formData: FormData) {
   }
 }
 
-
-export function changeInstitutionStatus(id: string, status: string): Promise<AsyncResponse<ActiveInstitution>> {
+export function changeInstitutionStatus(id, status) {
   return api.addAuthenticationHeader().put(`${basePath}/${id}/status`, { status });
 }
-export function deleteInstitutionStatus(id: string, status: string): Promise<AsyncResponse<ActiveInstitution>> {
+
+
+export function deleteInstitutionStatus(id, status) {
   return api.addAuthenticationHeader().delete(`${basePath}/${id}/status`, { status });
 }
-export function importInstitutions(file: File): Promise<AsyncResponse<any>> {
+
+export function importInstitutions(file) {
   const formData = new FormData();
   formData.append('file', file);
-  
+
   return api.addAuthenticationHeader().post(`${basePath}/import`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
@@ -89,18 +79,13 @@ export function importInstitutions(file: File): Promise<AsyncResponse<any>> {
   });
 }
 
-export function downloadInstitutionTemplate(): Promise<Blob> {
+export function downloadInstitutionTemplate() {
   return api.addAuthenticationHeader().get(`${basePath}/template`, {
     responseType: 'blob'
   });
 }
 
-
-export function importPayerPersons(
-  id: Record<string, any> = {},
-  data: FormData,
-  config: Record<string, any> = {}
-): Promise<any> {
+export function importPayerPersons(id = {}, data, config = {}) {
   const qr = getQueryFormObject(id);
   return api.addAuthenticationHeader().post(`${basePath}/import${qr}`, data, {
     ...config,
@@ -109,16 +94,3 @@ export function importPayerPersons(
     },
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
