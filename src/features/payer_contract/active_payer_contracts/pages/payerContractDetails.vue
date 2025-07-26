@@ -32,7 +32,7 @@ const contractData = ref({
 });
 
 // Tab management
-const activeTab = ref('employees');
+const activeTab = ref('ProviderDetails');
 
 // Employee data and pagination
 const employeeSearch = ref('');
@@ -247,7 +247,70 @@ watch(contractData, (newVal) => {
 
   <div v-else class="p-6 space-y-6 bg-white rounded-lg">
     <!-- Header -->
-    <div class="flex items-center justify-between rounded-lg bg-primary p-6 text-white">
+  
+
+    <div class="bg-[#F6F7FA] p-6 rounded-md">
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex bg-white rounded overflow-hidden border">
+           <button
+            @click="activeTab = 'ProviderDetails'"
+            :class="[
+              'px-6 py-3 text-sm font-medium',
+              activeTab === 'ProviderDetails'
+                ? 'bg-[#75778B] text-white'
+                : 'text-[#75778B] hover:bg-gray-100'
+            ]"
+          >
+            Provider Details
+          </button>
+          <button
+            @click="activeTab = 'employees'"
+            :class="[
+              'px-6 py-3 text-sm font-medium',
+              activeTab === 'employees'
+                ? 'bg-[#75778B] text-white'
+                : 'text-[#75778B] hover:bg-gray-100'
+            ]"
+          >
+            Employees ({{ contractData.totalInsured ?? 0 }})
+          </button>
+          <button
+            @click="activeTab = 'groups'"
+            :class="[
+              'px-6 py-3 text-sm font-medium',
+              activeTab === 'groups'
+                ? 'bg-[#75778B] text-white'
+                : 'text-[#75778B] hover:bg-gray-100'
+            ]"
+          >
+            Employee Groups
+          </button>
+          <button
+            @click="activeTab = 'services'"
+            :class="[
+              'px-6 py-3 text-sm font-medium',
+              activeTab === 'services'
+                ? 'bg-[#75778B] text-white'
+                : 'text-[#75778B] hover:bg-gray-100'
+            ]"
+          >
+            Services ({{ contractData.contractDetails?.length ?? 0 }})
+          </button>
+        </div>
+
+    <button
+  v-if="activeTab === 'employees'"
+  class="bg-primary hover:bg-[#014F4F] text-white px-5 py-4 rounded-md text-sm"
+  @click="handleOpenModal"
+>
+  Add Employee
+</button>
+
+
+
+      </div>
+      <div v-if="activeTab === 'ProviderDetails'" class="bg-white p-6 rounded-lg shadow-sm">
+  <div class="flex items-center justify-between rounded-lg bg-primary p-6 text-white">
       <div class="flex items-center gap-4">
          <div class="w-20 h-20 flex items-center justify-center  rounded-lg ">
   <img 
@@ -341,57 +404,7 @@ watch(contractData, (newVal) => {
         </div>
       </div>
     </div>
-
-    <div class="bg-[#F6F7FA] p-6 rounded-md">
-      <div class="flex justify-between items-center mb-4">
-        <div class="flex bg-white rounded overflow-hidden border">
-          <button
-            @click="activeTab = 'employees'"
-            :class="[
-              'px-6 py-3 text-sm font-medium',
-              activeTab === 'employees'
-                ? 'bg-[#75778B] text-white'
-                : 'text-[#75778B] hover:bg-gray-100'
-            ]"
-          >
-            Employees ({{ contractData.totalInsured ?? 0 }})
-          </button>
-          <button
-            @click="activeTab = 'groups'"
-            :class="[
-              'px-6 py-3 text-sm font-medium',
-              activeTab === 'groups'
-                ? 'bg-[#75778B] text-white'
-                : 'text-[#75778B] hover:bg-gray-100'
-            ]"
-          >
-            Employee Groups
-          </button>
-          <button
-            @click="activeTab = 'services'"
-            :class="[
-              'px-6 py-3 text-sm font-medium',
-              activeTab === 'services'
-                ? 'bg-[#75778B] text-white'
-                : 'text-[#75778B] hover:bg-gray-100'
-            ]"
-          >
-            Services ({{ contractData.contractDetails?.length ?? 0 }})
-          </button>
-        </div>
-
-    <button
-  v-if="activeTab === 'employees'"
-  class="bg-primary hover:bg-[#014F4F] text-white px-5 py-4 rounded-md text-sm"
-  @click="handleOpenModal"
->
-  Add Employee
-</button>
-
-
-
-      </div>
-
+    </div>
       <div v-if="activeTab === 'employees'" class="bg-white p-6 rounded-lg shadow-sm">
         <div class="flex justify-end mb-4">
           <input

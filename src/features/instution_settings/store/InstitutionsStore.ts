@@ -37,6 +37,7 @@ export interface Payer {
   logoBase64?: string | null;
   logoPath?: string | null;
   totalContracts?: number;
+  numberOfInsured?: number;
   totalPages?: number;
   contracts?: any[];
   users?: PayerUser[];
@@ -84,6 +85,7 @@ export const institutions = defineStore("institutionsStore", () => {
       logoBase64: item.logoBase64 || null,
       logoPath: item.logoPath || null,
       totalContracts: item.totalContracts || 0,
+      numberOfInsured: item.numberOfInsured || 0,
       contracts: item.contracts || [],
       users: item.users || item.userList || [], // Handle both users and userList
       totalPages: item.totalPages || 0
@@ -130,6 +132,7 @@ export const institutions = defineStore("institutionsStore", () => {
       logoBase64: item.logoBase64 || null,
       logoPath: item.logoPath || null,
       totalContracts: item.totalContracts || 0,
+      numberOfInsured: item.numberOfInsured || 0,
       contracts: item.contracts || [],
       users: item.users || item.userList || [], // Handle both users and userList
       totalPages: item.totalPages || 0

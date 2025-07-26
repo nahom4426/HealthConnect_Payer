@@ -222,7 +222,7 @@ function handleImageError(event) {
               'Contracts',
               'Payer Admin User',
               'Contact',
-              'Category',
+              'Number of Insured',
               'Status',
               'Actions',
             ],
@@ -231,7 +231,7 @@ function handleImageError(event) {
               'totalContracts',
               'email',
               'telephone',
-              'category',
+              'numberOfInsured',
               'status',
             ],
           }"
@@ -265,6 +265,7 @@ function handleImageError(event) {
                 'totalContracts',
                 'telephone',
                 'category',
+                'numberOfInsured',
                 'status',
               ]"
               :headKeys="[
@@ -274,6 +275,7 @@ function handleImageError(event) {
                 'TIN Number',
                 'Contact Phone',
                 'Category',
+                'Number of Insured',
                 'Status',
                 'Actions',
               ]"

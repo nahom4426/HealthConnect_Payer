@@ -249,6 +249,11 @@ async function handleDeactivateWithClose(payerUuid) {
         </span>
       </div>
       
+       <div v-else-if="key === 'numberOfInsured'" class="truncate">  
+        <span class="text-gray-700">
+          {{ row.numberOfInsured  }}
+        </span>
+      </div>
       <div v-else-if="key === 'payerName'" class="text-gray-700 flex items-center gap-2.5">
         <div class="flex justify-center items-center">
           <img 

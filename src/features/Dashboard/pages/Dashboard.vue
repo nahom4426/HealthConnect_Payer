@@ -94,14 +94,14 @@ const updateDataStructures = () => {
   } else {
     // Default cards (for payer or super admin)
     data.value = [
-      {
-        title: "Number of Insured",
-        Image: icons.no_emolpoyee,
-        amount: filteredData.value.totalInsured.toString(),
-        today: icons.no_emolpoyee,
-        percent: "8.5%",
-        customClass: "bg-[#FFE2E5]",
-      },
+      // {
+      //   title: "Number of Insured",
+      //   Image: icons.no_emolpoyee,
+      //   amount: filteredData.value.totalInsured.toString(),
+      //   today: icons.no_emolpoyee,
+      //   percent: "8.5%",
+      //   customClass: "bg-[#FFE2E5]",
+      // },
       {
         title: "Number of Groups",
         Image: icons.product_sold,

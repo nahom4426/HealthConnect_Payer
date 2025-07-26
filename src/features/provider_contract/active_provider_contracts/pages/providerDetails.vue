@@ -19,20 +19,20 @@ const contractData = ref({
   endDate: "",
   status: "",
   contractCode: "",
-  providerName: "",
-  providerAddress: "",
+  payerName: "",
+  payerAddress: "",
   contactPersonName: "",
   contactPersonNumber: "",
   totalInsured: 0,
   totalDependants: 0,
   contractDetails: [],
   insuredSummaries: [],
-   providerLogoBase64: '',
+   payerLogoBase64: '',
   employeeGroups: [],
 });
 
 // Tab management
-const activeTab = ref('employees');
+const activeTab = ref('PayerDetails');
 
 // Employee data and pagination
 const employeeSearch = ref('');
@@ -106,7 +106,7 @@ async function fetchContract() {
     if (response && response.data) {
       contractData.value = {
         ...response.data,
-        providerAddress: response.data.providerAddress || 'Arada, Around Semen City Hall, Addis Ababa', // Default if not provided
+        payerAddress: response.data.payerAddress || 'Arada, Around Semen City Hall, Addis Ababa', // Default if not provided
         contactPersonName: response.data.contactPersonName || 'Birhane Araya', // Default if not provided
         contactPersonNumber: response.data.contactPersonNumber || '+251 945065432', // Default if not provided
         contractDetails: response.data.contractDetails || [],
@@ -199,131 +199,22 @@ onMounted(() => {
 
   <div v-else class="p-6 space-y-6 bg-white rounded-lg">
     <!-- Header -->
-    <div class="flex items-center justify-between rounded-lg bg-primary p-6 text-white">
-      <div class="flex items-center gap-4">
-         <div class="w-20 h-20 flex items-center justify-center  rounded-lg ">
-  <img 
-    v-if="contractData.providerLogoBase64" 
-    :src="contractData.providerLogoBase64" 
-    alt="Provider Logo" 
-    class="w-full h-full object-contain p-4"
-    @error="handleImageError"
-  />
-  <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-  </div>
-</div>
-        <div>
-          <h1 class="text-xl font-semibold">{{ contractData.providerName || 'N/A Provider' }}</h1>
-          <p class="text-sm">Pharmacy</p>
-        </div>
-      </div>
-      <button class="btn btn-primary bg-white font-normal text-sm px-2 py-2">View Contract Document</button>
-    </div>
-
-    <!-- Provider and Contract Detail -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#F6F7FA] p-6 rounded-lg shadow-md">
-      <div class="bg-white rounded-lg p-6 text-[#373946] space-y-4 shadow-sm">
-        <h2 class="text-[#75778B] font-semibold text-lg border-b pb-4">Provider Detail</h2>
-        
-        <div class="flex justify-between text-sm">
-          <span class="text-[#75778B]">Provider legal name:</span>
-          <span class="font-medium">{{ contractData.providerName || 'N/A' }}</span>
-        </div>
-        
-        <div class="flex justify-between text-sm">
-          <span class="text-[#75778B]">Address:</span>
-          <span class="font-medium text-right">{{ contractData.providerAddress || 'N/A' }}</span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 pt-2 text-sm">
-          <div class="flex justify-between border-r pr-4">
-            <span class="text-[#75778B]">Contact Person:</span>
-            <span class="font-medium">{{ contractData.contactPersonName || 'N/A' }}</span>
-          </div>
-          <div class="flex justify-between pl-4">
-            <span class="text-[#75778B]">Contact Number:</span>
-            <span class="font-medium">{{ contractData.contactPersonNumber || 'N/A' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-lg p-6 text-[#373946] space-y-4 shadow-sm">
-        <h2 class="text-[#75778B] font-semibold text-lg border-b pb-4">Contract Detail</h2>
-
-        <div class="grid grid-cols-2 gap-4 text-sm border- pb-4">
-          <div class="flex justify-between border-r pr-2">
-            <span class="text-[#75778B]">Contract ID:</span>
-          <span class="font-medium col-span-1">{{ contractData.contractCode || 'N/A' }}</span>
-          </div>
-          <div class="flex justify-between">
-          <span class="text-[#75778B]">Contract Status:</span>
-          <span
-            :class="[
-              'font-medium',
-              {
-                'text-green-600': contractData.status === 'ACTIVE',
-                'text-red-600': contractData.status === 'INACTIVE',
-                'text-yellow-600': contractData.status === 'PENDING',
-              }
-            ]"
-          >
-            {{ contractData.status || 'N/A' }}
-          </span>
-        </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 text-sm  pb-4">
-          <div class="flex justify-between border-r pr-2">
-            <span class="text-[#75778B]">Contract From:</span>
-            <span class="font-medium">{{ formatDate(contractData.startDate) }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-[#75778B]">Contract To:</span>
-            <span class="font-medium">{{ formatDate(contractData.endDate) }}</span>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 text-sm">
-          <div class="flex justify-between">
-            <span class="text-[#75778B]">Number of Employees:</span>
-            <span class="font-medium">{{ contractData.totalInsured ?? 0 }}</span>
-          </div>
-          <!-- <div class="flex justify-between">
-            <span class="text-[#75778B]">Employee Groups:</span>
-            <span class="font-medium">{{ contractData.employeeGroups?.length ?? 0 }}</span> 
-          </div> -->
-        </div>
-      </div>
-    </div>
+   
 
     <div class="bg-[#F6F7FA] p-6 rounded-md">
       <div class="flex justify-between items-center mb-4">
         <div class="flex bg-white rounded overflow-hidden border">
-          <button
-            @click="activeTab = 'employees'"
+           <button
+            @click="activeTab = 'PayerDetails'"
             :class="[
               'px-6 py-3 text-sm font-medium',
-              activeTab === 'employees'
+              activeTab === 'PayerDetails'
                 ? 'bg-[#75778B] text-white'
                 : 'text-[#75778B] hover:bg-gray-100'
             ]"
           >
-            Employees ({{ contractData.totalInsured ?? 0 }})
+            Payer Details
           </button>
-          <!-- <button
-            @click="activeTab = 'groups'"
-            :class="[
-              'px-6 py-3 text-sm font-medium',
-              activeTab === 'groups'
-                ? 'bg-[#75778B] text-white'
-                : 'text-[#75778B] hover:bg-gray-100'
-            ]"
-          >
-            Employee Groups ({{ contractData.employeeGroups?.length ?? 0 }})
-          </button> -->
           <button
             @click="activeTab = 'services'"
             :class="[
@@ -335,6 +226,19 @@ onMounted(() => {
           >
             Services ({{ contractData.contractDetails?.length ?? 0 }})
           </button>
+          <button
+            @click="activeTab = 'employees'"
+            :class="[
+              'px-6 py-3 text-sm font-medium',
+              activeTab === 'employees'
+                ? 'bg-[#75778B] text-white'
+                : 'text-[#75778B] hover:bg-gray-100'
+            ]"
+          >
+            Employees ({{ contractData.totalInsured ?? 0 }})
+          </button>
+         
+         
         </div>
 
    
@@ -507,47 +411,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="activeTab === 'groups'" class="bg-white p-6 rounded-lg shadow-sm">
-        <!-- <h3 class="text-lg font-semibold mb-4">Employee Groups for this Contract</h3>
-        <p class="text-gray-600">
-          Currently, there are {{ contractData.employeeGroups?.length ?? 0 }} employee groups.
-        </p> -->
-        <!-- <FamilyGroup /> -->
-        <!-- <div v-if="contractData.employeeGroups?.length > 0">
-          <table class="w-full table-auto text-sm mt-4">
-            <thead class="text-[#75778B] text-left border-b">
-              <tr>
-                <th class="py-3">#</th>
-                <th class="py-3">Group Name</th>
-                <th class="py-3">Employees in Group</th>
-                <th class="py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody class="text-[#373946]">
-              <tr v-for="(group, gIndex) in contractData.employeeGroups" :key="group.uuid || gIndex" class="border-b hover:bg-gray-50">
-                <td class="py-3">{{ gIndex + 1 }}</td>
-                <td class="py-3">{{ group.name || 'N/A' }}</td>
-                <td class="py-3">{{ group.employeeCount ?? 0 }}</td>
-                <td class="py-3">
-                  <span
-                    :class="[
-                      'px-3 py-1 rounded-md text-xs font-medium',
-                      {
-                        'bg-[#D6F3EF] text-[#007E73]': group.status === 'Active',
-                        'bg-red-100 text-red-700': group.status === 'Inactive'
-                      }
-                    ]"
-                  >
-                    {{ group.status || 'N/A' }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div v-else class="py-3 text-center text-gray-500">No employee groups found.</div> -->
-      </div>
-
       <div v-if="activeTab === 'services'" class="bg-white p-6 rounded-lg shadow-sm">
         <div class="flex justify-end mb-4">
           <input
@@ -587,6 +450,107 @@ onMounted(() => {
             </tr>
           </tbody>
         </table>
+      </div>
+      <div v-if="activeTab === 'PayerDetails'" class="bg-white p-6 rounded-lg shadow-sm">
+ <div class="flex items-center justify-between rounded-lg bg-primary p-6 text-white">
+      <div class="flex items-center gap-4">
+         <div class="w-20 h-20 flex items-center justify-center  rounded-lg ">
+  <img 
+    v-if="contractData.payerLogoBase64" 
+    :src="contractData.payerLogoBase64" 
+    alt="payer Logo" 
+    class="w-full h-full object-contain p-4"
+    @error="handleImageError"
+  />
+  <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  </div>
+</div>
+        <div>
+          <h1 class="text-xl font-semibold">{{ contractData.payerName || 'N/A payer' }}</h1>
+          <p class="text-sm">Pharmacy</p>
+        </div>
+      </div>
+      <button class="btn btn-primary bg-white font-normal text-sm px-2 py-2">View Contract Document</button>
+    </div>
+
+    <!-- payer and Contract Detail -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#F6F7FA] p-6 rounded-lg shadow-md">
+      <div class="bg-white rounded-lg p-6 text-[#373946] space-y-4 shadow-sm">
+        <h2 class="text-[#75778B] font-semibold text-lg border-b pb-4">payer Detail</h2>
+        
+        <div class="flex justify-between text-sm">
+          <span class="text-[#75778B]">payer legal name:</span>
+          <span class="font-medium">{{ contractData.payerName || 'N/A' }}</span>
+        </div>
+        
+        <div class="flex justify-between text-sm">
+          <span class="text-[#75778B]">Address:</span>
+          <span class="font-medium text-right">{{ contractData.payerAddress || 'N/A' }}</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 pt-2 text-sm">
+          <div class="flex justify-between border-r pr-4">
+            <span class="text-[#75778B]">Contact Person:</span>
+            <span class="font-medium">{{ contractData.contactPersonName || 'N/A' }}</span>
+          </div>
+          <div class="flex justify-between pl-4">
+            <span class="text-[#75778B]">Contact Number:</span>
+            <span class="font-medium">{{ contractData.contactPersonNumber || 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg p-6 text-[#373946] space-y-4 shadow-sm">
+        <h2 class="text-[#75778B] font-semibold text-lg border-b pb-4">Contract Detail</h2>
+
+        <div class="grid grid-cols-2 gap-4 text-sm border- pb-4">
+          <div class="flex justify-between border-r pr-2">
+            <span class="text-[#75778B]">Contract ID:</span>
+          <span class="font-medium col-span-1">{{ contractData.contractCode || 'N/A' }}</span>
+          </div>
+          <div class="flex justify-between">
+          <span class="text-[#75778B]">Contract Status:</span>
+          <span
+            :class="[
+              'font-medium',
+              {
+                'text-green-600': contractData.status === 'ACTIVE',
+                'text-red-600': contractData.status === 'INACTIVE',
+                'text-yellow-600': contractData.status === 'PENDING',
+              }
+            ]"
+          >
+            {{ contractData.status || 'N/A' }}
+          </span>
+        </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-sm  pb-4">
+          <div class="flex justify-between border-r pr-2">
+            <span class="text-[#75778B]">Contract From:</span>
+            <span class="font-medium">{{ formatDate(contractData.startDate) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#75778B]">Contract To:</span>
+            <span class="font-medium">{{ formatDate(contractData.endDate) }}</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="flex justify-between">
+            <span class="text-[#75778B]">Number of Employees:</span>
+            <span class="font-medium">{{ contractData.totalInsured ?? 0 }}</span>
+          </div>
+          <!-- <div class="flex justify-between">
+            <span class="text-[#75778B]">Employee Groups:</span>
+            <span class="font-medium">{{ contractData.employeeGroups?.length ?? 0 }}</span> 
+          </div> -->
+        </div>
+      </div>
+    </div>
       </div>
     </div>
   </div>
