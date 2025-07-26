@@ -111,7 +111,7 @@ const updateDataStructures = () => {
         customClass: "bg-[#D2FFDA]",
       },
        {
-        title: "numberOfPayersWithInsured",
+        title: "Number Of Payers With Insured",
         Image: icons.policy2,
         amount: filteredData.value.numberOfPayersWithInsured.toString(),
         today: icons.new_customer,
