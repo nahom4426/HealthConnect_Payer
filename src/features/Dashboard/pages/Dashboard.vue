@@ -137,6 +137,14 @@ const updateDataStructures = () => {
         today: icons.new_customer,
         percent: "8.5%",
         customClass: "bg-[#E0F2FE]",
+      }),
+        data.value.push({
+        title: "Number Of Payers With Insured",
+        Image: icons.policy2,
+        amount: filteredData.value.numberOfPayersWithInsured.toString(),
+        today: icons.new_customer,
+        percent: "8.5%",
+        customClass: "bg-[#E0F2FE]",
       });
     }
   }
