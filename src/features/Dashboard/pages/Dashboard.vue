@@ -94,30 +94,30 @@ const updateDataStructures = () => {
   } else {
     // Default cards (for payer or super admin)
     data.value = [
-      // {
-      //   title: "Number of Insured",
-      //   Image: icons.no_emolpoyee,
-      //   amount: filteredData.value.totalInsured.toString(),
-      //   today: icons.no_emolpoyee,
-      //   percent: "8.5%",
-      //   customClass: "bg-[#FFE2E5]",
-      // },
       {
-        title: "Number of Groups",
-        Image: icons.product_sold,
-        amount: filteredData.value.totalGroups.toString(),
-        today: icons.product_sold,
+        title: "Number of Insured",
+        Image: icons.no_emolpoyee,
+        amount: filteredData.value.totalInsured.toString(),
+        today: icons.no_emolpoyee,
         percent: "8.5%",
-        customClass: "bg-[#D2FFDA]",
+        customClass: "bg-[#FFE2E5]",
       },
-       {
-        title: "Number Of Payers With Insured",
-        Image: icons.policy2,
-        amount: filteredData.value.numberOfPayersWithInsured.toString(),
-        today: icons.new_customer,
-        percent: "2.5%",
-        customClass: "bg-[#F3E8EF]",
-      },
+      // {
+      //   title: "Number of Groups",
+      //   Image: icons.product_sold,
+      //   amount: filteredData.value.totalGroups.toString(),
+      //   today: icons.product_sold,
+      //   percent: "8.5%",
+      //   customClass: "bg-[#D2FFDA]",
+      // },
+      //  {
+      //   title: "Number Of Payers With Insured",
+      //   Image: icons.policy2,
+      //   amount: filteredData.value.numberOfPayersWithInsured.toString(),
+      //   today: icons.new_customer,
+      //   percent: "2.5%",
+      //   customClass: "bg-[#F3E8EF]",
+      // },
       {
         title: "Total Claims",
         Image: icons.policy2,
@@ -144,7 +144,7 @@ const updateDataStructures = () => {
         amount: filteredData.value.numberOfPayersWithInsured.toString(),
         today: icons.new_customer,
         percent: "8.5%",
-        customClass: "bg-[#E0F2FE]",
+        customClass: "bg-[#D2FFDA]",
       });
     }
   }

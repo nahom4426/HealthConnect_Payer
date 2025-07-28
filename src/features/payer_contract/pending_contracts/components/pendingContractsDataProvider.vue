@@ -12,8 +12,8 @@ const props = defineProps({
   },
 status: {
   type: String,
-  // default: "REJECTED",
-  // validator: (value) => ["REJECTED", "APPROVED", "PENDING"].includes(value),
+  default: "SUBMITTED",
+  validator: (value) => ["REJECTED", "APPROVED", "PENDING"].includes(value),
 },
 
   search: {

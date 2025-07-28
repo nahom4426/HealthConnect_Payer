@@ -394,8 +394,46 @@ logo:`<svg width="33" height="33" viewBox="0 0 33 33" fill="none" xmlns="http://
 `,
   plus: `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 14 14"><path fill="white" fill-rule="evenodd" d="M8 1a1 1 0 0 0-2 0v5H1a1 1 0 0 0 0 2h5v5a1 1 0 1 0 2 0V8h5a1 1 0 1 0 0-2H8z" clip-rule="evenodd"/></svg>`,
   delete: `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 14 14"><path fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round" d="M1 3.5h12m-10.5 0h9v9a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-9h0Zm2 0V3a2.5 2.5 0 0 1 5 0v.5m-4 2V11m3-5.5V11"/></svg>`,
-  import: ` <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14 14"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m1.91 9.5l-1.3 2.55a1 1 0 0 0 0 1a1 1 0 0 0 .87.47h11a1 1 0 0 0 .87-.47a1 1 0 0 0 0-1L12.09 9.5ZM5 2.5l2-2l2 2m-2-2v6"/><path d="M3 4.5a1 1 0 0 0-1 1v4h10v-4a1 1 0 0 0-1-1"/></g></svg>
-	`,
+  import: ` <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14 14">
+  <style>
+    .pulse {
+      animation: pulse-animation 2s infinite;
+    }
+    @keyframes pulse-animation {
+      0%, 100% {
+        stroke: currentColor;
+      }
+      50% {
+        stroke: black; /* Change to any color you prefer */
+      }
+    }
+  </style>
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="pulse">
+    <path d="m1.91 9.5l-1.3 2.55a1 1 0 0 0 0 1a1 1 0 0 0 .87.47h11a1 1 0 0 0 .87-.47a1 1 0 0 0 0-1L12.09 9.5ZM5 2.5l2-2l2 2m-2-2v6"/>
+    <path d="M3 4.5a1 1 0 0 0-1 1v4h10v-4a1 1 0 0 0-1-1"/>
+  </g>
+</svg>	`,
+    download: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14 14">
+  <style>
+    .pulse {
+      animation: pulse-animation 2s infinite;
+    }
+    @keyframes pulse-animation {
+      0%, 100% {
+        stroke: currentColor;
+      }
+      50% {
+        stroke: primary;
+      }
+    }
+  </style>
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="pulse">
+    <path d="M5 5.5l2 2l2-2m-2 2v-6"/>
+    <path d="m1.91 9.5l-1.3 2.55a1 1 0 0 0 0 1a1 1 0 0 0 .87.47h11a1 1 0 0 0 .87-.47a1 1 0 0 0 0-1L12.09 9.5Z"/>
+    <path d="M3 8.5a1 1 0 0 0-1 1v1h10v-1a1 1 0 0 0-1-1"/>
+  </g>
+</svg>
+`,
   export: `<svg width="20" height="20" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path fill-rule="evenodd" clip-rule="evenodd" d="M8.62188 3.97901L6.61497 2.25899C6.52127 2.17685 6.40298 2.13483 6.28407 2.13477C6.20271 2.13472 6.12105 2.15433 6.04679 2.19417C6.01369 2.21187 5.98225 2.2335 5.95317 2.25899L3.94626 3.97901C3.73547 4.15966 3.71104 4.47699 3.8917 4.68779C4.07236 4.89858 4.38969 4.92301 4.60048 4.74235L5.78137 3.73027V7.62324C5.78137 7.90086 6.00642 8.12591 6.28404 8.12591C6.56165 8.12591 6.7867 7.90086 6.7867 7.62324L6.7867 3.73022L7.96766 4.74235C8.17845 4.92301 8.49578 4.89858 8.67644 4.68779C8.85709 4.47699 8.83267 4.15966 8.62188 3.97901ZM3.26803 7.16143C3.26803 6.88382 3.49308 6.65877 3.7707 6.65877H4.5247C4.80231 6.65877 5.02736 6.43371 5.02736 6.1561C5.02736 5.87848 4.80231 5.65343 4.5247 5.65343H3.7707C2.93785 5.65343 2.2627 6.32859 2.2627 7.16143V8.66943C2.2627 9.50228 2.93785 10.1774 3.7707 10.1774H8.79736C9.63021 10.1774 10.3054 9.50228 10.3054 8.66943V7.16143C10.3054 6.32859 9.63021 5.65343 8.79736 5.65343H8.04336C7.76575 5.65343 7.5407 5.87848 7.5407 6.1561C7.5407 6.43371 7.76575 6.65877 8.04336 6.65877H8.79736C9.07498 6.65877 9.30003 6.88382 9.30003 7.16143V8.66943C9.30003 8.94705 9.07498 9.1721 8.79736 9.1721H3.7707C3.49308 9.1721 3.26803 8.94705 3.26803 8.66943V7.16143Z" fill="#0F3659"/>
 </svg>

@@ -1,32 +1,28 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import {
-  getPayerContractById,
-  updatePayerContract,
-} from "../api/contractRequestApi";
+import { getPayerContractById } from "../api/contractRequestApi";
 import icons from "@/utils/icons";
 import { toasted } from "@/utils/utils";
 import { useAuthStore } from "@/stores/auth";
 import Spinner from "@/components/Spinner.vue";
 import Button from "@/components/Button.vue";
 import { openModal } from "@customizer/modal-x";
+import * as XLSX from 'xlsx';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const contractId = route.params.id;
 const loadingContract = ref(true);
-const activeTab = ref("services");
 const showInsured = ref(false);
-
-function handleApprove() {
-  openModal("acceptContract");
-}
-
-function handleReject() {
-  openModal("rejectContract");
-}
+const showContractDetails = ref(false);
+const excelFile = ref(null);
+const validationResults = ref([]);
+const validationPerformed = ref(false);
+const importDialog = ref(false);
+const excelData = ref([]);
+const validationComplete = ref(false);
 
 const formData = ref({
   contractHeaderUuid: "",
@@ -34,37 +30,115 @@ const formData = ref({
   contractDescription: "",
   startDate: "",
   endDate: "",
-  status: "ACTIVE",
+  status: "RESUBMITTED",
   contractDetails: [],
   insuredSummaries: [],
   providerLogoBase64: "",
 });
 
-// Handle image loading errors
-const handleImageError = (event) => {
-  event.target.style.display = "none";
-  // Or use a placeholder:
-  // event.target.src = '/path/to/placeholder-image.png';
+// Handle file upload and prepare for validation
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const sheetData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+      
+      const headers = sheetData[0].map(h => h.trim());
+      
+      const getColumnIndex = (patterns) => {
+        for (const pattern of patterns) {
+          const index = headers.findIndex(h => 
+            h.toLowerCase().includes(pattern.toLowerCase())
+          );
+          if (index !== -1) return index;
+        }
+        return -1;
+      };
+
+      const codeIndex = getColumnIndex(['service code', 'servicecode']);
+      const nameIndex = getColumnIndex(['service name', 'servicename']);
+      const priceIndex = getColumnIndex(['negotiated price', 'price']);
+      
+      if (nameIndex === -1 || priceIndex === -1) {
+        throw new Error('Missing required columns (name and price) in Excel file');
+      }
+      
+      excelData.value = [];
+      for (let i = 1; i < sheetData.length; i++) {
+        const row = sheetData[i];
+        if (!row[nameIndex]) continue;
+        
+        excelData.value.push({
+          serviceCode: row[codeIndex] || '',
+          serviceName: row[nameIndex],
+          negotiatedPrice: parseFloat(row[priceIndex]) || 0
+        });
+      }
+
+      importDialog.value = true;
+      excelFile.value = null;
+      
+    } catch (err) {
+      console.error('Error processing Excel file:', err);
+      toasted(false, `Error importing file: ${err.message}`);
+    }
+  };
+  reader.readAsArrayBuffer(file);
 };
 
-// Computed properties to separate services and drugs
+// Perform the actual validation
+const performValidation = () => {
+  validationResults.value = formData.value.contractDetails.map(contractItem => {
+    const importedItem = excelData.value.find(
+      item => item.serviceName === contractItem.serviceName || 
+             item.serviceCode === contractItem.serviceCode
+    );
+    
+    return {
+      ...contractItem,
+      importedPrice: importedItem?.negotiatedPrice,
+      isValid: importedItem ? 
+        Math.abs(importedItem.negotiatedPrice - contractItem.negotiatedPrice) < 0.01 : false,
+      notFound: !importedItem
+    };
+  });
+
+  validationPerformed.value = true;
+  validationComplete.value = true;
+  importDialog.value = false;
+  
+  // Animation effect
+  setTimeout(() => {
+    validationComplete.value = false;
+  }, 3000);
+  
+  const matchCount = validationResults.value.filter(item => item.isValid).length;
+  const totalCount = validationResults.value.length;
+  
+  if (matchCount === totalCount) {
+    toasted(true, `Perfect match! All ${totalCount} services validated successfully.`);
+  } else {
+    toasted(false, "",`Validation complete. ${matchCount}/${totalCount} services matched.`);
+  }
+};
+
 const services = computed(() => {
-  return formData.value.contractDetails.filter(
-    (item) => item.itemType === "SERVICE"
-  );
+  if (validationPerformed.value) {
+    return validationResults.value;
+  }
+  return formData.value.contractDetails;
 });
 
-const drugs = computed(() => {
-  return formData.value.contractDetails.filter(
-    (item) => item.itemType === "DRUG"
-  );
+const allServicesValid = computed(() => {
+  return validationResults.value.length > 0 && 
+         validationResults.value.every(item => item.isValid);
 });
-
-// Calculate percentage difference
-const calculateDifference = (negotiatedPrice, originalPrice) => {
-  if (!originalPrice || originalPrice === 0) return 0;
-  return ((negotiatedPrice - originalPrice) / originalPrice) * 100;
-};
 
 async function fetchContract() {
   try {
@@ -85,10 +159,19 @@ async function fetchContract() {
   }
 }
 
+function handleApprove() {
+  openModal("acceptContract");
+}
+
+function handleReject() {
+  openModal("rejectContract");
+}
+
 onMounted(async () => {
   await fetchContract();
 });
 </script>
+
 <template>
   <div v-if="loadingContract" class="flex justify-center items-center h-64">
     <Spinner size="lg" />
@@ -96,233 +179,209 @@ onMounted(async () => {
   </div>
 
   <div v-else class="space-y-6">
-    <div class="flex gap-6">
-      <div>
-        <div class="bg-white w-full p-6 flex items-center">
-          <!-- Logo -->
-          <div
-            class="w-44 h-44 flex items-center justify-center bg-[#F6F7FA] rounded-lg mr-6 p-4"
-          >
+    <!-- Collapsible Contract Header -->
+    <div 
+      class="bg-gradient-to-r from-primary to-white rounded-xl p-6 shadow-lg cursor-pointer transition-all duration-300"
+      @click="showContractDetails = !showContractDetails"
+    >
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="w-12 h-12 flex items-center justify-center bg-white/10 rounded-lg mr-4">
             <img
               v-if="formData.providerLogoBase64"
               :src="formData.providerLogoBase64"
               alt="Provider Logo"
-              class="w-full h-full object-contain p-4"
+              class="w-full h-full object-contain"
               @error="handleImageError"
             />
-            <div
-              v-else
-              class="w-full h-full flex items-center justify-center text-gray-400"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-16 w-16"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1"
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+            <div v-else class="text-white/50">
+              <i v-html="icons.building" class="w-8 h-8"></i>
             </div>
           </div>
-          <!-- Contract Info -->
-          <div class="bg-[#F6F7FA] rounded-xl p-4 w-[77rem]">
-            <!-- Title -->
-            <h2
-              class="text-lg font-semibold text-[#6B7280] mb-3 w-full flex justify-between"
-            >
-              <p>Contract Detail</p>
-              <p>{{ formData.contractName }}</p>
-            </h2>
-            <div class="border-t border-[#E5E7EB] mb-4"></div>
+          <h1 class="text-xl font-bold text-white">{{ formData.contractName }}</h1>
+        </div>
+        <i 
+          v-html="showContractDetails ? icons.chevronUp : icons.chevronDown" 
+          class="w-6 h-6 text-white/80 transition-transform duration-300"
+        ></i>
+      </div>
 
-            <!-- Grid layout with vertical divider -->
-            <div class="space-y-4 px-4">
-              <!-- First Row -->
-              <div
-                class="flex justify-between items-center pb-4 border-[#E5E7EB]"
-              >
-                <div
-                  class="flex items-center text-sm border-l border-[#E5E7EB] text-gray-600 w-1/2"
-                >
-                  <span class="font-medium w-40">Contract ID:</span>
-                  <span class="text-gray-800 font-semibold">{{
-                    formData.contractCode
-                  }}</span>
-                </div>
-                <div class="flex items-center text-sm text-gray-600 w-1/2 pl-8">
-                  <span class="font-medium w-40">Contract Status:</span>
-                  <span class="text-[#2C9984] font-semibold">{{
-                    formData.status
-                  }}</span>
-                </div>
-              </div>
-
-              <!-- Second Row -->
-              <div class="flex justify-between items-center pb-4">
-                <div
-                  class="flex items-center text-sm border-l border-red text-gray-600 w-1/2"
-                >
-                  <span class="font-medium border-l w-40">Contract From:</span>
-                  <span class="text-gray-800 font-semibold">{{
-                    formData.startDate
-                  }}</span>
-                </div>
-                <div class="flex items-center text-sm text-gray-600 w-1/2 pl-8">
-                  <span class="font-medium w-40">Contract To:</span>
-                  <span class="text-gray-800 font-semibold">{{
-                    formData.endDate
-                  }}</span>
-                </div>
-              </div>
-
-              <!-- Third Row -->
-              <div class="flex justify-between items-center">
-                <div class="flex items-center text-sm text-gray-600 w-1/2">
-                  <span class="font-medium w-40">Number of Employees:</span>
-                  <span class="text-gray-800 font-semibold">{{
-                    formData.contractEmployees
-                  }}</span>
-                </div>
-                <div class="flex items-center text-sm text-gray-600 w-1/2 pl-8">
-                  <span class="font-medium w-40">Employee Groups:</span>
-                  <span class="text-gray-800 font-semibold">{{
-                    formData.employeeGroups
-                  }}</span>
-                </div>
-              </div>
-            </div>
+      <!-- Expanded Details -->
+      <div 
+        v-if="showContractDetails"
+        class="mt-6 pt-6 border-t border-white/20 transition-all duration-300 text-white"
+      >
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm opacity-90">Contract ID</p>
+            <p class="font-mono text-lg">{{ formData.contractCode || 'N/A' }}</p>
+          </div>
+          <div>
+            <p class="text-sm opacity-90">Status</p>
+            <p class="text-lg font-semibold capitalize">{{ formData.status.toLowerCase() }}</p>
+          </div>
+          <div>
+            <p class="text-sm opacity-90">Valid From</p>
+            <p class="text-lg">{{ formData.startDate }}</p>
+          </div>
+          <div>
+            <p class="text-sm opacity-90">Valid To</p>
+            <p class="text-lg">{{ formData.endDate }}</p>
           </div>
         </div>
       </div>
     </div>
-    <div class="bg-white rounded-md p-6 space-y-6 shadow-sm">
-      <div class="bg-white rounded-md p-6 mt-6 shadow-sm">
-        <div
-          class="flex items-center p-4 justify-between border-b border-gray-200"
-        >
-          <h3 class="text-md text-[#75778B] font-semibold">Contract Items</h3>
-          <div class="flex border border-gray-300 rounded-md overflow-hidden">
-            <button
-              type="button"
-              @click="activeTab = 'services'"
-              :class="[
-                'px-4 py-2 text-sm font-medium transition-colors duration-200',
-                activeTab === 'services'
-                  ? 'bg-[#02676B] text-white'
-                  : 'text-[#75778B] hover:bg-gray-100',
-              ]"
-            >
-              Services ({{ services.length }})
-            </button>
-            <button
-              type="button"
-              @click="activeTab = 'drugs'"
-              :class="[
-                'px-4 py-2 text-sm font-medium transition-colors duration-200',
-                activeTab === 'drugs'
-                  ? 'bg-[#02676B] text-white'
-                  : 'text-[#75778B] hover:bg-gray-100',
-              ]"
-            >
-              Drugs ({{ drugs.length }})
-            </button>
+
+    <!-- Insured Section (if needed) -->
+   
+
+    <!-- Validation Card -->
+    <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+      <div class="flex justify-between items-center mb-2">
+        <div>
+          <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i v-html="icons.contract" class="w-5 h-5 text-primary"></i>
+            Contract Validation
+          </h2>
+          <p class="text-sm text-gray-600 mt-1">
+            Import the negotiated contract to verify service prices
+          </p>
+        </div>
+        <label class="relative cursor-pointer bg-gradient-to-r from-primary to-[#02878B] text-white px-5 py-2.5 rounded-lg hover:shadow-md transition-all">
+          <input 
+            type="file" 
+            accept=".xlsx,.xls" 
+            class="hidden" 
+            @change="handleFileUpload"
+            ref="excelFile"
+          />
+          <span class="flex items-center gap-2">
+            <i v-html="icons.import" class="w-4 h-4"></i>
+            Import for Validation
+          </span>
+        </label>
+      </div>
+
+      <div v-if="validationPerformed" class="mb-6">
+        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-white rounded-full shadow-sm">
+              <i v-html="icons.checkCircle" class="w-6 h-6 text-green-500"></i>
+            </div>
+            <div>
+              <h3 class="font-medium text-gray-800">Validation Complete</h3>
+              <p class="text-sm text-gray-600">
+                {{ validationResults.filter(i => i.isValid).length }} of {{ validationResults.length }} services matched
+              </p>
+            </div>
+          </div>
+          <div v-if="allServicesValid" class="px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium flex items-center gap-2">
+            <i v-html="icons.check" class="w-4 h-4"></i>
+            Ready to Accept
+          </div>
+          <div v-else class="px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium flex items-center gap-2">
+            <i v-html="icons.warning" class="w-4 h-4"></i>
+            Review Required
           </div>
         </div>
+      </div>
+    </div>
 
-        <div class="p-3">
-          <table
-            class="w-full bg-white table-auto text-sm rounded-lg overflow-hidden shadow-sm"
-          >
+    <!-- Services Table -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+      <div class="p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <i v-html="icons.services" class="w-5 h-5 text-primary"></i>
+          Contract Services
+          <span v-if="validationPerformed" class="ml-auto text-sm font-normal bg-gray-100 text-gray-800 px-3 py-1 rounded-full">
+            {{ validationResults.filter(i => i.isValid).length }}/{{ validationResults.length }} Verified
+          </span>
+        </h2>
+
+        <div class="overflow-x-auto">
+          <table class="w-full">
             <thead>
-              <tr class="text-left font-bold text-gray-700 bg-gray-50">
-                <th class="p-3 w-12">#</th>
-                <th class="p-3">
-                  {{ activeTab === "services" ? "Service" : "Drug" }} Name
-                </th>
-                <th class="p-3">Original Price</th>
-                <th class="p-3">Negotiated Price</th>
-                <th class="p-3">Difference</th>
-                <th class="p-3">Groups</th>
+              <tr class="bg-gray-50 text-gray-700">
+                <th class="p-4 text-left rounded-tl-lg">#</th>
+                <th class="p-4 text-left">Service</th>
+                <th class="p-4 text-left">Code</th>
+                <th class="p-4 text-left">Contract Price</th>
+                <th v-if="validationPerformed" class="p-4 text-left">Your Price</th>
+                <th v-if="validationPerformed" class="p-4 text-left rounded-tr-lg">Status</th>
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="(item, index) in activeTab === 'services'
-                  ? services
-                  : drugs"
+              <tr 
+                v-for="(item, index) in services"
                 :key="item.contractDetailUuid"
-                class="border-b border-gray-100 hover:bg-gray-50"
+                class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
               >
-                <td class="p-3">{{ index + 1 }}</td>
-                <td class="p-3 font-medium text-gray-800">
-                  {{ item.serviceName || item.drugName }}
+                <td class="p-4 text-gray-600">{{ index + 1 }}</td>
+                <td class="p-4 font-medium text-gray-800">
+                  {{ item.serviceName }}
+                  <p v-if="item.description" class="text-xs text-gray-500 mt-1">{{ item.description }}</p>
                 </td>
-                <td class="p-3 text-gray-700">
-                  ETB {{ item.price?.toLocaleString("en-US") || "0.00" }}
+                <td class="p-4 font-mono text-sm text-gray-600">
+                  {{ item.serviceCode || 'N/A' }}
                 </td>
-                <td class="p-3 text-gray-700">
-                  ETB
-                  {{ item.negotiatedPrice?.toLocaleString("en-US") || "0.00" }}
+                <td class="p-4 font-medium text-gray-800">
+                  ETB {{ item.negotiatedPrice?.toLocaleString("en-US") || "0.00" }}
                 </td>
-                <td class="p-3">
-                  <span
-                    :class="{
-                      'text-green-600':
-                        calculateDifference(item.negotiatedPrice, item.price) >=
-                        0,
-                      'text-red-600':
-                        calculateDifference(item.negotiatedPrice, item.price) <
-                        0,
-                    }"
-                  >
-                    {{
-                      calculateDifference(
-                        item.negotiatedPrice,
-                        item.price
-                      ).toFixed(2)
-                    }}%
+                <td v-if="validationPerformed" class="p-4">
+                  <span v-if="item.importedPrice !== undefined" class="font-medium text-gray-800">
+                    ETB {{ item.importedPrice?.toLocaleString("en-US") }}
                   </span>
+                  <span v-else class="text-gray-400 italic">Not imported</span>
                 </td>
-                <td class="p-3">
-                  <span
-                    v-if="item.assignedGroups && item.assignedGroups.length > 0"
+                <td v-if="validationPerformed" class="p-4">
+                  <span 
+                    v-if="item.isValid"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
                   >
-                    {{ item.assignedGroups.join(", ") }}
+                    <i v-html="icons.check" class="w-4 h-4 mr-1"></i>
+                    Match
                   </span>
-                  <span v-else class="text-gray-400">All groups</span>
+                  <span 
+                    v-else-if="item.notFound"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"
+                  >
+                    <i v-html="icons.warning" class="w-4 h-4 mr-1"></i>
+                    Not Found
+                  </span>
+                  <span 
+                    v-else
+                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800"
+                  >
+                    <i v-html="icons.close" class="w-4 h-4 mr-1"></i>
+                    Mismatch
+                  </span>
                 </td>
               </tr>
-              <tr
-                v-if="
-                  (activeTab === 'services' ? services : drugs).length === 0
-                "
-              >
-                <td colspan="6" class="p-4 text-center text-gray-500">
-                  No {{ activeTab }} found in this contract.
+              <tr v-if="services.length === 0">
+                <td :colspan="validationPerformed ? 6 : 4" class="p-8 text-center text-gray-400">
+                  <div class="flex flex-col items-center justify-center">
+                    <i v-html="icons.empty" class="w-12 h-12 mb-2"></i>
+                    No services found in this contract
+                  </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-      <div class="bg-white rounded-xl p-6 mt-6 shadow-md">
+    </div>
+ <div class="bg-white rounded-xl p-6 mt-6 shadow-md">
         <!-- Header and Toggle -->
         <div class="flex justify-between items-center mb-4">
           <h3
-            class="text-xl font-semibold text-[#02676B] flex items-center gap-2"
+            class="text-xl font-semibold text-primary flex items-center gap-2"
           >
-            <i v-html="icons.people" class="w-5 h-5 text-[#02676B]"></i>
+            <i v-html="icons.people" class="w-5 h-5 text-primary"></i>
             Insured Members
           </h3>
           <button
             @click="showInsured = !showInsured"
-            class="text-sm text-[#02676B] border border-[#02676B] px-3 py-1 rounded-md hover:bg-[#02676B] hover:text-white transition-colors duration-200"
+            class="text-sm text-primary border border-primary px-3 py-1 rounded-md hover:bg-primary hover:text-white transition-colors duration-200"
           >
             {{ showInsured ? "Hide" : "Show" }}
           </button>
@@ -382,21 +441,125 @@ onMounted(async () => {
           </div>
         </Transition>
       </div>
-      <div class="flex justify-end gap-4 text-white">
-        <Button @click="handleReject" class="bg-[#DB2E48] py-2.5 px-6"
-          >Reject Contract</Button
-        >
-        <Button @click="handleApprove" class="bg-primary py-2.5 px-6"
-          >Accept Contract</Button
-        >
+    <!-- Action Buttons -->
+    <div class="flex justify-end gap-4 mt-8">
+      <Button 
+        @click="handleReject" 
+        class="bg-gradient-to-r from-red-600 to-red-700 text-white py-3 px-8 rounded-lg shadow hover:shadow-md transition-all"
+        :disabled="!validationPerformed"
+      >
+        <span class="flex items-center gap-2">
+          <i v-html="icons.close" class="w-5 h-5"></i>
+          Reject Contract
+        </span>
+      </Button>
+      <Button 
+        @click="handleApprove" 
+        class="bg-gradient-to-r from-primary to-[#02878B] text-white py-3 px-8 rounded-lg shadow hover:shadow-md transition-all"
+        :class="{'animate-pulse': allServicesValid && validationComplete}"
+        :disabled="!validationPerformed || !allServicesValid"
+      >
+        <span class="flex items-center gap-2">
+          <i v-html="icons.check" class="w-5 h-5"></i>
+          Accept Contract
+        </span>
+      </Button>
+    </div>
+
+    <!-- Import Validation Modal -->
+    <div v-if="importDialog" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div class="border-b border-gray-200 p-6 flex justify-between items-center bg-gray-50">
+          <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i v-html="icons.import" class="w-6 h-6 text-primary"></i>
+            Validate Contract Prices
+          </h3>
+          <button @click="importDialog = false" class="text-gray-500 hover:text-gray-700">
+            <i v-html="icons.close" class="w-6 h-6"></i>
+          </button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto max-h-[70vh]">
+          <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4">
+            <div class="flex items-start">
+              <i v-html="icons.info" class="w-5 h-5 text-blue-500 mt-0.5 mr-3"></i>
+              <div>
+                <h4 class="font-medium text-blue-800">Validation Instructions</h4>
+                <p class="text-sm text-blue-700 mt-1">
+                  Review the imported prices below. The system will compare these with the contract prices.
+                  Services not found in the import will be marked accordingly.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-gray-50 text-gray-700">
+                  <th class="p-3 text-left">Service Name</th>
+                  <th class="p-3 text-left">Code</th>
+                  <th class="p-3 text-left">Imported Price</th>
+                  <th class="p-3 text-left">Contract Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr 
+                  v-for="(importedItem, index) in excelData"
+                  :key="index"
+                  class="border-b border-gray-100 hover:bg-gray-50"
+                >
+                  <td class="p-3 font-medium text-gray-800">{{ importedItem.serviceName }}</td>
+                  <td class="p-3 font-mono text-sm text-gray-600">{{ importedItem.serviceCode || 'N/A' }}</td>
+                  <td class="p-3 font-medium text-primary">
+                    ETB {{ importedItem.negotiatedPrice?.toLocaleString("en-US") }}
+                  </td>
+                  <td class="p-3 text-gray-500 italic">
+                    Will be compared after validation
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-500 p-4">
+            <div class="flex items-start">
+              <i v-html="icons.warning" class="w-5 h-5 text-yellow-500 mt-0.5 mr-3"></i>
+              <div>
+                <h4 class="font-medium text-yellow-800">Important Notice</h4>
+                <p class="text-sm text-yellow-700 mt-1">
+                  Only services with matching names or codes will be validated. 
+                  Make sure your Excel file uses the same naming conventions as the contract.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="border-t border-gray-200 p-4 bg-gray-50 flex justify-end gap-3">
+          <button
+            @click="importDialog = false"
+            class="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="performValidation"
+            class="px-5 py-2 bg-primary text-white rounded-lg hover:bg-[#02878B] transition-colors flex items-center gap-2"
+          >
+            <i v-html="icons.check" class="w-5 h-5"></i>
+            Validate Prices
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* Base styles */
 .required-field {
-  @apply border-l-2 border-[#02676B];
+  @apply border-l-2 border-primary;
 }
 
 .error-field {
@@ -407,84 +570,64 @@ onMounted(async () => {
   @apply text-red-500 text-xs mt-1;
 }
 
-input[type="checkbox"] {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  outline: none;
-  cursor: pointer;
-  position: relative;
-  transition: background-color 0.2s, border-color 0.2s;
-}
-
-input[type="checkbox"]:checked {
-  background-color: #02676b;
-  border-color: #02676b;
-}
-
-input[type="checkbox"]:checked::after {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 1px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-input[type="checkbox"]:focus {
-  box-shadow: 0 0 0 2px rgba(2, 103, 107, 0.2);
-}
-
-input[type="date"]:required {
-  border-left: 2px solid #02676b;
-}
-
-select:focus {
-  @apply border-[#02676B] ring-[#02676B];
-}
-
-th {
-  @apply font-bold;
-}
-
-button:disabled {
-  @apply opacity-50 cursor-not-allowed;
-}
-
+/* Table styles */
 table {
   @apply min-w-full divide-y divide-gray-200;
 }
 
 th {
-  @apply py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider;
+  @apply py-3 text-left text-sm font-semibold text-gray-700;
 }
 
 td {
-  @apply py-4;
+  @apply py-4 whitespace-nowrap;
 }
-/* Slide-fade dropdown transition */
-.dropdown-enter-active,
-.dropdown-leave-active {
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Modal transition */
+.modal-enter-active,
+.modal-leave-active {
   transition: all 0.3s ease;
-  overflow: hidden;
 }
-.dropdown-enter-from,
-.dropdown-leave-to {
-  max-height: 0;
+
+.modal-enter-from,
+.modal-leave-to {
   opacity: 0;
-  transform: scaleY(0.95);
+  transform: translateY(-20px);
 }
-.dropdown-enter-to,
-.dropdown-leave-from {
-  max-height: 1000px;
-  opacity: 1;
-  transform: scaleY(1);
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
 }
 </style>

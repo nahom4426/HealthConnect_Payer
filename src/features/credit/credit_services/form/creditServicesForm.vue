@@ -99,7 +99,11 @@ const contractOptions = computed(() => {
     value: contract.contractHeaderUuid
   }));
 });
-
+watch(contractOptions, (newOptions) => {
+  if (newOptions.length === 1) {
+    selectedContract.value = newOptions[0].value;
+  }
+}, { immediate: true });
 async function fetchPayers() {
   try {
     fetchPending.value = true;
@@ -477,20 +481,28 @@ watch(selectedContract, async (newContractId) => {
             />
           </div>
           
-          <div class="w-72" v-if="selectedPayer && contractOptions.length > 0">
-            <Select     
-              :obj="true"
-              name="contract"
-              label="Select Contract"
-              validation="required"
-              :options="contractOptions"
-              :disabled="fetchPending"
-              :attributes="{
-                placeholder: 'Select a Contract'
-              }"
-              v-model="selectedContract"
-            />
-          </div>
+    <div class="w-72" v-if="selectedPayer && contractOptions.length > 0">
+  <div v-if="contractOptions.length === 1">
+    <label class="block text-sm font-medium text-gray-700 mb-1">Contract</label>
+    <div class="p-2 bg-gray-100 rounded-md text-sm text-gray-700">
+      {{ contractOptions[0].label }}
+    </div>
+    <input type="hidden" v-model="selectedContract" />
+  </div>
+  <Select
+    v-else
+    :obj="true"
+    name="contract"
+    label="Select Contract"
+    validation="required"
+    :options="contractOptions"
+    :disabled="fetchPending"
+    :attributes="{
+      placeholder: 'Select a Contract'
+    }"
+    v-model="selectedContract"
+  />
+</div>
           
           <div class="w-full">
             <Input 

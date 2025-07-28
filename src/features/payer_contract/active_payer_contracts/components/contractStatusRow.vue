@@ -237,7 +237,7 @@ function handleReject(row) {
                 </button>
 
                 <button
-                  v-if="row.status === 'REJECTED' || row.status === 'Active'"
+                  v-if="row.status === 'REJECTED' || row.status === 'Rejected' || row.status === 'RESUBMITTED' || row.status === 'Resubmitted'"
                   @click.stop="handleEdit(row)"
                   class="block w-full text-center py-2 text-sm text-[#DB2E48] hover:bg-gray-100"
                 >

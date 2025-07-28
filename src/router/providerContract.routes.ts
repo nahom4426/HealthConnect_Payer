@@ -1,16 +1,3 @@
-// import ProviderList from "@/features/providers/pages/ActiveProviders.vue";
-// import AddProvider from "@/features/providers/pages/AddProvider.vue";
-// import InactiveProviders from "@/features/providers/pages/InactiveProviders.vue";
-// import NewContract from "@/features/payer_contract/new_contracts/pages/Contracts.vue";
-// import PayerContracts from "@/features/payer_contract/active_payer_contracts/pages/PayerContracts.vue";
-// import PayerIndex from "@/features/payer_contract/active_payer_contracts/pages/PayerIndex.vue";
-// import Details from "@/features/payer_contract/active_payer_contracts/pages/payerContractDetails.vue";
-// import NewContracts from "@/features/payer_contract/new_contracts/components/newContract.vue";
-// import PayerContractIndex from "@/features/payer_contract/new_contracts/pages/PayerContractIndex.vue";
-// import EditContract from "@/features/payer_contract/new_contracts/components/editContract.vue";
-// import Pending_contracts from "@/features/payer_contract/pending_contracts/pages/pending_contracts.vue";
-
-// import Details from "@/features/provider_contract/active_payer_contracts/pages/providerDetails.vue";
 import ActiveProviderIndex from "@/features/provider_contract/active_provider_contracts/pages/ActiveProviderIndex.vue";
 import ProviderContracts from "@/features/provider_contract/active_provider_contracts/pages/ProviderContracts.vue";
 import ProviderDetails from "@/features/provider_contract/active_provider_contracts/pages/providerDetails.vue";

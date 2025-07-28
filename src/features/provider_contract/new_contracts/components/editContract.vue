@@ -52,7 +52,7 @@ const formData = ref({
   contractDescription: '',
   startDate: '',
   endDate: '',
-  status: 'ACTIVE',
+  status: 'RESUBMIT',
   payerUuid: auth.auth.user?.payerUuid || '',
   providerUuid: '',
   contractDetails: [],

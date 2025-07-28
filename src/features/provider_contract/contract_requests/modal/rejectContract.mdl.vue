@@ -8,7 +8,8 @@ import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { rejectContract } from "../api/contractRequestApi";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
-
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter(); // Added router import
 const props = defineProps({
   contractId: {
     type: String,
@@ -20,7 +21,7 @@ const req = useApiRequest();
 const rejectionReason = ref("");
 const remark = ref("");
 const rejecting = ref(false);
-
+const route = useRoute();
 const rejectionReasons = [
   { value: "PRICING_ISSUE", label: "Pricing Issue" },
   { value: "TERMS_UNACCEPTABLE", label: "Unacceptable Terms" },
@@ -35,23 +36,25 @@ const rejectContractRequest = async () => {
   }
 
   rejecting.value = true;
-  
+
   try {
-    await req.send(
-      () => rejectContract(props.contractId, rejectionReason.value, remark.value),
-      () => {
-        if (req.success) {
-          toasted(true, "Contract rejected successfully");
-          closeModal();
-        } else {
-          toasted(false, req.response.value?.message || "Failed to reject contract");
-        }
-      }
+    const result = await req.send(() =>
+      rejectContract(props.contractId || route.params.id, rejectionReason.value, remark.value)
     );
+
+    if (result) {
+      toasted(true, "Contract rejected successfully");
+      closeModal();
+      router.push("/provider/contracts");
+    } else {
+    }
+  } catch (error) {
+    toasted(false, "An error occurred during rejection.");
   } finally {
     rejecting.value = false;
   }
 };
+
 </script>
 
 <template>
@@ -105,15 +108,30 @@ const rejectContractRequest = async () => {
             >
               Cancel
             </Button>
-            <Button
-              @click.prevent="rejectContractRequest"
-              :disabled="rejecting || !rejectionReason"
-              class="flex items-center bg-[#DB2E48] text-white font-medium hover:bg-red-700 disabled:opacity-50"
-              size="md"
-            >
-              <span v-if="rejecting">Processing...</span>
-              <span v-else>Confirm Rejection</span>
-            </Button>
+           <Button
+  @click.prevent="rejectContractRequest"
+  :disabled="rejecting || !rejectionReason"
+  class="flex items-center bg-[#DB2E48] text-white font-medium hover:bg-red-700 disabled:opacity-50"
+  size="md"
+>
+  <svg
+    v-if="rejecting"
+    class="animate-spin h-4 w-4 mr-2 text-white"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+    <path
+      class="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8v8H4z"
+    />
+  </svg>
+  <span v-if="!rejecting">Confirm Rejection</span>
+  <span v-else>Processing...</span>
+</Button>
+
           </div>
         </template>
       </NewFormParent>
