@@ -3,7 +3,7 @@ import { usePagination } from "@/composables/usePagination";
 import { payerContracts } from "../store/payerContractStore";
 import { watch } from "vue";
 import { removeUndefined } from "@/utils/utils";
-import { getPayerContracts } from "../api/pendingPayerContractApi";
+import { getPayerContracts } from "../api/rejectedPayerContractApi";
 
 const props = defineProps({
   auto: {
@@ -12,7 +12,7 @@ const props = defineProps({
   },
 status: {
   type: String,
-  default: "SUBMITTED",
+  default: "REJECTED",
   validator: (value) => ["REJECTED", "APPROVED", "PENDING"].includes(value),
 },
 

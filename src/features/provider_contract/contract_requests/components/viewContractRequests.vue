@@ -201,7 +201,7 @@ onMounted(async () => {
           <h1 class="text-xl font-bold text-white">{{ formData.contractName }}</h1>
         </div>
         <i 
-          v-html="showContractDetails ? icons.chevronUp : icons.chevronDown" 
+          v-html="showContractDetails ? icons.chevron : icons.chevron_Down" 
           class="w-6 h-6 text-white/80 transition-transform duration-300"
         ></i>
       </div>
@@ -240,14 +240,14 @@ onMounted(async () => {
       <div class="flex justify-between items-center mb-2">
         <div>
           <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <i v-html="icons.contract" class="w-5 h-5 text-primary"></i>
+            <i v-html="icons.contracts" class="w-5 h-5 text-primary"></i>
             Contract Validation
           </h2>
           <p class="text-sm text-gray-600 mt-1">
             Import the negotiated contract to verify service prices
           </p>
         </div>
-        <label class="relative cursor-pointer bg-gradient-to-r from-primary to-[#02878B] text-white px-5 py-2.5 rounded-lg hover:shadow-md transition-all">
+        <label class="relative cursor-pointer bg-gradient-to-r from-primary to-primary text-white px-5 py-2.5 rounded-lg hover:shadow-md transition-all">
           <input 
             type="file" 
             accept=".xlsx,.xls" 
@@ -445,22 +445,24 @@ onMounted(async () => {
     <div class="flex justify-end gap-4 mt-8">
       <Button 
         @click="handleReject" 
-        class="bg-gradient-to-r from-red-600 to-red-700 text-white py-3 px-8 rounded-lg shadow hover:shadow-md transition-all"
-        :disabled="!validationPerformed"
+        class="bg-gradient-to-r from-red-600 to-red-700 text-white py-1 px-4 rounded-lg shadow hover:shadow-md transition-all"
+       
       >
+       <!-- :disabled="!validationPerformed" -->
         <span class="flex items-center gap-2">
-          <i v-html="icons.close" class="w-5 h-5"></i>
+          <i v-html="icons.close" class="w-4 h-4"></i>
           Reject Contract
         </span>
       </Button>
       <Button 
         @click="handleApprove" 
-        class="bg-gradient-to-r from-primary to-[#02878B] text-white py-3 px-8 rounded-lg shadow hover:shadow-md transition-all"
+        class="bg-gradient-to-r from-primary to-primary text-white py-1 px-4 rounded-lg shadow hover:shadow-md transition-all"
         :class="{'animate-pulse': allServicesValid && validationComplete}"
-        :disabled="!validationPerformed || !allServicesValid"
+        
       >
+      <!-- :disabled="!validationPerformed || !allServicesValid" -->
         <span class="flex items-center gap-2">
-          <i v-html="icons.check" class="w-5 h-5"></i>
+          <i v-html="icons.check" class="w-4 h-4"></i>
           Accept Contract
         </span>
       </Button>
@@ -545,9 +547,9 @@ onMounted(async () => {
           </button>
           <button
             @click="performValidation"
-            class="px-5 py-2 bg-primary text-white rounded-lg hover:bg-[#02878B] transition-colors flex items-center gap-2"
+            class="px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors flex items-center gap-2"
           >
-            <i v-html="icons.check" class="w-5 h-5"></i>
+            <i v-html="icons.check" class="w-4 h-4"></i>
             Validate Prices
           </button>
         </div>

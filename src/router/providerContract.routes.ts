@@ -6,6 +6,9 @@ import AddProviderContractIndex from "@/features/provider_contract/add_contracts
 import ViewContractRequests from "@/features/provider_contract/contract_requests/components/viewContractRequests.vue";
 import ContractRequests from "@/features/provider_contract/contract_requests/pages/contractRequests.vue";
 import ProviderContractIndex from "@/features/provider_contract/contract_requests/pages/ProviderContractIndex.vue";
+import Rejected_provider_contracts from "@/features/provider_contract/rejected_provider_contracts/pages/rejected_provider_contracts.vue";
+import RejectedProviderContractIndex from "@/features/provider_contract/rejected_provider_contracts/pages/RejectedProviderContractIndex.vue";
+
 
 
 export default [
@@ -68,23 +71,23 @@ export default [
 		]
 	},
 
-	// {
-	// 	path: '/pending_contracts',
-	// 	name: 'Pending Contracts',
-	// 	component: PayerIndex,
-	// 	children: [
-	// 		{
-	// 			path: '',
-	// 			name: 'Pending Contracts List',
-	// 			component: Pending_contracts,
-	// 		}
-	// 		// {
-	// 		// 	path: 'detail/:contractHeaderUuid',
-	// 		// 	name: 'Pending Contract Details',
-	// 		// 	component: Details,
-	// 		// 	props: true,
-	// 		// }
-	// 	]
-	// }
+	{
+		path: '/rejected_provider_contracts',
+		name: 'rejected provider_Contracts',
+		component: RejectedProviderContractIndex,
+		children: [
+			{
+				path: '',
+				name: 'rejected provider_Contracts List',
+				component: Rejected_provider_contracts,
+			}
+			// {
+			// 	path: 'detail/:contractHeaderUuid',
+			// 	name: 'rejected provider_Contract Details',
+			// 	component: Details,
+			// 	props: true,
+			// }
+		]
+	}
 
 ];

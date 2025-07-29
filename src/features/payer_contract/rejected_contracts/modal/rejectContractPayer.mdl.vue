@@ -6,7 +6,7 @@ import ModalParent from "@/components/ModalParent.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
-import { rejectContract } from "../api/pendingPayerContractApi";
+import { rejectContract } from "../api/rejectedPayerContractApi";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
 
 const props = defineProps({

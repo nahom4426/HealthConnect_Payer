@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue'; // Add ref import
 import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
 import { institutions } from "@/features/instution_settings/store/InstitutionsStore";
@@ -6,7 +7,8 @@ import icons from "@/utils/icons";
 import { changeInstutionStatus } from '@/features/instution_settings/api/institutionsApi';
 import { onMounted, defineProps, onUnmounted, toRaw, defineEmits } from 'vue';
 import { createKenemaContracts } from '../api/contractRequestApi';
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const props = defineProps({
   rowData: Array,
   rowKeys: Array,
@@ -18,17 +20,35 @@ const props = defineProps({
 });
 
 // Define emits for selection changes
-const emit = defineEmits(['select-payer']);
+const emit = defineEmits(['select-payer', 'refresh-data', 'clear-selection']);
 const { addToast } = useToast();
 const payersStore = institutions();
+const allSelected = ref(false); // Add allSelected ref
 
 function getStatusStyle(status) {
-  if (status === 'ACTIVE' || status === 'Active') {
-    return 'bg-[#DFF1F1] text-[#02676B]';
-  } else if (status === 'INACTIVE' || status === 'Inactive') {
-    return 'bg-red-100 text-red-800';
-  } else {
-    return 'bg-gray-100 text-gray-800';
+  const base = "inline-flex justify-center items-center min-w-[80px] px-3 py-1 rounded text-sm font-semibold";
+
+  switch (status?.toUpperCase()) {
+    case "APPROVED":
+      return `${base} bg-green-100 text-green-800`;
+    case "ACTIVE":
+      return `${base} bg-green-100 text-green-800`;
+    case "SUBMITTED":
+      return `${base} bg-yellow-100 text-yellow-800`;
+    case "INACTIVE":
+      return `${base} bg-red-100 text-red-800`;
+    case "PENDING":
+      return `${base} bg-yellow-100 text-yellow-800`;
+    case "ACCEPTED":
+      return `${base} bg-blue-100 text-blue-800`;
+    case "REJECTED":
+      return `${base} bg-red-100 text-red-800`;
+    case "RESUBMITTED":
+      return `${base} bg-purple-100 text-purple-800`;
+    case "SUSPENDED":
+      return `${base} bg-yellow-100 text-yellow-800`;
+    default:
+      return `${base} bg-gray-100 text-gray-800`;
   }
 }
 
@@ -82,7 +102,6 @@ function handleCheckboxChange(row) {
     return;
   }
   
-  // Emit the selection event instead of calling a prop function
   emit('select-payer', row.payerUuid);
 }
 
@@ -131,8 +150,11 @@ async function handleDeactivateWithClose(payerUuid) {
     });
   }
 }
+
 async function handleCreateContracts(payerUuids) {
-  // Check if payerUuids is an array, if not convert it to array
+  closeAllDropdowns(); // Close dropdown when creating contracts
+  
+  // Use props.selectedPayers instead of selectedPayers.value
   const uuids = Array.isArray(payerUuids) ? payerUuids : [payerUuids];
   
   if (uuids.length === 0) {
@@ -154,10 +176,10 @@ async function handleCreateContracts(payerUuids) {
         title: "Contracts Created",
         message: `${uuids.length} contract(s) created successfully`,
       });
-      // Clear selection after successful creation
-      selectedPayers.value = [];
-      allSelected.value = false;
-      refreshData();
+      router.push('/provider_contracts'); // Redirect to the contracts page
+      // Emit events to parent component
+      emit('clear-selection');
+      emit('refresh-data');
     } else {
       throw new Error(response.error || "Failed to create contracts");
     }
@@ -171,6 +193,9 @@ async function handleCreateContracts(payerUuids) {
   }
 }
 
+function refreshData() {
+  emit('refresh-data');
+}
 </script>
 
 <template>
@@ -182,7 +207,7 @@ async function handleCreateContracts(payerUuids) {
     <td class="p-4" @click.stop>
       <input
         type="checkbox"
-        :checked="selectedPayers.includes(row.payerUuid)"
+        :checked="props.selectedPayers.includes(row.payerUuid)"
         @change="() => handleCheckboxChange(row)"
         class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
       />
@@ -232,7 +257,7 @@ async function handleCreateContracts(payerUuids) {
     </td>  
 
     <td class="p-3">  
-      <div class="dropdown-container relative ">
+      <div class="dropdown-container relative">
         <button 
           @click.stop="toggleDropdown($event, row.payerUuid || row.id)"
           class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
@@ -257,7 +282,7 @@ async function handleCreateContracts(payerUuids) {
                 Edit
               </div>
             </button>
-             <button 
+            <button 
               @click.stop="handleCreateContracts(row.payerUuid)"
               class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
@@ -267,7 +292,7 @@ async function handleCreateContracts(payerUuids) {
               </div>
             </button>
             
-            <template v-if="row.status">
+            <!-- <template v-if="row.status">
               <button 
                 v-if="row.status === 'INACTIVE' || row.status === 'Inactive'"
                 @click.stop="handleActivateWithClose(row.payerUuid || row.id)"
@@ -289,7 +314,7 @@ async function handleCreateContracts(payerUuids) {
                   Deactivate
                 </div>
               </button>
-            </template>
+            </template> -->
           </div>
         </div>
       </div>

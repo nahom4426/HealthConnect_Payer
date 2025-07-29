@@ -3,7 +3,7 @@ import { ref, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import pendingContractsDataProvider from "../components/pendingContractsDataProvider.vue";
+import pendingContractsDataProvider from "../components/rejectedContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
 import { changePayerContractStatus, deletePayerContract } from "../../active_payer_contracts/api/payerContractApi";

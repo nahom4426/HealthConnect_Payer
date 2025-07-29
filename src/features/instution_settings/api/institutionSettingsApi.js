@@ -9,7 +9,9 @@ const basePath = '/payer';
 export function getActiveInstitutions(params) {
   return api.addAuthenticationHeader().get(`${basePath}/list`, { params });
 }
-
+export function getPayersWithoutContract(params) {
+  return api.addAuthenticationHeader().get(`${basePath}/without-active-contract`, { params });
+}
 export function updateInstitutionStatus(id, status) {
   return api.addAuthenticationHeader().put(`${basePath}/${id}/status`, { status });
 }

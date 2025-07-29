@@ -80,8 +80,8 @@ async function fetchContract() {
 
       if (contract.contractDetails) {
         selectedItems.value = contract.contractDetails.map(item => ({
-          id: item.serviceUuid || `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          serviceUuid: item.serviceUuid,
+          id: item.serviceCode || `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          serviceCode: item.serviceCode,
           name: item.serviceName,
           description: item.description || 'No description',
           providerPrice: item.negotiatedPrice,
@@ -251,7 +251,7 @@ const handleFileUpload = (event) => {
       
       excelData.value = services.map((item, index) => ({
         id: item.serviceCode || `imported-${index}`,
-        serviceUuid: item.serviceCode,
+        serviceCode: item.serviceCode,
         name: item.serviceName,
         description: item.category,
         providerPrice: item.price,
@@ -279,7 +279,7 @@ const confirmImport = () => {
 
   // Update existing items or add new ones
   excelData.value.forEach(newItem => {
-    const existingIndex = selectedItems.value.findIndex(item => item.serviceUuid === newItem.serviceUuid);
+    const existingIndex = selectedItems.value.findIndex(item => item.serviceCode === newItem.serviceCode);
     if (existingIndex >= 0) {
       selectedItems.value[existingIndex] = { ...selectedItems.value[existingIndex], ...newItem };
     } else {
@@ -372,10 +372,10 @@ async function submit() {
       beginDate: new Date(beginDate.value).toISOString(),
       endDate: new Date(endDate.value).toISOString(),
       contractItems: selectedItems.value.map(item => ({
-        itemUuid: item.serviceUuid || null, // Use serviceUuid if available, otherwise null
+        itemUuid: item.serviceCode || null, // Use serviceCode if available, otherwise null
         serviceName: item.name,
         itemType: 'SERVICE', // Hardcoded as 'SERVICE' since we removed drugs
-        negotiatedPrice: item.userPrice
+        negotiatedPrice: item.userPrice || '0.00'
       }))
     };
 
@@ -395,7 +395,7 @@ async function submit() {
       setTimeout(() => successIcon.remove(), 2000);
 
       toasted(true, 'Contract updated successfully!');
-      router.push("/pending_contracts");
+      router.push("/new_contract");
     } else {
       throw new Error(response.message || 'Failed to update contract');
     }
@@ -419,8 +419,27 @@ onMounted(async () => {
   </div>
 
   <div v-else class="bg-white rounded-md p-6 space-y-6">
+    <!-- Rejection Notice (shown only for rejected contracts) -->
+    <div v-if="formData.status === 'RESUBMITTED' || 'REJECTED'" class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800">This contract was previously rejected</h3>
+          <div class="mt-2 text-sm text-red-700">
+            <p><strong>Reason:</strong> {{ formData.rejectionReason || 'Not specified' }}</p>
+            <p class="mt-1"><strong>Remark:</strong> {{ formData.remark || 'No additional comments' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <div v-else class="bg-white rounded-md p-6 space-y-6">
     <!-- Provider and Date Inputs -->
-    <div class="grid md:grid-cols-3 gap-6">
+
       <div class="md:col-span-2">
         <Select     
           :obj="true"
@@ -515,7 +534,7 @@ onMounted(async () => {
       
    <table class="text-sm w-full bg-white rounded-md overflow-hidden">
   <thead>
-    <tr class="text-white bg-[#02676B]">
+    <tr class="text-white ">
       <th class="text-left p-3">#</th>
       <th class="text-left p-3">Service Code</th>
       <th class="text-left p-3">Service Name</th>
@@ -532,7 +551,7 @@ onMounted(async () => {
       :data-item-id="item.id"
     >
       <td class="p-3">{{ idx + 1 + (selectedItemsPage - 1) * selectedItemsPerPage }}</td>
-      <td class="p-3 font-mono text-xs">{{ item.serviceUuid || 'N/A' }}</td>
+      <td class="p-3 font-mono text-xs">{{ item.serviceCode || 'N/A' }}</td>
       <td class="p-3">{{ item.name }}</td>
       <td class="p-3">{{ item.description }}</td>
       <td class="p-3 price-cell">
@@ -705,7 +724,7 @@ onMounted(async () => {
                 :key="index"
                 class="hover:bg-gray-50 transition-colors"
               >
-                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-500">{{ item.serviceUuid }}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-500">{{ item.serviceCode }}</td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ item.name }}</td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ item.description }}</td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 font-medium">

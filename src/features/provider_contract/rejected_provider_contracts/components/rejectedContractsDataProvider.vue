@@ -3,35 +3,37 @@ import { usePagination } from "@/composables/usePagination";
 import { payerContracts } from "../store/payerContractStore";
 import { watch } from "vue";
 import { removeUndefined } from "@/utils/utils";
-import { getPayerContracts } from "../../active_provider_contracts/api/providerContractApi";
+import { getPayerContracts } from "../api/rejectedPayerContractApi";
 
 const props = defineProps({
   auto: {
     type: Boolean,
-    default: true,
+    default: true
   },
-  status: {
-    type: String,
-    default: "PENDING" 
-  },
+status: {
+  type: String,
+  default: "REJECTED",
+  validator: (value) => ["REJECTED", "APPROVED", "PENDING"].includes(value),
+},
+
   search: {
     type: String,
-    default: "",
-  },
+    default: ""
+  }
 });
 
 const store = payerContracts();
 
 const pagination = usePagination({
   store,
-  cb: (data) =>
+  cb: (data) => 
     getPayerContracts(
       removeUndefined({
         ...data,
         status: props.status,
-        search: props.search.trim(),
+        search: props.search.trim()
       })
-    ),
+    )
 });
 
 watch(

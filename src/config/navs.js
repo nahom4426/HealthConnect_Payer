@@ -28,8 +28,8 @@ export default [
         privilege: ["Create Employees"],
       },
       {
-        path: "/pending_contracts",
-        name: "Pending Contracts",
+        path: "/rejected_contracts",
+        name: "Rejcted Contracts",
         icon: icons.pending_contracts,
         category: "Pages",
         privilege: ["Create Employees"],
@@ -57,8 +57,8 @@ export default [
         privilege: ["Create Services"],
       },
       {
-        path: "/pending_contracts",
-        name: "Pending Contracts",
+        path: "/rejected_provider_contracts",
+        name: "Rejected Contracts",
         icon: icons.pending_contracts,
         category: "Pages",
         privilege: ["Create Services"],

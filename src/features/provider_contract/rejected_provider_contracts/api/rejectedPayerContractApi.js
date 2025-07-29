@@ -1,40 +1,43 @@
 import ApiService from "@/service/ApiService";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore } from '@/stores/auth';
 
 const api = new ApiService();
-const basePath = "/payer-provider-contract";
+const basePath = '/payer-provider-contract';
 
 export function getPayerContracts(query = {}) {
   const authStore = useAuthStore();
-  const providerUuid = authStore.auth?.user?.providerUuid;
+  const payerUuid = authStore.auth?.user?.payerUuid;
 
-  if (!providerUuid) {
-    throw new Error("Payer UUID not found in auth store");
+  if (!payerUuid) {
+    throw new Error('Payer UUID not found in auth store');
   }
 
   return api.addAuthenticationHeader().get(`${basePath}/all`, {
     params: {
-      providerUuid,
+      payerUuid,
       page: 0,
-      // size: 10,
-      sort: "startDate",
-      ...query,
-    },
+      size: 10,
+      sort: 'startDate',
+      ...query
+    }
   });
 }
 
 export function getPayerContractById(id) {
-  return api.addAuthenticationHeader().get(`${basePath}/${id}`, {
-    params: {
-      userType: "provider",
-    },
-  });
+  return api
+    .addAuthenticationHeader()
+    .get(`${basePath}/${id}`, {
+      params: {
+        userType: 'payer',
+      },
+    });
 }
+
 
 export function createPayerContract(formData) {
   return api.addAuthenticationHeader().post(basePath, formData, {
     headers: {
-      "Content-Type": "multipart/form-data",
+      'Content-Type': 'multipart/form-data',
     },
   });
 }
@@ -42,17 +45,15 @@ export function createPayerContract(formData) {
 export function updatePayerContract(uuid, formData) {
   return api.addAuthenticationHeader().put(`${basePath}/${uuid}`, formData, {
     headers: {
-      "Content-Type": "multipart/form-data",
-    },
+      'Content-Type': 'multipart/form-data'
+    }
   });
 }
 
 export function changePayerContractStatus(contractId, status) {
-  return api
-    .addAuthenticationHeader()
-    .patch(`${basePath}/${contractId}/status`, null, {
-      params: { status },
-    });
+  return api.addAuthenticationHeader().patch(`${basePath}/${contractId}/status`, null, {
+    params: { status }
+  });
 }
 
 export function deletePayerContract(id) {
@@ -61,69 +62,87 @@ export function deletePayerContract(id) {
 
 export function importPayerContracts(file) {
   const formData = new FormData();
-  formData.append("file", file);
-
+  formData.append('file', file);
+  
   return api.addAuthenticationHeader().post(`${basePath}/import`, formData, {
     headers: {
-      "Content-Type": "multipart/form-data",
-    },
+      'Content-Type': 'multipart/form-data'
+    }
   });
 }
 
 export function downloadPayerContractTemplate() {
   return api.addAuthenticationHeader().get(`${basePath}/template`, {
-    responseType: "blob",
+    responseType: 'blob'
   });
 }
 
 export function addInsuredToContract(contractHeaderUuid, payload) {
-  return api
-    .addAuthenticationHeader()
-    .post(`${basePath}/${contractHeaderUuid}/add-insured`, payload);
+  return api.addAuthenticationHeader().post(
+    `${basePath}/${contractHeaderUuid}/add-insured`,
+    payload
+  );
 }
 export function searchInsuredByInstitution(id, query = {}, config = {}) {
-  return api
-    .addAuthenticationHeader()
+  return api.addAuthenticationHeader()
     .get(`/insuredperson/by-payer/${id}`, {
       params: {
         ...query,
-        contractUuid: query.contractUuid, // ensure contractUuid is in the query
+        contractUuid: query.contractUuid // ensure contractUuid is in the query
       },
-      ...config,
+      ...config
     })
-    .then((response) => {
+    .then(response => {
       console.log("API raw response:", response);
       return response.data;
     })
-    .catch((error) => {
+    .catch(error => {
       console.error("API error:", error);
       throw error;
     });
 }
+export function activateApproveContract(contractHeaderUuid, remark = "") {
+  return api.addAuthenticationHeader().put(`${basePath}/${contractHeaderUuid}/status`, {
+    action: "ACTIVATE",
+    rejectionReason: "",
+    remark,
+  });
+}
+
+// ✅ New: Reject contract
+export function rejectContract(contractHeaderUuid, rejectionReason, remark = "") {
+  return api.addAuthenticationHeader().put(`${basePath}/${contractHeaderUuid}/status`, {
+    action: "REJECT",
+    rejectionReason,
+    remark,
+  });
+}
+
 export function assignServicesToGroup(groupUuid, serviceUuids = []) {
   // if (!groupUuid || !Array.isArray(serviceUuids)) {
   //   throw new Error('Invalid group UUID or service list');
   // }
 
-  return api
-    .addAuthenticationHeader()
-    .post(`${basePath}/${groupUuid}/assign-services`, serviceUuids, {
+  return api.addAuthenticationHeader().post(
+    `${basePath}/${groupUuid}/assign-services`,
+    serviceUuids,
+    {
       headers: {
-        "Content-Type": "application/json",
-      },
-    });
+        'Content-Type': 'application/json'
+      }
+    }
+  );
 }
 export function getContractDetailsByGroup(groupUuid, contractHeaderUuid) {
   // if (!groupUuid || !contractHeaderUuid) {
   //   throw new Error('Both groupUuid and contractHeaderUuid are required');
   // }
 
-  return api
-    .addAuthenticationHeader()
-    .get(
-      `/groups/groups/${groupUuid}/contracts/${contractHeaderUuid}/contract-details`
-    );
+  return api.addAuthenticationHeader().get(
+    `/groups/groups/${groupUuid}/contracts/${contractHeaderUuid}/contract-details`
+  );
 }
+
 
 // Helper function for safe API responses
 export async function safeApiCall(apiCall) {
@@ -136,7 +155,7 @@ export async function safeApiCall(apiCall) {
   } catch (error) {
     return {
       success: false,
-      error: error?.response?.data?.message || error.message || "Unknown error",
+      error: error?.response?.data?.message || error.message || 'Unknown error'
     };
   }
 }

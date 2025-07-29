@@ -8,9 +8,9 @@ import { addToast } from "@/toast";
 import { openModal } from "@customizer/modal-x";
 import { useApiRequest } from "@/composables/useApiRequest";
 import contractRequestStatusRow from "../components/contractRequestStatusRow.vue";
-import ActiveInstitutionsDataProvider from "@/features/instution_settings/components/ActiveInstitutionsDataProvider.vue";
 import { createKenemaContracts } from "../api/contractRequestApi";
 import icons from '@/utils/icons';
+import KenemaPayersContractsDataProvider from '../components/kenemaPayersContractsDataProvider.vue';
 
 const router = useRouter();
 const search = ref("");
@@ -114,7 +114,12 @@ async function createContracts() {
         message: `${selectedCount} contract(s) created successfully`,
       });
       
-      // Refresh data after clearing selections
+     router.push('/provider_contracts'); // Redirect to the contracts page
+      // Emit events to parent component if needed
+      // emit('clear-selection');
+      // emit('refresh-data');
+      
+      // Optionally, refresh data in the data provider
       refreshData();
     } else {
       throw new Error(response.error || "Failed to create contracts");
@@ -289,7 +294,7 @@ onMounted(() => {
     </template>
 
     <template #default="{ search }">
-      <ActiveInstitutionsDataProvider
+      <KenemaPayersContractsDataProvider
         ref="dataProvider"
         :search="search"
         v-slot="{
@@ -305,7 +310,7 @@ onMounted(() => {
           :headers="{
             head: [
               '', // For the selection checkbox column
-              '#',
+           
               'Payer Name',
               'Contracts',
               'Payer Admin User',
@@ -316,7 +321,7 @@ onMounted(() => {
             ],
             row: [
               'selection',
-              'index',
+          
               'payerName',
               'totalContracts',
               'email',
@@ -353,7 +358,7 @@ onMounted(() => {
             />
           </template>
         </Table>
-      </ActiveInstitutionsDataProvider>
+      </kenemaPayersContractsDataProvider>
     </template>
   </DefaultPage>
 </template>

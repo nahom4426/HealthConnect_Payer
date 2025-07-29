@@ -70,6 +70,22 @@ export default {
   contracts: ` <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M19 8.2V12.7C19 17.2 17.2 19 12.7 19H7.3C2.8 19 1 17.2 1 12.7V7.3C1 2.8 2.8 1 7.3 1H11.8M19 8.2H15.4C12.7 8.2 11.8 7.3 11.8 4.6V1M19 8.2L11.8 1M5.5 10.9H10.9M5.5 14.5H9.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`,
+checkCircle: `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">
+    <path fill="currentColor" fill-rule="evenodd" d="M7 0a7 7 0 1 0 0 14A7 7 0 0 0 7 0zM9.354 5.646a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L6 8.293l2.646-2.647a.5.5 0 0 1 .708 0z" clip-rule="evenodd"/>
+  </svg>
+`,
+empty: `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">
+    <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="2" />
+  </svg>
+`,
+people: `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">
+    <path fill="currentColor" d="M4.5 1.75a2.25 2.25 0 1 0 0 4.5a2.25 2.25 0 0 0 0-4.5zm5 0a2.25 2.25 0 1 0 0 4.5a2.25 2.25 0 0 0 0-4.5zM2.25 7C1.007 7 0 8.007 0 9.25v.5a1.25 1.25 0 0 0 1.25 1.25h6.5A1.25 1.25 0 0 0 9 9.75v-.5C9 8.007 7.993 7 6.75 7h-4.5zm9.5 0c-.54 0-1.033.158-1.45.427a3.001 3.001 0 0 1 .7 1.823v.5c0 .177-.03.347-.085.505h1.835A1.25 1.25 0 0 0 14 9.75v-.5C14 8.007 12.993 7 11.75 7z"/>
+  </svg>
+`,
+
   trash: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
   creditClaims: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>`,
   debitClaims: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>`,
@@ -294,6 +310,27 @@ assign:`<svg width="16" height="17" viewBox="0 0 16 17" fill="#28A745" xmlns="ht
   close: `
 		<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14"><path fill="currentColor" fill-rule="evenodd" d="M1.707.293A1 1 0 0 0 .293 1.707L5.586 7L.293 12.293a1 1 0 1 0 1.414 1.414L7 8.414l5.293 5.293a1 1 0 0 0 1.414-1.414L8.414 7l5.293-5.293A1 1 0 0 0 12.293.293L7 5.586z" clip-rule="evenodd"/></svg>
 	`,
+ check: `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">
+    <path fill="currentColor" fill-rule="evenodd" d="M5.5 10.793L2.354 7.646a.5.5 0 0 0-.708.708l3.5 3.5a.5.5 0 0 0 .708 0l7-7a.5.5 0 0 0-.708-.708L5.5 10.793z" clip-rule="evenodd"/>
+  </svg>
+`,
+info: `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">
+    <path fill="currentColor" fill-rule="evenodd" d="M7 0a7 7 0 1 0 0 14A7 7 0 0 0 7 0zM6.25 4.25a.75.75 0 1 1 1.5 0a.75.75 0 0 1-1.5 0zM7 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 1 0v-3A.5.5 0 0 0 7 6z" clip-rule="evenodd"/>
+  </svg>
+`,
+warning: `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">
+    <path fill="currentColor" fill-rule="evenodd" d="M6.293 1.502a1 1 0 0 1 1.414 0l5.5 5.5a1 1 0 0 1 0 1.414l-5.5 5.5a1 1 0 0 1-1.414 0l-5.5-5.5a1 1 0 0 1 0-1.414l5.5-5.5zM7 4a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5A.75.75 0 0 0 7 4zm0 5.75a.75.75 0 1 0 0 1.5a.75.75 0 0 0 0-1.5z" clip-rule="evenodd"/>
+  </svg>
+`,
+building: `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 14 14">
+    <path fill="currentColor" fill-rule="evenodd" d="M2 1a1 1 0 0 0-1 1v11h2v-1a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1h2V5.414a1 1 0 0 0-.293-.707l-4.414-4.414A1 1 0 0 0 8.586 0H2zm1 2h2v2H3V3zm0 3h2v2H3V6zm0 3h2v2H3V9zm3-6h2v2H6V3zm0 3h2v2H6V6zm0 3h2v2H6V9zm3-6h.586L12 4.414V5H9V3z" clip-rule="evenodd"/>
+  </svg>
+`,
+
   eye: `
 		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 14 14"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13.23 6.246c.166.207.258.476.258.754c0 .279-.092.547-.258.754C12.18 9.025 9.79 11.5 7 11.5S1.82 9.025.77 7.754A1.2 1.2 0 0 1 .512 7c0-.278.092-.547.258-.754C1.82 4.975 4.21 2.5 7 2.5s5.18 2.475 6.23 3.746"/><path d="M7 9a2 2 0 1 0 0-4a2 2 0 0 0 0 4"/></g></svg>
 	`,

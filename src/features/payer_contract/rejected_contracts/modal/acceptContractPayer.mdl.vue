@@ -6,7 +6,7 @@ import ModalParent from "@/components/ModalParent.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
-import { activateApproveContract } from "../api/pendingPayerContractApi";
+import { activateApproveContract } from "../api/rejectedPayerContractApi";
 import { useRoute } from "vue-router";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
 
