@@ -23,7 +23,7 @@ const validationPerformed = ref(false);
 const importDialog = ref(false);
 const excelData = ref([]);
 const validationComplete = ref(false);
-
+const status = ref("");
 const formData = ref({
   contractHeaderUuid: "",
   contractName: "",
@@ -400,7 +400,7 @@ onMounted(async () => {
                 <tr>
                   <th class="px-6 py-3 text-left font-semibold">Name</th>
                   <th class="px-6 py-3 text-left font-semibold">
-                    Membership #
+                    Employee ID
                   </th>
                   <th class="px-6 py-3 text-left font-semibold">Dependants</th>
                 </tr>
@@ -443,11 +443,11 @@ onMounted(async () => {
       </div>
     <!-- Action Buttons -->
     <div class="flex justify-end gap-4 mt-8">
-      <Button 
-        @click="handleReject" 
-        class="bg-gradient-to-r from-red-600 to-red-700 text-white py-1 px-4 rounded-lg shadow hover:shadow-md transition-all"
-       
-      >
+    <Button 
+  v-if="formData.status !== 'REJECTED'"
+  @click="handleReject" 
+  class="bg-gradient-to-r from-red-600 to-red-700 text-white py-1 px-4 rounded-lg shadow hover:shadow-md transition-all"
+>
        <!-- :disabled="!validationPerformed" -->
         <span class="flex items-center gap-2">
           <i v-html="icons.close" class="w-4 h-4"></i>
@@ -456,6 +456,7 @@ onMounted(async () => {
       </Button>
       <Button 
         @click="handleApprove" 
+         v-if="formData.status !== 'REJECTED'"
         class="bg-gradient-to-r from-primary to-primary text-white py-1 px-4 rounded-lg shadow hover:shadow-md transition-all"
         :class="{'animate-pulse': allServicesValid && validationComplete}"
         

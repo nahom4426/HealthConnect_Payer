@@ -530,7 +530,7 @@ watch(searchEmployeeQuery, (newQuery) => {
         <div class="mt-4 flex-1 flex flex-col">
           <template v-if="fetchPending">
             <div class="flex justify-center py-8">
-              <Spinner class="h-8 w-8 text-teal-600" />
+              <Spinner size="lg" />
             </div>
           </template>
           <template v-else>
@@ -540,7 +540,7 @@ watch(searchEmployeeQuery, (newQuery) => {
                   <thead class="bg-gray-50 sticky top-0 z-10">
                     <tr>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Membership #</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Eligibility</th>
