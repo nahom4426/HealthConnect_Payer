@@ -108,7 +108,7 @@ function submitForm() {
 
 <template>
   <div class="bg-white p-4 rounded-xl space-y-6 box-border">
-    <h1 class="border-b font-semibold p-4">Eligibility Check</h1>
+    <!-- <h1 class="border-b font-semibold p-4">Eligibility Check</h1> -->
     
     <div class="bg-white rounded-lg">
       <creditServicesFormDataProvider ref="formDataProvider">
