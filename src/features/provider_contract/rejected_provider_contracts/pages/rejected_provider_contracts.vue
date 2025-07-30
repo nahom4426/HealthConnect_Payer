@@ -3,7 +3,7 @@ import { ref, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 import Table from "@/components/Table.vue";
 import DefaultPage from "@/components/DefaultPage.vue";
-import pendingContractsDataProvider from "../components/rejectedContractsDataProvider.vue";
+import rejectedContractsDataProvider from "../components/rejectedContractsDataProvider.vue";
 import Button from "@/components/Button.vue";
 import { Status } from "@/types/interface";
 // import { changePayerContractStatus, deletePayerContract } from "../../active_payer_contracts/api/payerContractApi";
@@ -13,9 +13,10 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { openModal } from "@customizer/modal-x";
 import { payerContracts } from "../store/payerContractStore";
 import icons from "@/utils/icons";
-// import ContractStatusRow from "../../active_payer_contracts/components/contractStatusRow.vue";
+// import contractRequestStatusRow from "../../active_payer_contracts/components/contractStatusRow.vue";
 import { changePayerContractStatus, deletePayerContract } from "../api/rejectedPayerContractApi";
-import ContractStatusRow from "@/features/payer_contract/active_payer_contracts/components/contractStatusRow.vue";
+import ContractRequestStatusRow from "../../contract_requests/components/contractRequestStatusRow.vue";
+// import ContractStatusRow from "@/features/payer_contract/active_payer_contracts/components/contractStatusRow.vue";
 
 
 const emit = defineEmits(["navigate"]);
@@ -156,7 +157,7 @@ function handleDeactivate(contract) {
    
 
     <template #default="{ search }">
-      <pendingContractsDataProvider
+      <rejectedContractsDataProvider
         ref="dataProvider"
         :search="search"
         v-slot="{ contracts, pending, currentPage, itemsPerPage, totalPages }"
@@ -185,7 +186,7 @@ function handleDeactivate(contract) {
             ]
           }"
           :rows="contracts"
-          :rowCom="ContractStatusRow"
+          :rowCom="ContractRequestStatusRow"
           :pagination="{
             currentPage,
             itemsPerPage,
@@ -195,7 +196,7 @@ function handleDeactivate(contract) {
           }"
         >
           <template #row>
-            <ContractStatusRow
+            <contractRequestStatusRow
               :rowData="contracts"
               :rowKeys="[
                 'contractName',
@@ -224,7 +225,7 @@ function handleDeactivate(contract) {
             />
           </template>
         </Table>
-      </pendingContractsDataProvider>
+      </rejectedContractsDataProvider>
     </template>
   </DefaultPage>
 </template>

@@ -139,7 +139,7 @@ async function fetchEmployees() {
     // Prepare search parameters
     const params = {};
     if (searchEmployeeQuery.value.trim()) {
-      params.search = searchEmployeeQuery.value.trim();
+      params.searchKey = searchEmployeeQuery.value.trim(); // Changed from 'search' to 'searchKey'
     }
 
     const response = await getPayerContractById(selectedContract.value, params);
@@ -201,7 +201,6 @@ async function fetchEmployees() {
     fetchPending.value = false;
   }
 }
-
 function selectEmployee(employee) {
   selectedEmployee.value = {
     ...employee,
@@ -587,7 +586,7 @@ watch(searchEmployeeQuery, (newQuery) => {
                                 selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid
                             }"
                           >
-                            {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Selected' : 'Select' }}
+                            {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Detail' : 'Detail' }}
                           </button>
                         </td>
                       </tr>
@@ -654,7 +653,7 @@ watch(searchEmployeeQuery, (newQuery) => {
                                   selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid
                               }"
                             >
-                              {{ selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid ? 'Selected' : 'Select' }}
+                              {{ selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid ? 'Detail' : 'Detail' }}
                             </button>
                           </td>
                         </tr>

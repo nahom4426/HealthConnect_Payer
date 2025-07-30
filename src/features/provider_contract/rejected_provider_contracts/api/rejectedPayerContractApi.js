@@ -6,15 +6,15 @@ const basePath = '/payer-provider-contract';
 
 export function getPayerContracts(query = {}) {
   const authStore = useAuthStore();
-  const payerUuid = authStore.auth?.user?.payerUuid;
+  const providerUuid = authStore.auth?.user?.providerUuid;
 
-  if (!payerUuid) {
+  if (!providerUuid) {
     throw new Error('Payer UUID not found in auth store');
   }
 
   return api.addAuthenticationHeader().get(`${basePath}/all`, {
     params: {
-      payerUuid,
+      providerUuid,
       page: 0,
       size: 10,
       sort: 'startDate',
