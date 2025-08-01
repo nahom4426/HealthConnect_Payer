@@ -509,6 +509,40 @@ logo:`<svg width="33" height="33" viewBox="0 0 33 33" fill="none" xmlns="http://
 <path d="M13.0593 22.4741C13.0593 25.4932 15.5068 27.9407 18.5259 27.9407H29.0037C29.5908 27.9407 30.0667 28.4166 30.0667 29.0037C30.0667 29.5907 29.5908 30.0667 29.0037 30.0667H11.9963C11.4093 30.0667 10.9333 29.5907 10.9333 29.0037V11.9963C10.9333 11.4092 11.4093 10.9333 11.9963 10.9333C12.5834 10.9333 13.0593 11.4092 13.0593 11.9963V22.4741Z" fill="#4AD991"/>
 <path opacity="0.5" d="M17.0236 23.3529C16.6221 23.7812 15.9494 23.8029 15.5211 23.4014C15.0929 22.9998 15.0712 22.3272 15.4727 21.8989L19.4588 17.647C19.8471 17.2328 20.4924 17.1969 20.9242 17.5655C22.642 19.0313 25.2338 18.7764 26.6331 17.004L28.1694 15.058C28.5332 14.5972 29.2016 14.5186 29.6624 14.8823C30.1231 15.2461 30.2018 15.9145 29.838 16.3753L25.0547 22.4342C24.6811 22.9074 23.989 22.9755 23.5304 22.5841C21.7313 21.0489 19.0433 21.1985 17.4258 22.9239L17.0236 23.3529Z" fill="#4AD991"/>
 </svg>`,
+  group: `<svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle opacity="1" cx="20.5" cy="20.5" r="20.5" fill="#E0F2FE"/>
+  <path d="M20.5 22.5C23.5376 22.5 26 20.0376 26 17C26 13.9624 23.5376 11.5 20.5 11.5C17.4624 11.5 15 13.9624 15 17C15 20.0376 17.4624 22.5 20.5 22.5Z" fill="#38BDF8"/>
+  <path opacity="0.5" d="M29 28.5C29 26.0147 26.9853 24 24.5 24H16.5C14.0147 24 12 26.0147 12 28.5C12 29.3284 12.6716 30 13.5 30H27.5C28.3284 30 29 29.3284 29 28.5Z" fill="#38BDF8"/>
+</svg>
+`,
+  contract: `<svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle opacity="1" cx="20.5" cy="20.5" r="20.5" fill="#F3E8FF"/>
+  <path d="M14 10C13.4477 10 13 10.4477 13 11V30C13 30.5523 13.4477 31 14 31H27C27.5523 31 28 30.5523 28 30V16.5L22 10H14Z" fill="#C084FC"/>
+  <path opacity="0.5" d="M22 10V17H28" fill="#C084FC"/>
+  <path d="M17 20H24" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M17 24H24" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+`,
+clock:`<svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="20.5" cy="20.5" r="20.5" fill="#F3E8FF"/>
+  <path d="M20.5 12V21L26 24" stroke="#EAB308" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`,
+check_circle:`<svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="20.5" cy="20.5" r="20.5" fill="#FEF9C3"/>
+  <path d="M29.5 15.5L18 27L12 21" stroke="#22C55E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+`,
+x_circle:`<svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="20.5" cy="20.5" r="20.5" fill="#FEF9C3"/>
+  <path d="M26 15L15 26" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M15 15L26 26" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
+
+`,
+
   premium: `<svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
 <rect width="41" height="41" rx="20.5" fill="#FFF0E6"/>
 <path opacity="0.499209" fill-rule="evenodd" clip-rule="evenodd" d="M10.7066 23.9762C10.466 23.8373 10.4068 23.5079 10.652 23.3773L19.6208 18.6004C19.9973 18.3998 20.4489 18.3998 20.8254 18.6004L29.7942 23.3773C29.9774 23.4749 29.9444 23.7227 29.7647 23.8265L20.2845 29.2998C20.1754 29.3628 20.0364 29.3628 19.9273 29.2998L10.7066 23.9762Z" fill="#FEC53D"/>

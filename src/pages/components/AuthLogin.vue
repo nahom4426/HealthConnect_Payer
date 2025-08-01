@@ -52,8 +52,9 @@ function handleLogin({ values }) {
         }
         localStorage.setItem("userDetail", JSON.stringify(res.data));
         reRoute();
+         toasted(res.success, "Successfully Logged In", res.error);
       }
-      toasted(res.success, "Successfully Logged In", res.error);
+     
     }
   );
 }
