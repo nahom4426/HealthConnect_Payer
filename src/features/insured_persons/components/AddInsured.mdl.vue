@@ -24,7 +24,7 @@ async function handleSubmit(formValues) {
       "firstName",
       "fatherName",
       "idNumber",
-      "phone",
+      
     ];
 
     const missingFields = requiredFields.filter((field) => !formValues[field]);
@@ -48,7 +48,7 @@ async function handleSubmit(formValues) {
       groupUuid:formValues.groupUuid,
       birthDate: formValues.birthDate,
       inactiveDate: formValues.inactiveDate || "",
-      phone: formValues.phone,
+      phone: formValues.phone || null,
       woreda: formValues.woreda || "",
       state: formValues.state || "Addis Ababa",
       city: formValues.city || "",

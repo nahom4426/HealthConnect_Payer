@@ -27,8 +27,7 @@ function handleImageError() {
 }
 
 function logout() {
-  localStorage.removeItem("userDetail");
-  window.location.href = "/login";
+  authStore.logout(); // Uses the centralized logout logic
 }
 
 const props = defineProps({

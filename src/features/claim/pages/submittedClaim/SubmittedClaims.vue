@@ -4,7 +4,7 @@ import DefaultPage from "@/components/DefaultPage.vue";
 import { openModal } from "@customizer/modal-x";
 import icons from "@/utils/icons";
 import SubmittedClaimDataProvider from "./components/SubmittedClaimDataProvider.vue";
-import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAndStatusRow.vue";
+import PriceAndStatusRow from "@/features/credit/track_claim/components/track_row.vue";
 </script>
 
 <template>

@@ -7,7 +7,7 @@ import { usePagination } from "@/composables/usePagination";
 import { getAuthorizationDetail } from "@/features/credit/authorization/api/authorizationApi";
 import DynamicForm from "@/features/credit/authorization/form/DynamicForm.vue";
 import { getClaimByID } from "@/features/credit/track_claim/api/trackClaimApi";
-import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAndStatusRow.vue";
+import PriceAndStatusRow from "@/features/credit/track_claim/components/track_row.vue";
 import {
   formatCurrency,
   formatDateToYYMMDD,

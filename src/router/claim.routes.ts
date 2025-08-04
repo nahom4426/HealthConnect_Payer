@@ -11,6 +11,8 @@ import SubmittedClaimDetail from "@/features/claim/pages/submittedClaim/Submitte
 import SubmittedClaimIndex from "@/features/claim/pages/submittedClaim/SubmittedClaimIndex.vue";
 import SubmittedClaims from "@/features/claim/pages/submittedClaim/SubmittedClaims.vue";
 import TrackClaim from "@/features/credit/track_claim/pages/TrackClaim.vue";
+import TrackClaimDetail from "@/features/credit/track_claim/pages/TrackClaimDetail.vue";
+import TrackClaimsIndex from "@/features/credit/track_claim/pages/trackClaimsIndex.vue";
 
 export default [
    {
@@ -66,20 +68,27 @@ export default [
       }
     ]
   },
-  
-
- 
-  
-  {
+    {
+    
     path: "/track_claims",
     name: "Track Claims",
-    component: TrackClaim,
-    meta: {
+    component: TrackClaimsIndex,
+     meta: {
       requiresAuth: true,
       privilege: ['Create Services'], // Changed from privileges to privilege to match what the router checks
     },
+    children: [
+      { 
+        path: "",
+        name: "Track Approval",
+        component: TrackClaim,},
+      {
+        path: "detail/:id",
+        name: "Track Approval Detail",
+        component: TrackClaimDetail,
+      }
+    ]
   },
-
   {
     
     path: "/payment",

@@ -97,15 +97,13 @@ const openExportModal = async () => {
   try {
     loadingCategories.value = true;
     
-    // Fetch categories from backend
     const response = await getServiceCategories(selectedProvider.value);
     
     if (Array.isArray(response)) {
-      // Transform response to match our expected format
-      categories.value = response.map((category, index) => ({
-        id: category.toLowerCase().replace(/\s+/g, '-') || `category-${index}`,
-        name: category,
-        original: category
+      categories.value = response.map((category) => ({
+        id: category,         // keep original value
+        name: category,       // keep original name
+        original: category    // keep original reference
       }));
       
       // Remove duplicates
@@ -128,6 +126,7 @@ const openExportModal = async () => {
     loadingCategories.value = false;
   }
 };
+
 const toggleAllCategories = () => {
   if (selectedCategories.value.length === categories.value.length) {
     selectedCategories.value = [];

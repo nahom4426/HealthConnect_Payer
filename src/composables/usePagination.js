@@ -43,7 +43,7 @@ function getPaginationData(next = true, current = false) {
     searchKey: search.value || "",
     search: search.value || "",
     page: pageValue,
-    limit: limitValue || 25, // ✅ fallback to 25
+    size: limitValue || 25, // ✅ fallback to 25
   };
 
   console.log("Generated pagination data:", data);

@@ -29,12 +29,19 @@ export const useClinical = defineStore("claimStore", () => {
       clinicalClaim.value.splice(idx, 1, data);
     }
   }
+     function updateStatus(id, claimStatus) {
+    const idx = clinicalClaim.value.findIndex((el) => el.dispensingUuid == id);
+    if (idx == -1) return;
+
+    clinicalClaim.value[idx].claimStatus = claimStatus;
+  }
 
   return {
     set,
     add,
     remove,
     update,
+    updateStatus,
     getAll,
     clinicalClaim,
   };

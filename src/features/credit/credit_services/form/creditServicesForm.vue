@@ -828,14 +828,7 @@ watch(searchEmployeeQuery, (newQuery) => {
             Back to Details
           </Button>
           <div class="flex space-x-4">
-            <Button
-              type="button"
-              @click="onCancel"
-              class="text-gray-600 px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-              :disabled="pending"
-            >
-              Cancel
-            </Button>
+           
             <ModalFormSubmitButton
               v-if="activeTab === 'services'"
               :pending="pending"

@@ -102,9 +102,11 @@ async function fetchEmployees() {
   if (!selectedPayer.value) return;
   try {
     fetchPending.value = true;
-    const response = await searchInsuredByInstitution(selectedPayer.value, {
-      search: searchEmployeeQuery.value
-    });
+   const response = await searchInsuredByInstitution(selectedPayer.value, {
+  search: searchEmployeeQuery.value ,
+  page: 1,
+  size: 100000 // Corrected the syntax here
+});
     const employeesData = Array.isArray(response) ? response :
       response?.content || response?.data?.content || [];
 

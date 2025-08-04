@@ -37,6 +37,7 @@ function register(formData) {
       'payerUuid',
       'firstName',
       'fatherName',
+      
       'idNumber',
     ];
 

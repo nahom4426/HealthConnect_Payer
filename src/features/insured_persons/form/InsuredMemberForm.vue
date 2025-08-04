@@ -155,7 +155,9 @@ function handleSubmit() {
     birthDate: dateOfBirth.value ? `${dateOfBirth.value}T00:00:00.000Z` : "",
     inactiveDate: inactiveDate.value ? `${inactiveDate.value}T00:00:00.000Z` : "",
     idNumber: employeeId.value,
-    phone: `${countryCode.value}${phoneNumber.value}`,
+      ...(phoneNumber.value && {
+      phone: `${countryCode.value}${phoneNumber.value}`,
+    }),
     state: state.value,
     woreda: woreda.value, // Woreda
     subcity: subcity.value, // Sub City
@@ -388,13 +390,13 @@ const statusOptions = ["ACTIVE", "INACTIVE"];
               :options="['+251']"
               :attributes="{
                  class: 'pr-2 my-2 bg-[#F9F9FD]',
-                required: true,
+                
               }"
             />
             <Input
               v-model="phoneNumber"
               name="phoneNumber"
-             
+              validation="required"
               :attributes="{
                 placeholder: 'Enter phone number',
                 class: 'pr-32 my-2 bg-[#F9F9FD]',

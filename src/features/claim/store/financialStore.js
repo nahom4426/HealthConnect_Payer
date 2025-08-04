@@ -13,6 +13,7 @@ export const useFinancialStore = defineStore("financialClaimStore", () => {
   }
 
   function remove(id) {
+       console.log(id);
     const idx = financialData.value.findIndex((el) => el.claimUuid == id);
     if (idx > -1) {
       financialData.value.splice(idx, 1);

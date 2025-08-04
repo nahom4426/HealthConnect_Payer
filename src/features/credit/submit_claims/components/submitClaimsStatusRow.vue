@@ -19,7 +19,33 @@ const props = defineProps({
   onRowClick: { type: Function, default: () => {} },
   onRemove: { type: Function, default: () => {} } // Add this new prop for remove action
 });
+function getStatusStyle(status) {
+  const base = "inline-flex justify-center items-center min-w-[80px] px-3 py-1 rounded text-sm font-semibold";
 
+  switch (status?.toUpperCase()) {
+    case "APPROVED":
+      return `${base} bg-green-100 text-green-800`;
+      case "ACTIVE":
+      return `${base} bg-green-100 text-green-800`;
+      case "SUBMITTED":
+      return `${base} bg-yellow-100 text-yellow-800`;
+        // Light green for active
+    case "INACTIVE":
+      return `${base} bg-red-100 text-red-800`;    // Light gray for inactive
+    case "PENDING":
+      return `${base} bg-yellow-100 text-yellow-800`; // Light yellow for pending
+    case "ACCEPTED":
+      return `${base} bg-blue-100 text-blue-800`;     // Light blue for accepted
+    case "REJECTED":
+      return `${base} bg-red-100 text-red-800`;       // Light red for rejected
+    case "RESUBMITTED":
+      return `${base} bg-purple-100 text-purple-800`;
+    case "SUSPENDED":
+      return `${base} bg-yellow-100 text-yellow-800`; // Light yellow for suspended
+    default:
+      return `${base} bg-gray-100 text-gray-800`;    // Default light gray
+  }
+}
 const { addToast } = useToast();
 const insuredStore = claimServices();
 const payerNames = ref<Record<string, string>>({});
@@ -169,11 +195,13 @@ const removeClaim = (claimUuid: string) => {
       >
        rem <i v-html="icons.trash"></i>
       </button>
-            <button 
-              @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
-              class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
-              v-if="row.insuredUuid"
-            >
+           <button 
+  v-if="(row.status === 'APPROVED' || row.status === 'Inactive') && row.insuredUuid"
+  @click.prevent="$router.push(`/insured_list/detail/${row.insuredUuid}`)"
+  class="block w-full text-center py-2 text-sm text-gray-700 hover:bg-gray-100"
+>
+ 
+
               <div class="flex items-start justify-start pl-4 gap-4">
                 <i v-html="icons.details" />
                 Details

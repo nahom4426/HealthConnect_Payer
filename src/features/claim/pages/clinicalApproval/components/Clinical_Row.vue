@@ -15,7 +15,8 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { useClinical } from "@/features/claim/store/clinicalStore";
 import { approveBatchClaims } from "@/features/claim/api/batchClaim";
 import { useSubmittedClaimStore } from "@/features/claim/store/submittedClaimStore";
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const props = defineProps({
   rowData: {
     type: Array,
@@ -47,6 +48,33 @@ const message = ref(
     : "Are you sure you want to approve this batch?"
 );
 
+function getStatusStyle(claimStatus) {
+  const base = "inline-flex justify-center items-center min-w-[80px] px-3 py-1 rounded text-sm font-semibold";
+
+  switch (claimStatus?.toUpperCase()) {
+    case "APPROVED":
+      return `${base} bg-green-100 text-green-800`;
+    case "ACTIVE":
+      return `${base} bg-green-100 text-green-800`;
+    case "SUBMITTED":
+      return `${base} bg-yellow-100 text-yellow-800`;
+    // Light green for active
+    case "INACTIVE":
+      return `${base} bg-red-100 text-red-800`;    // Light gray for inactive
+    case "PENDING":
+      return `${base} bg-yellow-100 text-yellow-800`; // Light yellow for pending
+    case "ACCEPTED":
+      return `${base} bg-blue-100 text-blue-800`;     // Light blue for accepted
+    case "REJECTED":
+      return `${base} bg-red-100 text-red-800`;       // Light red for rejected
+    case "RESUBMITTED":
+      return `${base} bg-purple-100 text-purple-800`;
+    case "SUSPENDED":
+      return `${base} bg-yellow-100 text-yellow-800`; // Light yellow for suspended
+    default:
+      return `${base} bg-gray-100 text-gray-800`;    // Default light gray
+  }
+}
 const submittedClaimStore = useSubmittedClaimStore();
 
 function handleApproval(id, main) {
@@ -56,32 +84,49 @@ function handleApproval(id, main) {
       title: title.value,
       message: message.value,
     },
-    (confirmed) => {
+    async (confirmed) => {
       if (confirmed) {
         if (main) {
-          api.send(
+          await api.send(
             () => approveBatchClaims(id, { newStatus: "SUBMITTED" }),
             (res) => {
               if (res.success) {
-                submittedClaimStore.remove(claimUuid);
-                //   clinicalStore.remove(id);
+                submittedClaimStore.remove(id); // Changed from claimUuid to id
+                // clinicalStore.remove(id);
               }
-              toasted(res.success, "Claim Approved Successfully", res.error);
+              toasted(res.success, "Claim Submitted Successfully", res.error);
             }
           );
         } else {
-          api.send(
+          await api.send(
             () => approveClaim(id, { newStatus: "SUBMITTED" }),
             (res) => {
               if (res.success) {
-                clinicalStore.remove(id);
+                clinicalStore.updateStatus(id, "SUBMITTED");
+                // Check if all claims are submitted and redirect
+                if (areAllClaimsSubmitted()) {
+                  toasted(true, "All claims submitted successfully! Redirecting...");
+                  setTimeout(() => {
+                    router.push('/clinical_approval');
+                  }, 500);
+                } else {
+                  toasted(res.success, "Claim Submitted Successfully", res.error);
+                }
               }
-              toasted(res.success, "Claim Approved Successfully", res.error);
             }
           );
         }
       }
     }
+  );
+}
+
+// Helper function to check if all claims are submitted
+function areAllClaimsSubmitted() {
+  const claims = clinicalStore.getAll(); // Or whichever method gets your claims
+  return claims.length > 0 && claims.every(claim => 
+    claim.claimStatus?.toUpperCase() === "SUBMITTED" || 
+    claim.status?.toUpperCase() === "SUBMITTED"
   );
 }
 </script>
@@ -115,26 +160,11 @@ function handleApproval(id, main) {
         </p>
       </div>
 
-      <div class="truncate flex gap-4" v-else-if="key == 'claimStatus'">
-        <p
-          v-if="row?.claimStatus == 'DRAFT'"
-          class="bg-base-clr3 text-base-clr px-2 py-1 rounded border border-base-clr"
-        >
-          {{ row?.claimStatus }}
-        </p>
-        <p
-          v-else-if="row?.claimStatus == 'PAID'"
-          class="bg-secondary border border-primary px-2 py-1 rounded text-primary"
-        >
-          Paid
-        </p>
-
-        <p
-          v-else-if="row?.claimStatus == 'REJECTED'"
-          class="bg-[#FFE8E8] border border-error px-2 py-1 rounded text-error"
-        >
-          REJECTED
-        </p>
+     
+        <div v-else-if="key === 'claimStatus' || key === 'status'" class="truncate">
+        <span class="px-2.5 py-1 rounded-md text-xs font-medium" :class="getStatusStyle(row.claimStatus || row.status)">
+          {{ row.claimStatus || row.status }}
+        </span>
       </div>
       <span class="text-base-clr" v-else>
         {{ getColumnValue(key, row) }}
@@ -154,45 +184,45 @@ function handleApproval(id, main) {
             <i v-html="icons.threeDots"></i>
           </button>
         </div>
-        <div
-          class="flex shadow-lg text-base p-2 mt-2 rounded-lg flex-col gap-2 bg-white"
-          :ref="setRef"
-        >
-          <button
-            @click.prevent="
-              isOnDetailPage
-                ? $router.push(`/clinical_approval/detail/${row?.claimUuid}`)
-                : openModal('ClaimDetail', row)
-            "
-            class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
-          >
-            <i v-html="icons.edits" />
-            <span>Open</span>
-          </button>
+       <div
+  class="flex shadow-lg text-base p-2 mt-2 rounded-lg flex-col gap-2 bg-white"
+  :ref="setRef"
+>
+  <!-- Open Button (Always Visible) -->
+  <button
+    @click.prevent="
+      isOnDetailPage
+        ? $router.push(`/clinical_approval/detail/${row?.claimUuid}`)
+        : openModal('ClaimDetail', row)
+    "
+    class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
+  >
+    <i v-html="icons.details" />
+    <span>Details</span>
+  </button>
 
-          <button
-            @click="
-              isOnDetailPage
-                ? handleApproval(row?.claimUuid, isOnDetailPage)
-                : handleApproval(row?.dispensingUuid, isOnDetailPage)
-            "
-            class="p-2 flex text-base-clr items-center gap-2 rounded-lg hover:bg-gray-100"
-          >
-            <i v-html="icons.details" />
-            <span>Approve</span>
-          </button>
-          <button
-            @click="
-              isOnDetailPage
-                ? openModal('ClinicalRejection', row)
-                : openModal('ClinicalRejection', row)
-            "
-            class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
-          >
-            <i v-html="icons.deactivate" />
-            <span>Reject</span>
-          </button>
-        </div>
+  <!-- Approve Button (Only on Detail Page) -->
+ <button
+  v-if="!isOnDetailPage && row?.claimStatus !== 'SUBMITTED'"
+  @click="handleApproval(row?.dispensingUuid)"
+  class="p-2 flex  text-primary items-center gap-2 rounded-lg hover:bg-gray-100"
+>
+  <i v-html="icons.activate" />
+  <span>Approve</span>
+</button>
+
+
+  <!-- Reject Button (Only on Detail Page) -->
+  <button
+    v-if="!isOnDetailPage && row?.claimStatus !== 'REJECTED'"
+    @click="openModal('ClinicalRejection', row)"
+    class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
+  >
+    <i v-html="icons.deactivate" />
+    <span>Reject</span>
+  </button>
+</div>
+
       </Dropdown>
     </td>
   </tr>

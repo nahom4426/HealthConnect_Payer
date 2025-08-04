@@ -49,7 +49,7 @@ function handleDelete() {
         }),
       (res) => {
         if (res.success) {
-          clinicalStore.remove(props.data?.services?.dispensingUuid);
+          clinicalStore.updateStatus(props.data?.dispensingUuid, "REJECTED");
           closeModal();
         }
         toasted(res.success, "Claim Rejected Successfully", res.error);

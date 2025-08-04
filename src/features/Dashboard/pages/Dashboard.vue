@@ -182,7 +182,7 @@ const updateDataStructures = () => {
         trend: "neutral"
       },
       {
-        title: "Active Payers",
+        title: "Payers With Employee",
         Image: icons.building_active,
         amount: filteredData.value.numberOfPayersWithInsured.toString(),
         today: icons.building_active,

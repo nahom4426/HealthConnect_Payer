@@ -201,7 +201,9 @@ onUnmounted(() => {
               </div>
             </button>
             <button
-                  @click="
+            v-if="row.status !== 'REJECTED' && row.status !== 'RESUBMITTED' && row.status !== 'Rejected' && row.status !== 'Resubmitted'"
+                 
+                 @click="
                     $router.push(`create_claims/detail/${row.batchCode}`)
                   "
                   class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"

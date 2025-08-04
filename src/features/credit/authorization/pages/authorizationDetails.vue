@@ -13,6 +13,7 @@ import { usePagination } from "@/composables/usePagination";
 import DynamicForm from "../form/DynamicForm.vue";
 import { openModal } from "@customizer/modal-x";
 import { getAuthorizationDetail } from "../api/authorizationApi";
+import icons from "@/utils/icons";
 
 const route = useRoute();
 const id = ref(route.params?.id);
@@ -176,6 +177,35 @@ watch(profilePicture, () => {
           </div>
         </template>
       </Table>
+      <div
+        v-if="firstItem.claimStatus !== 'APPROVED'"
+          class="flex justify-end mt-4 gap-2"
+        >
+          <div class="flex justify-end gap-4 mt-8">
+    <Button 
+ @click="openModal('ClaimRejection', route.params?.id)"
+  class="bg-gradient-to-r from-red-600 to-red-700 text-white py-1 px-4 rounded-lg shadow hover:shadow-md transition-all"
+>
+       <!-- :disabled="!validationPerformed" -->
+        <span class="flex items-center gap-2">
+          <i v-html="icons.close" class="w-4 h-4"></i>
+          Reject
+        </span>
+      </Button>
+      <Button 
+         @click="openModal('ClaimApproval', route.params?.id)"
+        class="bg-gradient-to-r from-primary to-primary text-white py-1 px-4 rounded-lg shadow hover:shadow-md transition-all"
+        :class="{'animate-pulse': allServicesValid && validationComplete}"
+        
+      >
+      <!-- :disabled="!validationPerformed || !allServicesValid" -->
+        <span class="flex items-center gap-2">
+          <i v-html="icons.check" class="w-4 h-4"></i>
+          Approve
+        </span>
+      </Button>
+    </div>
+        </div>
     </div>
   </DefaultPage>
 </template>

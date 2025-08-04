@@ -8,6 +8,7 @@ import AuthorizationBatchDataProvider from "../components/AuthorizationBatchData
 import Dropdown from "@/components/Dropdown.vue";
 import { formatDateToYYMMDD, toasted } from "@/utils/utils";
 import { openModal } from "@customizer/modal-x";
+import StatusRow from "../components/authorizationStatusRow.vue";
 function remove(id) {
   openModal(
     "Confirmation",
@@ -83,6 +84,7 @@ function remove(id) {
               'status',
             ],
           }"
+           :rowCom="StatusRow"
           :cells="{
             requestedOn: (requestedOn) => {
               const date = new Date(requestedOn);

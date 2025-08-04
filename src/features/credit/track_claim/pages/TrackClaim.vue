@@ -6,13 +6,13 @@ import { getClaimByStatus } from "../api/trackClaimApi";
 import { formatDateToYYMMDD, removeUndefined } from "@/utils/utils";
 import Table from "@/components/Table.vue";
 import Price_row from "../../authorization/components/price_row.vue";
-import PriceAndStatusRow from "../components/PriceAndStatusRow.vue";
+import PriceAndStatusRow from "../components/track_row.vue";
+import SubmittedClaimDataProvider from "@/features/claim/pages/submittedClaim/components/SubmittedClaimDataProvider.vue";
 
 const pagination = usePagination({
   cb: (data) =>
     getClaimByStatus(
       removeUndefined({
-        ClaimStatus: "SUBMITTED",
         ...data,
       })
     ),
@@ -29,27 +29,35 @@ const pagination = usePagination({
         <p class="text-base">Filters</p>
       </button>
     </template>
-    <Table
-      :pending="pagination.pending.value"
-      :rows="pagination.data?.value?.content"
-      :headers="{
-        head: [
-          'Batch Code',
-          'Payer',
-          'Requested On',
-          'Claim dating from',
-          'Claim dating to',
-          'Claim Amount',
-          'Status',
-        ],
-        row: [
-          'batchCode',
-          'payerName',
-          'visitDate',
-          'submissionDate',
-          'totalAmount',
-          'status',
-        ],
+    <SubmittedClaimDataProvider
+      :id="$route.params.id"
+      :search="search"
+      :providerUuid="selectedOption"
+      v-slot="{ claims, pending }"
+    >
+      <Table
+        :pending="pending"
+        :rows="claims"
+        :headers="{
+          head: [
+            'Batch Code',
+            'Provider Name',
+            'Requested On',
+            'Claim dating from',
+            'Claim dating to',
+            'Claim Amount',
+            'Status',
+            'Actions',
+          ],
+          row: [
+            'batchCode',
+            'providerName',
+            'visitDate',
+            'claimDatingFrom',
+            'claimDatingTo',
+            'totalAmount',
+            'status',
+          ],
       }"
       :cells="{
         visitDate: (visitDate) => {
@@ -68,5 +76,6 @@ const pagination = usePagination({
       :row-com="PriceAndStatusRow"
     >
     </Table>
+    </SubmittedClaimDataProvider>
   </DefaultPage>
 </template>

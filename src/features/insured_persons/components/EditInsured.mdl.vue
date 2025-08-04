@@ -65,7 +65,7 @@ async function handleSubmit(formValues) {
       grandFatherName: formValues.grandFatherName || formValues.grandfatherName,
       birthDate: formValues.birthDate ? `${formValues.birthDate}T00:00:00.000Z` : '',
       inactiveDate: formValues.inactiveDate ? `${formValues.inactiveDate}T00:00:00.000Z` : '',
-      phone: `${formValues.phone}`,
+      phone: formValues.phone || null,
       woreda: formValues.woreda || "",
       subcity: formValues.subcity || "",
       city: formValues.city || "",

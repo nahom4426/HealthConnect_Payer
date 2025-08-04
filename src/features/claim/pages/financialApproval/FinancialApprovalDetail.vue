@@ -5,19 +5,19 @@ import Table from "@/components/Table.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import DynamicForm from "@/features/credit/authorization/form/DynamicForm.vue";
 import { getClaimByID } from "@/features/credit/track_claim/api/trackClaimApi";
-import PriceAndStatusRow from "@/features/credit/track_claim/components/PriceAndStatusRow.vue";
-
-import { onMounted, ref, watch } from "vue";
+import {  ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import Financial_row from "./components/Financial_row.vue";
-
+import { convertBase64Image } from "@/utils/utils";
+// import { useFinancialStore } from "@/features/claim/store/financialStore";
+import { useFinancialDetailStore } from "@/features/claim/store/financialDetailStore";
 const route = useRoute();
 
 const profilePicture = ref("");
 const providerInfo = ref([]);
 const claimSummary = ref([]);
+const financialDetailStore = useFinancialDetailStore();
 const api = useApiRequest();
-const fetchClaim = () => {
   api.send(
     () => getClaimByID(route.params?.id),
     (res) => {
@@ -41,10 +41,10 @@ const fetchClaim = () => {
               }` || "N/A",
           },
         ];
+        financialDetailStore.set(res.data?.services);
       }
     }
   );
-};
 
 async function processProfilePicture() {
   if (!profilePicture.value) {
@@ -68,9 +68,7 @@ watch(profilePicture, () => {
   processProfilePicture();
 });
 
-onMounted(() => {
-  fetchClaim();
-});
+
 </script>
 
 <template>
@@ -104,7 +102,7 @@ onMounted(() => {
     <div class="bg-base-clr3 rounded-md p-4">
       <Table
         :pending="api.pending.value"
-        :rows="api.response.value?.services"
+        :rows="financialDetailStore.financialDetail || []"
         :headers="{
           head: [
             'Invoice ID',
@@ -126,18 +124,7 @@ onMounted(() => {
         }"
         :row-com="Financial_row"
       >
-        <template #actions="{ row }">
-          <div class="flex gap-2">
-            <Button
-              @click.prevent="openModal('BatchDetail', row)"
-              class="!text-white"
-              type="primary"
-              size="xs"
-            >
-              View
-            </Button>
-          </div>
-        </template>
+      
       </Table>
     </div>
   </DefaultPage>

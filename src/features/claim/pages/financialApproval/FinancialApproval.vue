@@ -71,6 +71,7 @@ const pagination = usePagination({
             'Claim dating from',
             'Claim dating to',
             'Claim Amount',
+            'Status',
             'Actions',
           ],
           row: [
@@ -80,6 +81,7 @@ const pagination = usePagination({
             'claimDatingFrom',
             'claimDatingTo',
             'totalAmount',
+            'status',
           ],
         }"
         :row-com="Financial_row"

@@ -9,7 +9,8 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import Form from "@/components/new_form_builder/Form.vue";
 import Button from "@/components/Button.vue";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
-
+import { useRouter } from "vue-router";
+const router = useRouter();
 const props = defineProps({
   data: String,
 });
@@ -22,8 +23,9 @@ function handleSubmit({ values }) {
     (res) => {
       if (res.success) {
         closeModal();
+        toasted(res.success, "Claim Approved Successfully"); // Updated success message
+        router.push(`/claim-approval`);
       }
-      toasted(res.success, "Claim Approves Successfully", res.error);
     }
   );
 }

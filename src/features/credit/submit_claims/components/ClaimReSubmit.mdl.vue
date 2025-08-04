@@ -10,7 +10,8 @@ import Form from "@/components/new_form_builder/Form.vue";
 import Button from "@/components/Button.vue";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
 import { claimRejection } from "../../authorization/api/claim";
-
+import { useRouter } from "vue-router";
+const router = useRouter();
 const props = defineProps({
   data: String,
 });
@@ -24,7 +25,7 @@ function handleSubmit({ values }) {
       if (res.success) {
         closeModal();
        toasted(res.success, "Claim Resubmitted Successfully"); // Resubmit success message
-
+ router.push("/create_claims");
       }
     }
   );
