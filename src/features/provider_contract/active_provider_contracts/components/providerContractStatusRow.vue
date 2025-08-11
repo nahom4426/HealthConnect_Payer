@@ -220,7 +220,7 @@ async function handleDeactivateWithClose(contract) {
             class="dropdown-menu hidden absolute right-0 z-10 w-full bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
           >
             <div class="py-1" role="none">
-              <button 
+              <!-- <button 
                 @click.stop="handleEditWithClose(row)"
                 class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
@@ -228,7 +228,7 @@ async function handleDeactivateWithClose(contract) {
                   <i v-html="icons.edits" />
                   Edit
                 </div>
-              </button>
+              </button> -->
               
              <button 
               @click.prevent="$router.push(`/provider_contracts/detail/${row.contractHeaderUuid}`)"

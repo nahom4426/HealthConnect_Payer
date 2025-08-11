@@ -19,8 +19,10 @@ import EmployeeDetails from '../components/EmployeeDetails.vue';
 import { getDispensingDetail, getEligibleServicesAndDrugs, updateDispensingRecord } from '../api/creditServicesApi';
 import icons from '@/utils/icons';
 import { debounce } from '@/utils/debounce';
+import { useRoute } from "vue-router";
 
 
+const route = useRoute();
 const props = defineProps({
   dispensingUuid: { type: String, required: true },
   onUpdated: { type: Function, default: () => {} },
@@ -35,6 +37,7 @@ const selectedEmployee = ref(null);
 const searchEmployeeQuery = ref('');
 const searchServiceQuery = ref('');
 const searchDrugQuery = ref('');
+const claimUuid =ref('');
 const fetchPending = ref(false);
 const error = ref(null);
 const currentStep = ref('selectEmployee');
@@ -51,6 +54,7 @@ const dispensingDate = ref(new Date().toISOString().split('T')[0]);
 const loading = ref(true);
 const claimData = ref({});
 const remarks = ref({});
+
 
 const employeeDetails = computed(() => {
   if (!selectedEmployee.value) return null;
@@ -281,6 +285,8 @@ async function handleSubmit() {
       secondaryDiagnosis: secondaryDiagnosis.value,
       prescriptionNumber: prescriptionNumber.value,
       pharmacyTransactionId: pharmacyTransactionId.value,
+      claimStatus: "RESUBMITTED",
+      claimUuid: route.params?.id || "",
       medicationItems: [
         ...addedServices.value.map(item => ({
           contractDetailUuid: item.contractDetailUuid,

@@ -76,9 +76,9 @@ function handleEditWithClose(row) {
 }
 
 function handleEdit(row) {
-  console.log('EditCreditServices modal opened with row:', row)
+  console.log('ResubmitCreditServices modal opened with row:', row)
   if (row.dispensingUuid) {
-    openModal('EditCreditServices', {
+    openModal('ResubmitCreditServices', {
       dispensingUuid: row.dispensingUuid,
       claim: row,
       onUpdated: (updatedClaim) => {
@@ -206,7 +206,7 @@ function areAllClaimsApproved() {
 
           <!-- Approve Button (Only if not already approved) -->
           <button
-            v-if="row?.claimStatus !== 'APPROVED'"
+            v-if="row?.claimStatus === 'REJECTED' "
             @click.stop="handleEditWithClose(row)"
             class="p-2 flex text-primary items-center gap-2 rounded-lg hover:bg-gray-100"
           >
@@ -216,12 +216,12 @@ function areAllClaimsApproved() {
 
           <!-- Reject Button (Only if not already rejected) -->
           <button
-            v-if="row?.claimStatus !== 'REJECTED'"
+            v-if="row?.claimStatus === 'REJECTED' "
             @click="handleRejection(row?.dispensingUuid)"
             class="p-2 flex items-center text-red-500 gap-2 rounded-lg hover:bg-gray-100"
           >
             <i v-html="icons.deactivate" />
-            <span>Reject</span>
+            <span>Remove</span>
           </button>
         </div>
       </Dropdown>

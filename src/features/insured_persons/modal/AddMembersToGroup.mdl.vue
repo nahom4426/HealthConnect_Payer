@@ -98,7 +98,6 @@ function handleAddMembersToGroup() {
           </div>
           <Table
             :firstCol="true"
-            :show-pagination="false"
             :pending="pending"
             :rows="insuredMembers"
             :headers="{
@@ -108,7 +107,7 @@ function handleAddMembersToGroup() {
                 'Phone',
                 'Position',
                 'Status',
-                'Actions',
+                
               ],
               row: ['fullName', 'idNumber', 'phone', 'position', 'status'],
             }"

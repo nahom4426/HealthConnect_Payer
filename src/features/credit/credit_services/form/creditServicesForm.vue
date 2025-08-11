@@ -48,7 +48,8 @@ const selectedContract = ref(null);
 const searchEmployeeQuery = ref('');
 const fetchPending = ref(false);
 const error = ref(null);
-const activeTab = ref('select');
+const activeTab = ref('select'); // Main tabs: 'select', 'details', 'services'
+const serviceSubTab = ref('services'); // Sub-tabs: 'services', 'drugs'
 const addedServices = ref([]);
 const addedDrugs = ref([]);
 const primaryDiagnosis = ref('');
@@ -136,10 +137,9 @@ async function fetchEmployees() {
     fetchPending.value = true;
     error.value = null;
     
-    // Prepare search parameters
     const params = {};
     if (searchEmployeeQuery.value.trim()) {
-      params.searchKey = searchEmployeeQuery.value.trim(); // Changed from 'search' to 'searchKey'
+      params.searchKey = searchEmployeeQuery.value.trim();
     }
 
     const response = await getPayerContractById(selectedContract.value, params);
@@ -201,6 +201,7 @@ async function fetchEmployees() {
     fetchPending.value = false;
   }
 }
+
 function selectEmployee(employee) {
   selectedEmployee.value = {
     ...employee,
@@ -224,10 +225,11 @@ function goToDetails() {
 function goToServices() {
   if (selectedEmployee.value) {
     activeTab.value = 'services';
+    serviceSubTab.value = 'services'; // Reset to services tab when entering
   }
 }
 
-async function handleSearchItems({ type, query }) {
+async function handleSearchItems({ type, query, searchType, insuredUuid, contractHeaderUuid }) {
   try {
     fetchPending.value = true;
 
@@ -238,7 +240,8 @@ async function handleSearchItems({ type, query }) {
       selectedContract.value,
       uuid,
       isDependant,
-      query
+      query,
+      searchType
     );
 
     const items = response.data?.content || response.data || [];
@@ -250,6 +253,9 @@ async function handleSearchItems({ type, query }) {
     }
   } catch (error) {
     console.error('Error searching items:', error);
+    if (selectServicesRef.value) {
+      selectServicesRef.value.setSearchResults([]);
+    }
   } finally {
     fetchPending.value = false;
   }
@@ -260,7 +266,7 @@ function handleUpdateRemarks(newRemarks) {
 }
 
 function handleAddItem(item) {
-  if (activeTab.value === 'services') {
+  if (serviceSubTab.value === 'services') {
     addedServices.value.push(item);
   } else {
     addedDrugs.value.push(item);
@@ -268,7 +274,7 @@ function handleAddItem(item) {
 }
 
 function handleRemoveItem(index) {
-  if (activeTab.value === 'services') {
+  if (serviceSubTab.value === 'services') {
     addedServices.value.splice(index, 1);
   } else {
     addedDrugs.value.splice(index, 1);
@@ -276,7 +282,7 @@ function handleRemoveItem(index) {
 }
 
 function handleUpdateQuantity({ index, value }) {
-  if (activeTab.value === 'services') {
+  if (serviceSubTab.value === 'services') {
     addedServices.value[index].quantity = value;
   } else {
     addedDrugs.value[index].quantity = value;
@@ -293,16 +299,16 @@ function handleUpdateDiagnosis({ index, primaryDiagnosis: primary, secondaryDiag
 }
 
 function handleUpdateItem({ index, item }) {
-  if (activeTab.value === 'drugs') {
+  if (serviceSubTab.value === 'drugs') {
     addedDrugs.value[index] = { ...addedDrugs.value[index], ...item };
   }
 }
 
 function handleClearItems(tab) {
   if (tab === 'services') {
-    addedDrugs.value = [];
-  } else {
     addedServices.value = [];
+  } else {
+    addedDrugs.value = [];
   }
 }
 
@@ -380,7 +386,6 @@ onMounted(async () => {
   await fetchPayers();
 });
 
-// Watch for changes to selected payer and contract
 watch(selectedPayer, async (newPayerId) => {
   selectedContract.value = null;
   if (!newPayerId) return;
@@ -392,13 +397,11 @@ watch(selectedPayer, async (newPayerId) => {
   }
 });
 
-// Watch for changes to selected contract
 watch(selectedContract, async (newContractId) => {
   if (!newContractId) return;
   await fetchEmployees();
 });
 
-// Watch for search query changes with debounce
 let searchTimeout;
 watch(searchEmployeeQuery, (newQuery) => {
   clearTimeout(searchTimeout);
@@ -408,6 +411,16 @@ watch(searchEmployeeQuery, (newQuery) => {
     }
   }, 500);
 });
+
+// Debug watches
+watch(serviceSubTab, (newTab) => {
+  console.log('Service sub-tab changed to:', newTab);
+});
+
+watch([addedServices, addedDrugs], () => {
+  console.log('Services:', addedServices.value);
+  console.log('Drugs:', addedDrugs.value);
+}, { deep: true });
 </script>
 
 <template>
@@ -419,53 +432,63 @@ watch(searchEmployeeQuery, (newQuery) => {
     class="bg-white rounded-lg shadow-sm"
     @submit.prevent="handleSubmit"
   >
-    <!-- Navigation Tabs -->
-    <div class="border-b border-gray-200">
-      <nav class="-mb-px flex space-x-8 px-6">
-        <button
-          type="button"
-          @click="goToSelect"
-          :class="{
-            'border-primary text-primary': activeTab === 'select',
-            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'select'
-          }"
-          class="whitespace-nowrap py-4 px-1 border-b-2 font-bold text-xl"
-        >
-          Eligibility Check
-          <span v-if="selectedEmployee" class="ml-1 bg-primary text-white text-xs px-2 py-0.5 rounded-full">✓</span>
-        </button>
+    <!-- Navigation Tabs with Integrated Title -->
+    <div class="border-b border-gray-200 px-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-medium text-gray-900">
+          <template v-if="activeTab === 'select'">Eligibility Check</template>
+          <template v-else-if="activeTab === 'details'">Employee Details</template>
+          <template v-else-if="activeTab === 'services'">
+            Credit Services for {{ employeeDetails?.fullName || 'Selected Employee' }}
+          </template>
+        </h2>
+        
+        <nav class="-mb-px flex space-x-8">
+          <button
+            type="button"
+            @click="goToSelect"
+            :class="{
+              'border-primary text-primary font-bold': activeTab === 'select',
+              'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': activeTab !== 'select'
+            }"
+            class="whitespace-nowrap py-4 px-1 border-b-2 text-sm"
+          >
+            Eligibility Check
+            <span v-if="selectedEmployee" class="ml-1 bg-primary text-white text-xs px-2 py-0.5 rounded-full">✓</span>
+          </button>
 
-        <button
-          type="button"
-          @click="goToDetails"
-          :disabled="!selectedEmployee"
-          :class="{
-            'border-primary text-primary': activeTab === 'details',
-            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'details',
-            'opacity-50 cursor-not-allowed': !selectedEmployee
-          }"
-          class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
-        >
-          Employee Details
-        </button>
+          <button
+            type="button"
+            @click="goToDetails"
+            :disabled="!selectedEmployee"
+            :class="{
+              'border-primary text-primary font-bold': activeTab === 'details',
+              'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': activeTab !== 'details',
+              'opacity-50 cursor-not-allowed': !selectedEmployee
+            }"
+            class="whitespace-nowrap py-4 px-1 border-b-2 text-sm"
+          >
+            Employee Details
+          </button>
 
-        <button
-          type="button"
-          @click="goToServices"
-          :disabled="!selectedEmployee"
-          :class="{
-            'border-primary text-primary': activeTab === 'services',
-            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'services',
-            'opacity-50 cursor-not-allowed': !selectedEmployee
-          }"
-          class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
-        >
-          Credit Services
-          <span v-if="addedServices.length > 0 || addedDrugs.length > 0" class="ml-1 bg-primary text-white text-xs px-2 py-0.5 rounded-full">
-            {{ addedServices.length + addedDrugs.length }}
-          </span>
-        </button>
-      </nav>
+          <button
+            type="button"
+            @click="goToServices"
+            :disabled="!selectedEmployee"
+            :class="{
+              'border-primary text-primary font-bold': activeTab === 'services',
+              'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium': activeTab !== 'services',
+              'opacity-50 cursor-not-allowed': !selectedEmployee
+            }"
+            class="whitespace-nowrap py-4 px-1 border-b-2 text-sm"
+          >
+            Credit Services
+            <span v-if="addedServices.length > 0 || addedDrugs.length > 0" class="ml-1 bg-primary text-white text-xs px-2 py-0.5 rounded-full">
+              {{ addedServices.length + addedDrugs.length }}
+            </span>
+          </button>
+        </nav>
+      </div>
     </div>
 
     <!-- Tab Content -->
@@ -586,7 +609,7 @@ watch(searchEmployeeQuery, (newQuery) => {
                                 selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid
                             }"
                           >
-                            {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Detail' : 'Detail' }}
+                            {{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ? 'Selected' : 'Select' }}
                           </button>
                         </td>
                       </tr>
@@ -653,7 +676,7 @@ watch(searchEmployeeQuery, (newQuery) => {
                                   selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid
                               }"
                             >
-                              {{ selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid ? 'Detail' : 'Detail' }}
+                              {{ selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid ? 'Selected' : 'Select' }}
                             </button>
                           </td>
                         </tr>
@@ -738,69 +761,10 @@ watch(searchEmployeeQuery, (newQuery) => {
           {{ error }}
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div class="p-6">
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="text-lg font-medium text-gray-900">Credit Services for {{ employeeDetails.fullName }}</h3>
-                <p class="mt-1 text-sm text-gray-500">
-                  Employee ID: {{ employeeDetails.employeeId }} | 
-                  {{ employeeDetails.isDependant ? 'Dependant' : 'Employee' }}
-                  <span v-if="employeeDetails.isDependant"> ({{ employeeDetails.relationshipType }})</span>
-                </p>
-              </div>
-              <button 
-                @click="goToDetails"
-                class="text-gray-500 hover:text-gray-700"
-              >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-              <div>
-                <Input
-                  v-model="prescriptionNumber"
-                  name="prescriptionNumber"
-                  label="Prescription Number"
-                  :attributes="{
-                    placeholder: 'Enter prescription number',
-                  }"
-                />
-              </div>
-              <div>
-                <Input
-                  v-model="pharmacyTransactionId"
-                  name="pharmacyTransactionId"
-                  label="Pharmacy Transaction ID"
-                  :attributes="{
-                    placeholder: 'Enter pharmacy transaction ID',
-                  }"
-                />
-              </div> 
-              <div>
-                <Input
-                  v-model="dispensingDate"
-                  name="dispensingDate"
-                  label="Dispensing Date"
-                  validation="required"
-                  :attributes="{
-                    type: 'date',
-                    placeholder: 'Select dispensing date',
-                    required: true
-                  }"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
         <selectServices
           ref="selectServicesRef"
-          v-model:activeTab="activeTab"
-          :added-items="activeTab === 'services' ? addedServices : addedDrugs"
+          v-model:activeTab="serviceSubTab"
+          :added-items="serviceSubTab === 'services' ? addedServices : addedDrugs"
           :remarks="remarks"
           :primary-diagnosis="primaryDiagnosis"
           :secondary-diagnosis="secondaryDiagnosis"
@@ -818,6 +782,42 @@ watch(searchEmployeeQuery, (newQuery) => {
           @update:secondary-diagnosis="secondaryDiagnosis = $event"
         />
 
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <!-- <div>
+            <Input
+              v-model="prescriptionNumber"
+              name="prescriptionNumber"
+              label="Prescription Number"
+              :attributes="{
+                placeholder: 'Enter prescription number',
+              }"
+            />
+          </div>
+          <div>
+            <Input
+              v-model="pharmacyTransactionId"
+              name="pharmacyTransactionId"
+              label="Pharmacy Transaction ID"
+              :attributes="{
+                placeholder: 'Enter pharmacy transaction ID',
+              }"
+            />
+          </div>  -->
+          <div>
+            <Input
+              v-model="dispensingDate"
+              name="dispensingDate"
+              label="Dispensing Date"
+              validation="required"
+              :attributes="{
+                type: 'date',
+                placeholder: 'Select dispensing date',
+                required: true
+              }"
+            />
+          </div>
+        </div>
+
         <div class="pt-4 px-6 border-t border-gray-200 flex justify-between">
           <Button
             type="button"
@@ -827,23 +827,12 @@ watch(searchEmployeeQuery, (newQuery) => {
           >
             Back to Details
           </Button>
-          <div class="flex space-x-4">
-           
-            <ModalFormSubmitButton
-              v-if="activeTab === 'services'"
-              :pending="pending"
-              btn-text="Add Service to Credit"
-              class="bg-primary hover:bg-teal-700 text-white px-6 py-2 rounded-md"
-              :disabled="pending"
-            />
-            <ModalFormSubmitButton
-              v-else-if="activeTab === 'drugs'"
-              :pending="pending"
-              btn-text="Add Drug to Credit"
-              class="bg-primary hover:bg-teal-700 text-white px-6 py-2 rounded-md"
-              :disabled="pending"
-            />
-          </div>
+          <ModalFormSubmitButton
+            :pending="pending"
+            :btn-text="serviceSubTab === 'services' ? 'Add Service to Credit' : 'Add Drug to Credit'"
+            class="bg-primary hover:bg-teal-700 text-white px-6 py-2 rounded-md"
+            :disabled="pending"
+          />
         </div>
       </div>
     </div>
