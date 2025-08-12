@@ -43,13 +43,13 @@ const searchForm = ref({
   serviceType: '',
   serviceCode: '',
   serviceName: '',
-  serviceDescription: '',
   servicePrice: '',
+  serviceQuantity: 1,
   drugType: '',
   drugCode: '',
   drugName: '',
-  drugDescription: '',
-  drugPrice: ''
+  drugPrice: '',
+  drugQuantity: 1
 });
 
 // Computed properties for v-model
@@ -86,17 +86,6 @@ const currentName = computed({
   }
 });
 
-const currentDescription = computed({
-  get: () => props.activeTab === 'services' ? searchForm.value.serviceDescription : searchForm.value.drugDescription,
-  set: (value) => {
-    if (props.activeTab === 'services') {
-      searchForm.value.serviceDescription = value;
-    } else {
-      searchForm.value.drugDescription = value;
-    }
-  }
-});
-
 const currentPrice = computed({
   get: () => props.activeTab === 'services' ? searchForm.value.servicePrice : searchForm.value.drugPrice,
   set: (value) => {
@@ -104,6 +93,17 @@ const currentPrice = computed({
       searchForm.value.servicePrice = value;
     } else {
       searchForm.value.drugPrice = value;
+    }
+  }
+});
+
+const currentQuantity = computed({
+  get: () => props.activeTab === 'services' ? searchForm.value.serviceQuantity : searchForm.value.drugQuantity,
+  set: (value) => {
+    if (props.activeTab === 'services') {
+      searchForm.value.serviceQuantity = value;
+    } else {
+      searchForm.value.drugQuantity = value;
     }
   }
 });
@@ -138,13 +138,13 @@ function resetSearchForm() {
     serviceType: '',
     serviceCode: '',
     serviceName: '',
-    serviceDescription: '',
     servicePrice: '',
+    serviceQuantity: 1,
     drugType: '',
     drugCode: '',
     drugName: '',
-    drugDescription: '',
-    drugPrice: ''
+    drugPrice: '',
+    drugQuantity: 1
   };
   searchResults.value = [];
 }
@@ -220,12 +220,10 @@ function setSearchResults(items) {
         serviceUuid: item.serviceUuid,
         serviceName: item.serviceName,
         serviceCode: item.serviceCode,
-        description: item.description || ''
       } : {
         drugUuid: item.drugUuid,
         drugName: item.drugName,
         drugCode: item.drugCode,
-        description: item.description || ''
       })
     };
   });
@@ -240,12 +238,10 @@ function fillFormFromResult(item) {
   if (props.activeTab === 'services') {
     searchForm.value.serviceCode = item.serviceCode || '';
     searchForm.value.serviceName = item.serviceName || '';
-    searchForm.value.serviceDescription = item.description || '';
     searchForm.value.servicePrice = item.price || '';
   } else {
     searchForm.value.drugCode = item.drugCode || '';
     searchForm.value.drugName = item.drugName || '';
-    searchForm.value.drugDescription = item.description || '';
     searchForm.value.drugPrice = item.price || '';
   }
 }
@@ -271,10 +267,10 @@ function handleAddFromForm() {
     itemType: 'SERVICE',
     serviceCode: searchForm.value.serviceCode,
     serviceName: searchForm.value.serviceName,
-    description: searchForm.value.serviceDescription,
     price: parseFloat(searchForm.value.servicePrice) || 0,
-    paymentAmount: `ETB ${parseFloat(searchForm.value.servicePrice || 0).toFixed(2)}`,
-    quantity: 1,
+    paymentAmount: `ETB ${(parseFloat(searchForm.value.servicePrice) * parseInt(searchForm.value.serviceQuantity) || 0).toFixed(2)}`,
+    quantity: parseInt(searchForm.value.serviceQuantity) || 1,
+    totalCost: (parseFloat(searchForm.value.servicePrice) * parseInt(searchForm.value.serviceQuantity) || 0),
     remark: ''
   } : {
     id: `temp-${Date.now()}`,
@@ -282,11 +278,10 @@ function handleAddFromForm() {
     itemType: 'DRUG',
     drugCode: searchForm.value.drugCode,
     drugName: searchForm.value.drugName,
-    description: searchForm.value.drugDescription,
     price: parseFloat(searchForm.value.drugPrice) || 0,
-    paymentAmount: `ETB ${parseFloat(searchForm.value.drugPrice || 0).toFixed(2)}`,
-    quantity: 1,
-    totalCost: parseFloat(searchForm.value.drugPrice) || 0,
+    paymentAmount: `ETB ${(parseFloat(searchForm.value.drugPrice) * parseInt(searchForm.value.drugQuantity) || 0).toFixed(2)}`,
+    quantity: parseInt(searchForm.value.drugQuantity) || 1,
+    totalCost: (parseFloat(searchForm.value.drugPrice) * parseInt(searchForm.value.drugQuantity) || 0),
     route: 'oral',
     frequency: 'daily',
     dose: '1',
@@ -316,6 +311,7 @@ function handleUpdateItem(index, field, value) {
   if (field === 'quantity' && 'price' in currentItem) {
     const quantity = Number(value) || 0;
     updatedItem.totalCost = currentItem.price * quantity;
+    updatedItem.paymentAmount = `ETB ${(currentItem.price * quantity).toFixed(2)}`;
   }
 
   const fullUpdate = { ...currentItem, ...updatedItem };
@@ -342,154 +338,138 @@ watch(localSecondaryDiagnosis, (newValue) => {
 
 defineExpose({ setSearchResults });
 </script>
-<template>
-  <div class="space-y-8">
-    <!-- Tab Navigation -->
-    <div class="flex justify-center">
-      <div class="flex bg-gray-100 p-1 rounded-full shadow-sm">
-        <button
-          type="button"
-          @click="changeTab('services')"
-          :class="[
-            'px-8 py-3 text-sm font-medium rounded-full transition-all duration-300',
-            activeTab === 'services'
-              ? 'bg-teal-600 text-white shadow-md'
-              : 'text-gray-600 hover:bg-gray-200'
-          ]"
-        >
-          Services
-        </button>
-        <button
-          type="button"
-          @click="changeTab('drugs')"
-          :class="[
-            'px-8 py-3 text-sm font-medium rounded-full transition-all duration-300',
-            activeTab === 'drugs'
-              ? 'bg-teal-600 text-white shadow-md'
-              : 'text-gray-600 hover:bg-gray-200'
-          ]"
-        >
-          Drugs
-        </button>
-      </div>
-    </div>
 
+<template>
+  <div class="space-y-6">
     <!-- Search Form -->
-    <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-      <div class="mb-8">
-        <h3 class="text-2xl font-bold text-gray-800 mb-2">
-          Add {{ activeTab === 'services' ? 'Service' : 'Drug' }}
-        </h3>
-        <p class="text-gray-500">Search and add {{ activeTab }} to your request</p>
+    <div class="bg-white p-6 rounded-xl shadow border border-gray-100">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <!-- Tab Navigation -->
+        <div class="flex bg-gray-100 p-1 rounded-lg shadow-sm">
+          <button
+            type="button"
+            @click="changeTab('services')"
+            :class="[
+              'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300',
+              activeTab === 'services'
+                ? 'bg-teal-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-200'
+            ]"
+          >
+            Services
+          </button>
+          <button
+            type="button"
+            @click="changeTab('drugs')"
+            :class="[
+              'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300',
+              activeTab === 'drugs'
+                ? 'bg-teal-600 text-white shadow-md'
+                : 'text-gray-600 hover:bg-gray-200'
+            ]"
+          >
+            Drugs
+          </button>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">
+            Add {{ activeTab === 'services' ? 'Service' : 'Drug' }}
+          </h3>
+        </div>
       </div>
 
       <!-- Single Row Form -->
-      <div class="grid grid-cols-6 gap-6 items-end">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 px-4 gap-4 items-end">
         <!-- Type Selection -->
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-gray-700">
+        <div class="space-y-1 mx-6">
+          <label class="block text-xs font-medium text-gray-700">
             Type
           </label>
-          <div class="relative">
-            <select 
-              v-model="currentType" 
-              class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 text-gray-700 font-medium"
+          <select 
+            v-model="currentType" 
+            class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm text-gray-700"
+          >
+            <option value="">Select type</option>
+            <option
+              v-for="option in (activeTab === 'services' ? serviceTypeOptions : drugTypeOptions)"
+              :key="option.value"
+              :value="option.value"
             >
-              <option value="">Select type</option>
-              <option
-                v-for="option in (activeTab === 'services' ? serviceTypeOptions : drugTypeOptions)"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
+              {{ option.label }}
+            </option>
+          </select>
         </div>
 
         <!-- Service/Drug Code -->
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-gray-700">
+        <div class="space-y-1 mx-6 ">
+          <label class="block text-xs font-medium text-gray-700">
             {{ activeTab === 'services' ? 'Service Code' : 'Drug Code' }}
           </label>
           <div class="relative">
-            <MagnifyingGlassIcon
-              class="absolute left-4 top-4 h-5 w-5 text-teal-500"
-            />
+            <MagnifyingGlassIcon class="absolute left-3 top-3 h-4 w-4 text-teal-500" />
             <input
               v-model="currentCode"
               :placeholder="`Enter ${activeTab === 'services' ? 'service' : 'drug'} code`"
-              class="w-full px-4 py-4 pl-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 text-gray-700 font-medium placeholder-gray-400"
+              class="w-full px-3 py-2 pl-9 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm text-gray-700 placeholder-gray-400"
             />
           </div>
         </div>
 
         <!-- Service/Drug Name -->
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-gray-700">
+        <div class="space-y-1 mx-6">
+          <label class="block text-xs font-medium text-gray-700">
             {{ activeTab === 'services' ? 'Service Name' : 'Drug Name' }}
           </label>
           <div class="relative">
-            <ClipboardDocumentListIcon
-              class="absolute left-4 top-4 h-5 w-5 text-teal-500"
-            />
+            <ClipboardDocumentListIcon class="absolute left-3 top-3 h-4 w-4 text-teal-500" />
             <input
               v-model="currentName"
               :placeholder="`Enter ${activeTab === 'services' ? 'service' : 'drug'} name`"
-              class="w-full px-4 py-4 pl-12 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 text-gray-700 font-medium placeholder-gray-400"
+              class="w-full px-3 py-2 pl-9 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm text-gray-700 placeholder-gray-400"
             />
           </div>
         </div>
-
-        <!-- Description -->
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-gray-700">
-            Description
+ <div class="space-y-1 mx-6">
+          <label class="block text-xs font-medium text-gray-700">
+            Quantity
           </label>
-          <div class="relative">
-            <InformationCircleIcon
-              class="absolute left-4 top-4 h-5 w-5 text-gray-400"
-            />
-            <input
-              v-model="currentDescription"
-              readonly
-              placeholder="Auto-filled"
-              class="w-full px-4 py-4 pl-12 bg-gray-100 border-2 border-gray-200 rounded-xl text-gray-600 font-medium placeholder-gray-400 cursor-not-allowed"
-            />
-          </div>
+          <input
+            v-model="currentQuantity"
+            type="number"
+            min="1"
+            class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm text-gray-700"
+          />
         </div>
-
         <!-- Price -->
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-gray-700">
-            Price (ETB)
+        <div class="space-y-1 mx-6">
+          <label class="block text-xs font-medium text-gray-700">
+            Unit Price (ETB)
           </label>
           <div class="relative">
-            <BanknotesIcon
-              class="absolute left-4 top-4 h-5 w-5 text-gray-400"
-            />
+            <BanknotesIcon class="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <input
               v-model="currentPrice"
               readonly
               placeholder="Auto-filled"
-              class="w-full px-4 py-4 pl-12 bg-gray-100 border-2 border-gray-200 rounded-xl text-gray-600 font-medium placeholder-gray-400 cursor-not-allowed"
+              class="w-full px-3 py-2 pl-9 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-600 placeholder-gray-400 cursor-not-allowed"
             />
           </div>
         </div>
 
+        <!-- Quantity -->
+       
+
         <!-- Add Button -->
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-transparent">
-            Action
-          </label>
+        <div class="md:col-span-5">
           <button
             @click="handleAddFromForm"
             :disabled="!canAddItem()"
             :class="[
-              'w-full px-6 py-4 rounded-xl font-bold text-sm shadow-lg transition-all duration-300 transform',
+              'w-full px-4 py-2 rounded-lg font-medium text-sm shadow transition-all duration-300',
               canAddItem()
-                ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                ? 'bg-teal-600 text-white hover:bg-teal-700'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             ]"
           >
             Add {{ activeTab === 'services' ? 'Service' : 'Drug' }}
@@ -500,26 +480,26 @@ defineExpose({ setSearchResults });
       <!-- Loading Indicator -->
       <div
         v-if="pending"
-        class="flex items-center justify-center mt-8 p-4 bg-teal-50 rounded-xl border border-teal-200"
+        class="flex items-center justify-center mt-4 p-3 bg-teal-50 rounded-lg border border-teal-200"
       >
-        <Spinner class="h-6 w-6 text-teal-600" />
-        <span class="ml-3 text-teal-700 font-medium">Searching for {{ activeTab }}...</span>
+        <Spinner class="h-5 w-5 text-teal-600" />
+        <span class="ml-2 text-teal-700 text-sm">Searching for {{ activeTab }}...</span>
       </div>
     </div>
 
     <!-- Results Table -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-      <div class="p-8 border-b border-gray-100">
+    <div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
+      <div class="p-4 border-b border-gray-100">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-2xl font-bold text-gray-800">
+            <h2 class="text-lg font-semibold text-gray-800">
               Added {{ activeTab === 'services' ? 'Services' : 'Drugs' }}
             </h2>
-            <p class="text-gray-500 mt-1">
+            <p class="text-gray-500 text-xs mt-1">
               {{ displayedItems.length }} {{ displayedItems.length === 1 ? 'item' : 'items' }} selected
             </p>
           </div>
-          <div class="bg-teal-100 text-teal-800 px-4 py-2 rounded-full font-semibold text-sm">
+          <div class="bg-teal-100 text-teal-800 px-3 py-1 rounded-full font-medium text-xs">
             {{ activeTab === 'services' ? 'Services' : 'Drugs' }} List
           </div>
         </div>
@@ -529,70 +509,66 @@ defineExpose({ setSearchResults });
         <table class="min-w-full">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">#</th>
-              <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Code</th>
-              <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Name</th>
-              <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Price</th>
-              <th v-if="activeTab === 'services'" class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
-              <th v-if="activeTab === 'drugs'" class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Dosage</th>
-              <th v-if="activeTab === 'drugs'" class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Quantity</th>
-              <th v-if="activeTab === 'drugs'" class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Total Cost</th>
-              <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">#</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Code</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Name</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Unit Price</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Quantity</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Total Price</th>
+              <th v-if="activeTab === 'services'" class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Remark</th>
+              <th v-if="activeTab === 'drugs'" class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Dosage</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Action</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-100">
             <tr
               v-for="(item, index) in displayedItems"
               :key="item.contractDetailUuid"
-              class="hover:bg-gray-50 transition-colors duration-200"
+              class="hover:bg-gray-50"
             >
-              <td class="px-8 py-6 text-sm font-semibold text-gray-600">{{ index + 1 }}</td>
-              <td class="px-8 py-6 text-sm font-bold text-gray-900">
+              <td class="px-4 py-3 text-sm font-medium text-gray-600">{{ index + 1 }}</td>
+              <td class="px-4 py-3 text-sm font-medium text-gray-900">
                 {{ item.serviceCode || item.drugCode }}
               </td>
-              <td class="px-8 py-6 text-sm text-gray-700 font-medium">
+              <td class="px-4 py-3 text-sm text-gray-700">
                 {{ item.serviceName || item.drugName }}
               </td>
-              <td class="px-8 py-6">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-800">
-                  {{ item.paymentAmount }}
-                </span>
+              <td class="px-4 py-3 text-sm text-gray-700">
+                ETB {{ item.price?.toFixed(2) || '0.00' }}
+              </td>
+              <td class="px-4 py-3">
+                <input
+                  type="number"
+                  min="1"
+                  :value="item.quantity"
+                  @input="handleUpdateItem(index, 'quantity', $event.target.value)"
+                  class="w-16 px-2 py-1 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm text-center font-medium"
+                />
+              </td>
+              <td class="px-4 py-3 text-sm font-medium text-gray-700">
+                ETB {{ item.totalCost?.toFixed(2) || '0.00' }}
               </td>
 
               <!-- Services -->
-              <td v-if="activeTab === 'services'" class="px-8 py-6">
+              <td v-if="activeTab === 'services'" class="px-4 py-3">
                 <input
                   type="text"
                   :value="localRemarks[item.contractDetailUuid]"
                   @input="handleUpdateRemark(index, item.contractDetailUuid, $event.target.value)"
-                  class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
+                  class="w-full px-2 py-1 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm"
                   placeholder="Add remark..."
                 />
               </td>
 
               <!-- Drugs -->
-              <template v-if="activeTab === 'drugs'">
-                <td class="px-8 py-6 text-sm font-medium text-gray-700">{{ item.dose }}</td>
-                <td class="px-8 py-6">
-                  <input
-                    type="number"
-                    min="1"
-                    :value="item.quantity"
-                    @input="handleUpdateItem(index, 'quantity', $event.target.value)"
-                    class="w-20 px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 text-center font-semibold"
-                  />
-                </td>
-                <td class="px-8 py-6">
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-800">
-                    ETB {{ item.totalCost?.toFixed(2) || '0.00' }}
-                  </span>
-                </td>
-              </template>
+              <td v-if="activeTab === 'drugs'" class="px-4 py-3 text-sm text-gray-700">
+                {{ item.dose }}
+              </td>
 
-              <td class="px-8 py-6">
+              <td class="px-4 py-3">
                 <button
                   @click="handleRemoveItem(index)"
-                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 transform hover:-translate-y-0.5"
+                  class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-1 focus:ring-red-500"
                 >
                   Remove
                 </button>
@@ -600,15 +576,14 @@ defineExpose({ setSearchResults });
             </tr>
             <tr v-if="displayedItems.length === 0">
               <td
-                :colspan="activeTab === 'services' ? 5 : 8"
-                class="px-8 py-12 text-center"
+                :colspan="activeTab === 'services' ? 8 : 9"
+                class="px-4 py-8 text-center"
               >
-                <div class="flex flex-col items-center justify-center space-y-3">
-                  <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                    <ClipboardDocumentListIcon class="w-8 h-8 text-gray-400" />
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <ClipboardDocumentListIcon class="w-5 h-5 text-gray-400" />
                   </div>
-                  <p class="text-gray-500 font-medium">No {{ activeTab }} added yet</p>
-                  <p class="text-gray-400 text-sm">Start by searching and adding {{ activeTab }} above</p>
+                  <p class="text-gray-500 text-sm">No {{ activeTab }} added yet</p>
                 </div>
               </td>
             </tr>
@@ -618,22 +593,22 @@ defineExpose({ setSearchResults });
     </div>
 
     <!-- Diagnosis Section (only for services) -->
-    <div v-if="activeTab === 'services' && displayedItems.length > 0" class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-      <h3 class="text-xl font-bold text-gray-800 mb-6">Diagnosis Information</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-gray-700">Primary Diagnosis</label>
+    <div v-if="activeTab === 'services' && displayedItems.length > 0" class="bg-white p-6 rounded-xl shadow border border-gray-100">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Diagnosis Information</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-1">
+          <label class="block text-xs font-medium text-gray-700">Primary Diagnosis</label>
           <input
             v-model="localPrimaryDiagnosis"
-            class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 text-gray-700 font-medium"
+            class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm text-gray-700"
             placeholder="Enter primary diagnosis"
           />
         </div>
-        <div class="space-y-3">
-          <label class="block text-sm font-semibold text-gray-700">Secondary Diagnosis</label>
+        <div class="space-y-1">
+          <label class="block text-xs font-medium text-gray-700">Secondary Diagnosis</label>
           <input
             v-model="localSecondaryDiagnosis"
-            class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 text-gray-700 font-medium"
+            class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm text-gray-700"
             placeholder="Enter secondary diagnosis"
           />
         </div>
@@ -649,22 +624,22 @@ defineExpose({ setSearchResults });
   to { opacity: 1; transform: translateY(0); }
 }
 
-.space-y-8 > * {
-  animation: fadeIn 0.5s ease-out;
+.space-y-6 > * {
+  animation: fadeIn 0.3s ease-out;
 }
 
 /* Hover effects */
 input:hover:not(:focus):not([readonly]) {
-  @apply border-gray-300 shadow-sm;
+  @apply border-gray-300;
 }
 
 select:hover:not(:focus) {
-  @apply border-gray-300 shadow-sm;
+  @apply border-gray-300;
 }
 
 /* Focus states */
 input:focus, select:focus {
-  @apply ring-2 ring-teal-500 border-teal-500 shadow-lg;
+  @apply ring-1 ring-teal-500 border-teal-500;
 }
 
 /* Button hover effects */
@@ -678,31 +653,10 @@ button:not(:disabled):active {
 
 /* Table row animations */
 tbody tr {
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
 }
 
 tbody tr:hover {
-  transform: translateX(4px);
-}
-
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-  .grid-cols-6 {
-    @apply grid-cols-3 gap-4;
-  }
-}
-
-@media (max-width: 768px) {
-  .grid-cols-6 {
-    @apply grid-cols-1 gap-4;
-  }
-  
-  .px-8 {
-    @apply px-4;
-  }
-  
-  .py-6 {
-    @apply py-4;
-  }
+  @apply bg-gray-50;
 }
 </style>

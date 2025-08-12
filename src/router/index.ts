@@ -17,6 +17,7 @@ import creditServicesRoutes from "./credit_services.routes";
 import submitClaimsRoutes from "./submit_claims.routes";
 import authorizationRoutes from "./authorization.routes";
 import Profile from "@/features/profile/pages/profile.vue";
+import product_settingsRoutes from "./product_settings.routes";
 
 function addMetaToRoutes(routes) {
   return routes.map(route => {
@@ -70,6 +71,7 @@ const router = createRouter({
         ...creditServicesRoutes,
         ...submitClaimsRoutes,
         ...authorizationRoutes,
+        ...product_settingsRoutes,
        
       ],
     },

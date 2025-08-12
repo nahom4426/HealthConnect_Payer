@@ -12,7 +12,9 @@ import { toasted } from '@/utils/utils';
 import { getPayerContractById, assignServicesToGroup, getContractDetailsByGroup } from '../api/payerContractApi';
 import { useRoute } from 'vue-router';
 import Spinner from "@/components/Spinner.vue";
-
+import { getPackageById } from "@/features/product_settings/api/coverageApi";
+import { getServicesByCategory, mapServiceToCategories } from "../api/serviceCategoryMappingsApi";
+const route = useRoute();
 const props = defineProps({
   data: {
     type: Object,
@@ -21,14 +23,15 @@ const props = defineProps({
   }
 });
 
-const groupUuid = computed(() => props.data?.data?.groupUuid);
+const categoryUuid = computed(() => props.data?.data?.categoryUuid);
 const contractHeaderUuid = computed(() => props.data?.data?.contractHeaderUuid);
+const contractDetailUuid = route.params.contractHeaderUuid;
 
-console.log("Resolved groupUuid:", groupUuid.value);
+console.log("Resolved categoryUuid:", categoryUuid.value);
 console.log("Resolved contractHeaderUuid:", contractHeaderUuid.value);
+console.log("Resolved contractDetailUuid:", contractDetailUuid.value);
 console.log("AddServiceToContract modal mounted with props:", props);
 
-const route = useRoute();
 const { addToast } = useToast();
 const api = useApiRequest();
 
@@ -55,63 +58,65 @@ async function fetchServices() {
   try {
     loading.value = true;
 
-    if (!groupUuid.value || !contractHeaderUuid.value) {
+    if (!categoryUuid.value || !contractHeaderUuid.value) {
       console.warn("UUIDs not available for fetching services.");
       loading.value = false;
       return;
     }
 
-    // Fetch existing services and drugs already assigned to this group
-    const existingResponse = await getContractDetailsByGroup(groupUuid.value, contractHeaderUuid.value);
-    const existingContractItems = existingResponse.data || [];
-
-    // Store existing items keyed by contractDetailUuid for quick lookup
-    const existingItemsMap = new Map();
-    existingContractItems.forEach(item => {
-      existingItemsMap.set(item.contractDetailUuid, { ...item, isExisting: true });
-    });
-
-    // Fetch all available services and drugs for the contract (from the contract header)
+    // 1. First, fetch all services available in the contract
     const allResponse = await getPayerContractById(contractHeaderUuid.value);
     const contractDetailsFromHeader = allResponse.data?.contractDetails || [];
 
+    // 2. Then fetch services already assigned to this category/group
+    const existingResponse = await getServicesByCategory(categoryUuid.value);
+    const assignedServiceUuids = Array.isArray(existingResponse.data) ? existingResponse.data : [];
+
+    console.log("All contract services:", contractDetailsFromHeader);
+    console.log("Assigned services to this group:", assignedServiceUuids);
+
+    // Create a Set of assigned contractDetailUuids for quick lookup
+    const assignedContractDetailUuids = new Set(assignedServiceUuids);
+
+    // Process services and drugs
     const servicesFromHeader = [];
     const drugsFromHeader = [];
 
     contractDetailsFromHeader.forEach(item => {
-      // Check if this item (by contractDetailUuid) is already existing for this group
-      const existingItem = existingItemsMap.get(item.contractDetailUuid);
+      const isAssigned = assignedContractDetailUuids.has(item.contractDetailUuid);
 
       if (item.itemType === 'SERVICE') {
-        if (existingItem) {
-          // If it exists, use the existing item with the isExisting flag
-          // and potentially richer data from the contract header (like serviceName)
-          servicesFromHeader.push({ ...item, isExisting: true });
-        } else {
-          // If it's not existing for this group, add as a new available service
-          servicesFromHeader.push({ ...item, isExisting: false });
+        servicesFromHeader.push({
+          ...item,
+          isExisting: isAssigned
+        });
+        
+        // If assigned, add to existingServices
+        if (isAssigned) {
+          existingServices.value.push({
+            ...item,
+            isExisting: true
+          });
         }
       } else if (item.itemType === 'DRUG') {
-        if (existingItem) {
-          // If it exists, use the existing item with the isExisting flag
-          // and potentially richer data from the contract header (like drugName)
-          drugsFromHeader.push({ ...item, isExisting: true });
-        } else {
-          // If it's not existing for this group, add as a new available drug
-          drugsFromHeader.push({ ...item, isExisting: false });
+        drugsFromHeader.push({
+          ...item,
+          isExisting: isAssigned
+        });
+        
+        // If assigned, add to existingDrugs
+        if (isAssigned) {
+          existingDrugs.value.push({
+            ...item,
+            isExisting: true
+          });
         }
       }
     });
 
-    // Now, assign these processed lists to your refs
+    // Assign the processed lists
     allServices.value = servicesFromHeader;
     allDrugs.value = drugsFromHeader;
-
-    // Filter services and drugs to only include those that are truly existing
-    // This is useful for the `selectedServices` and `selectedDrugs` initialization
-    existingServices.value = allServices.value.filter(s => s.isExisting);
-    existingDrugs.value = allDrugs.value.filter(d => d.isExisting);
-
 
     // Automatically select existing items (they can't be unselected)
     selectedServices.value = [...existingServices.value];
@@ -225,7 +230,7 @@ function isDrugSelected(drug) {
 // Submit selected services and drugs
 async function submitItems() {
   try {
-    if (!groupUuid.value || !contractHeaderUuid.value) {
+    if (!categoryUuid.value || !contractHeaderUuid.value) {
       addToast({
         type: 'error',
         title: 'Error',
@@ -243,9 +248,9 @@ async function submitItems() {
       .filter(d => !d.isExisting)
       .map(d => d.contractDetailUuid);
 
-    const itemUuidsToSend = [...newServiceUuids, ...newDrugUuids].filter(Boolean);
+    const contractDetailUuidsToSend = [...newServiceUuids, ...newDrugUuids].filter(Boolean);
 
-    if (itemUuidsToSend.length === 0) {
+    if (contractDetailUuidsToSend.length === 0) {
       addToast({
         type: 'info',
         title: 'No Changes',
@@ -255,27 +260,33 @@ async function submitItems() {
       return;
     }
 
-    const response = await assignServicesToGroup(
-      groupUuid.value,
-      itemUuidsToSend
-    );
+    // The corrected payload structure
+    const payload = {
+      contractDetailUuids: contractDetailUuidsToSend,
+      categoryUuid: categoryUuid.value,
+      consumesFromLimit: true,  // Set default value or make this configurable
+      notes: "",               // Empty string or make this configurable
+      replaceExisting: false   // Set based on your business logic
+    };
 
-    if (response.success) {
+    const response = await mapServiceToCategories(payload);
+
+    if (response?.success) {
       addToast({
         type: 'success',
         title: 'Success',
-        message: 'Items added to contract successfully'
+        message: 'Items added to contract package successfully'
       });
       closeModal(true);
     } else {
-      throw new Error(response.message || 'Failed to add items');
+      throw new Error(response?.message || 'Failed to add items');
     }
   } catch (error) {
     console.error('Error adding items:', error);
     addToast({
       type: 'error',
       title: 'Error',
-      message: error.message || 'Failed to add items to contract'
+      message: error.message || 'Failed to add items to contract package'
     });
   }
 }
@@ -289,8 +300,8 @@ onMounted(() => {
   <ModalParent>
     <NewFormParent
       size="lg"
-      title="Add Services/Drugs to Contract"
-      subtitle="Select services or drugs to add to this contract"
+      title="Add Services/Drugs to Contract Package"
+      subtitle="Select services or drugs to add to this contract package"
     >
       <div class="space-y-4">
         <div class="grid grid-cols-2 border border-base-clr rounded w-full">
@@ -389,7 +400,7 @@ onMounted(() => {
                     v-if="service.isExisting"
                     class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
                   >
-                    Already in contract
+                    Already in this package
                   </span>
                   <span
                     v-else
@@ -455,7 +466,7 @@ onMounted(() => {
                     v-if="drug.isExisting"
                     class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
                   >
-                    Already in contract
+                    Already in this package
                   </span>
                   <span
                     v-else

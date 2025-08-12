@@ -142,7 +142,12 @@ export default [
     icon: icons.active_insured_persons,
     privilege: ["Create Employees"],
   },
-
+  {
+    path: "/package_list",
+    name: "Package List",
+    icon: icons.active_insured_persons,
+    privilege: ["Create Employees"],
+  },
   {
     name: "Claims",
     icon: icons.claimManagement,
