@@ -107,6 +107,16 @@ const currentQuantity = computed({
     }
   }
 });
+const currentFsNumber = computed({
+  get: () => props.activeTab === 'services' ? searchForm.value.serviceFsNumber : searchForm.value.drugFsNumber,
+  set: (value) => {
+    if (props.activeTab === 'services') {
+      searchForm.value.serviceFsNumber = value;
+    } else {
+      searchForm.value.drugFsNumber = value;
+    }
+  }
+});
 
 const localPrimaryDiagnosis = ref(props.primaryDiagnosis);
 const localSecondaryDiagnosis = ref(props.secondaryDiagnosis);
@@ -458,7 +468,17 @@ defineExpose({ setSearchResults });
         </div>
 
         <!-- Quantity -->
-       
+        <div class="space-y-1 mx-6">
+          <label class="block text-xs font-medium text-gray-700">
+           Fs Number
+          </label>
+          <input
+            v-model="currentFsNumber"
+            type="text"
+            placeholder="Enter FS Number"
+            class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm text-gray-700"
+          />
+        </div>
 
         <!-- Add Button -->
         <div class="md:col-span-5">

@@ -24,11 +24,11 @@ export function getPayerContracts(query = {}) {
 }
 
 // In your providerContractApi.js file
-export function getPayerContractById(id, params = {}) {
+export function getPayerContractById(id, search = "") {
   return api.addAuthenticationHeader().get(`${basePath}/${id}`, {
     params: {
       userType: "provider",
-      ...params // Spread any additional params passed to the function
+      ...(search ? { searchKey: search } : {}) // Include search only if provided
     }
   });
 }

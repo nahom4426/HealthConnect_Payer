@@ -1,14 +1,10 @@
 import ApiService from "@/service/ApiService";
-import type { AsyncResponse } from "@/types/interface";
-import { getQueryFormObject } from "@/utils/utils";
 
-const api = new ApiService()
-const path = '/integration/pharmacy'
-const baseUrl = import.meta.env.VITE_API_URI
-const basePath = '/integration/pharmacy';
+const api = new ApiService();
+const path = '/integration/pharmacy';
 
 // Credit Services API
-export function createCreditService(data: any): Promise<AsyncResponse<any>> {
+export function createCreditService(data) {
   return api.addAuthenticationHeader().post(`${path}/dispensing-records`, data, {
     headers: {
       'Content-Type': 'application/json'
@@ -16,7 +12,7 @@ export function createCreditService(data: any): Promise<AsyncResponse<any>> {
   });
 }
 
-export function updateCreditService(uuid: string, data: any): Promise<AsyncResponse<any>> {
+export function updateCreditService(uuid, data) {
   return api.addAuthenticationHeader().put(`${path}/dispensing-records/${uuid}`, data, {
     headers: {
       'Content-Type': 'application/json'
@@ -24,16 +20,16 @@ export function updateCreditService(uuid: string, data: any): Promise<AsyncRespo
   });
 }
 
-export function getCreditService(uuid: string): Promise<AsyncResponse<any>> {
+export function getCreditService(uuid) {
   return api.addAuthenticationHeader().get(`${path}/dispensing-records/${uuid}`);
 }
 
-export function deleteCreditService(uuid: string): Promise<AsyncResponse<any>> {
+export function deleteCreditService(uuid) {
   return api.addAuthenticationHeader().delete(`${path}/dispensing-records/${uuid}`);
 }
 
 // Credit Drugs API
-export function createCreditDrug(data: any): Promise<AsyncResponse<any>> {
+export function createCreditDrug(data) {
   return api.addAuthenticationHeader().post(`${path}/drug-dispensing-records`, data, {
     headers: {
       'Content-Type': 'application/json'
@@ -41,7 +37,7 @@ export function createCreditDrug(data: any): Promise<AsyncResponse<any>> {
   });
 }
 
-export function updateCreditDrug(uuid: string, data: any): Promise<AsyncResponse<any>> {
+export function updateCreditDrug(uuid, data) {
   return api.addAuthenticationHeader().put(`${path}/drug-dispensing-records/${uuid}`, data, {
     headers: {
       'Content-Type': 'application/json'
@@ -49,16 +45,16 @@ export function updateCreditDrug(uuid: string, data: any): Promise<AsyncResponse
   });
 }
 
-export function getCreditDrug(uuid: string): Promise<AsyncResponse<any>> {
+export function getCreditDrug(uuid) {
   return api.addAuthenticationHeader().get(`${path}/drug-dispensing-records/${uuid}`);
 }
 
-export function deleteCreditDrug(uuid: string): Promise<AsyncResponse<any>> {
+export function deleteCreditDrug(uuid) {
   return api.addAuthenticationHeader().delete(`${path}/drug-dispensing-records/${uuid}`);
 }
 
 // Common Credit Operations
-export function getCreditClaimsbyProviderUuid(id: string, query = {}, config = {}) {
+export function getCreditClaimsbyProviderUuid(id, query = {}, config = {}) {
   return api.addAuthenticationHeader().get(`${path}/dispensing/${id}`, {
     params: query,
     ...config
@@ -70,18 +66,18 @@ export function getCreditClaimsbyProviderUuid(id: string, query = {}, config = {
   });
 }
 
-export function submitCreditClaims(claimUuids: string[]): Promise<AsyncResponse<any>> {
+export function submitCreditClaims(claimUuids) {
   return api.addAuthenticationHeader().post(`${path}/submit-claims`, {
     claimUuids
   });
 }
 
-export function getCreditClaimStatus(uuid: string): Promise<AsyncResponse<any>> {
+export function getCreditClaimStatus(uuid) {
   return api.addAuthenticationHeader().get(`${path}/claim-status/${uuid}`);
 }
 
 // Payer Related
-export function getPayerbyPayerUuid(id: string, query = {}, config = {}) {
+export function getPayerbyPayerUuid(id, query = {}, config = {}) {
   return api.addAuthenticationHeader().get(`/payer/${id}`, {
     params: query,
     ...config
@@ -92,14 +88,9 @@ export function getPayerbyPayerUuid(id: string, query = {}, config = {}) {
     throw error;
   });
 }
+
 // Get eligible services by contractHeaderUuid and insuredUuid
-// In your api file (creditServicesApi.ts)
-export function getEligibleServicesAndDrugs(
-  contractHeaderUuid: string,
-  uuid: string,                // insuredUuid or dependantUuid
-  isDependant: boolean = false,
-  searchKey?: string
-): Promise<AsyncResponse<any>> {
+export function getEligibleServicesAndDrugs(contractHeaderUuid, uuid, isDependant = false, searchKey) {
   return api.addAuthenticationHeader().get(`/payer-provider-contract/eligible-services`, {
     params: {
       contractHeaderUuid,
@@ -109,46 +100,46 @@ export function getEligibleServicesAndDrugs(
   });
 }
 
-
 // Batch Operations
-export function createBatchCreditClaims(claims: any[]): Promise<AsyncResponse<any>> {
+export function createBatchCreditClaims(claims) {
   return api.addAuthenticationHeader().post(`${path}/batch-claims`, {
     claims
   });
 }
 
-export function getBatchCreditClaims(batchId: string): Promise<AsyncResponse<any>> {
+export function getBatchCreditClaims(batchId) {
   return api.addAuthenticationHeader().get(`${path}/batch-claims/${batchId}`);
 }
 
 // Reporting
-export function generateCreditReport(params: any): Promise<AsyncResponse<any>> {
+export function generateCreditReport(params) {
   return api.addAuthenticationHeader().get(`${path}/credit-report`, {
     params
   });
 }
 
 // Utility Functions
-export function validateCreditClaim(data: any): Promise<AsyncResponse<any>> {
+export function validateCreditClaim(data) {
   return api.addAuthenticationHeader().post(`${path}/validate-claim`, data);
 }
 
-export function getCreditServiceTypes(): Promise<AsyncResponse<any>> {
+export function getCreditServiceTypes() {
   return api.addAuthenticationHeader().get(`${path}/service-types`);
 }
 
-export function getCreditDrugTypes(): Promise<AsyncResponse<any>> {
+export function getCreditDrugTypes() {
   return api.addAuthenticationHeader().get(`${path}/drug-types`);
 }
 
-export function getCreditServiceDetails(uuid: string): Promise<AsyncResponse<any>> {
+export function getCreditServiceDetails(uuid) {
   return api.addAuthenticationHeader().get(`${path}/getDispensingDetail/${uuid}`);
 }
+
 // Import/Export
-export function importCreditClaims(file: File): Promise<AsyncResponse<any>> {
+export function importCreditClaims(file) {
   const formData = new FormData();
   formData.append('file', file);
-  
+
   return api.addAuthenticationHeader().post(`${path}/import-claims`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
@@ -156,19 +147,20 @@ export function importCreditClaims(file: File): Promise<AsyncResponse<any>> {
   });
 }
 
-export function exportCreditClaims(params: any): Promise<Blob> {
+export function exportCreditClaims(params) {
   return api.addAuthenticationHeader().get(`${path}/export-claims`, {
     params,
     responseType: 'blob'
   });
 }
+
 // Get dispensing record detail
-export function getDispensingDetail(uuid: string): Promise<AsyncResponse<any>> {
+export function getDispensingDetail(uuid) {
   return api.addAuthenticationHeader().get(`${path}/getDispensingDetail/${uuid}`);
 }
 
 // Update dispensing record
-export function updateDispensingRecord(uuid: string, data: any): Promise<AsyncResponse<any>> {
+export function updateDispensingRecord(uuid, data) {
   return api.addAuthenticationHeader().put(`${path}/updateDispensing/${uuid}`, data, {
     headers: {
       'Content-Type': 'application/json'
@@ -177,10 +169,26 @@ export function updateDispensingRecord(uuid: string, data: any): Promise<AsyncRe
 }
 
 // Update drug dispensing record
-export function updateDrugDispensingRecord(uuid: string, data: any): Promise<AsyncResponse<any>> {
+export function updateDrugDispensingRecord(uuid, data) {
   return api.addAuthenticationHeader().put(`${path}/updateDispensing/${uuid}`, data, {
     headers: {
       'Content-Type': 'application/json'
+    }
+  });
+}
+export function getInstitutionsByContractUuid(contractUuid) {
+  return api.addAuthenticationHeader().get(`/eligibility/institutions`, {
+    params: { contractUuid }
+  });
+}
+
+// New API for getting insured eligibility by contractUuid and institutionUuid
+export function getInsuredEligibility(contractUuid, institutionUuid, search = "") {
+  return api.addAuthenticationHeader().get(`/eligibility/insuredEligibility`, {
+    params: { 
+      contractUuid, 
+      institutionUuid, 
+      ...(search ? { search } : {}) // Include search only if provided
     }
   });
 }
