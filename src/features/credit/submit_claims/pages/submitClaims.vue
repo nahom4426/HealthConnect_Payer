@@ -48,6 +48,7 @@ const selectedClaims = ref([]);
 const selectedPayerUuid = ref("");
 const selectedPayerName = ref("");
 const isPayerSelected = computed(() => !!selectedPayerUuid.value);
+
 // Initialize data
 onMounted(async () => {
   await claimServicesStore.fetchActiveInstitutions();
@@ -139,7 +140,7 @@ const submitClaims = async () => {
 
 // Refresh data with current filters
 const refreshDataWithDates = async (startDate, endDate) => {
-  if (!dataProvider.value) return;
+  if (!dataProvider.value || !hasGenerated.value) return;
 
   try {
     dataProvider.value.setFilters({
@@ -151,20 +152,16 @@ const refreshDataWithDates = async (startDate, endDate) => {
   } catch (error) {}
 };
 
-// Watch for date changes
-watch(
-  [fromDate, toDate],
-  ([newFromDate, newToDate]) => {
-    if (newFromDate && newToDate) {
-      refreshDataWithDates(newFromDate, newToDate);
-    }
-  },
-  { immediate: true }
-);
+// Watch for date changes - only refresh if we've already generated results
+watch([fromDate, toDate], ([newFromDate, newToDate]) => {
+  if (newFromDate && newToDate && hasGenerated.value) {
+    refreshDataWithDates(newFromDate, newToDate);
+  }
+});
 
-// Watch for payer changes
+// Watch for payer changes - only refresh if we've already generated results
 watch(selectedPayerUuid, (newPayerUuid) => {
-  if (newPayerUuid) {
+  if (newPayerUuid && hasGenerated.value) {
     const selected = claimServicesStore.institutions.find(
       (i) => i.uuid === newPayerUuid
     );
@@ -200,11 +197,13 @@ function refreshData() {
 </script>
 
 <template>
-  <DefaultPage :placeholder="!isClaimCreationMode ? 'Search Batches' : ''">
-    <template #filter v-if="!isClaimCreationMode">
-      <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
-      >
+  <!-- Show DefaultPage wrapper only when NOT in claim creation mode -->
+  <DefaultPage 
+    v-if="!isClaimCreationMode" 
+    :placeholder="'Search Batches'"
+  >
+    <template #filter>
+      <button class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3">
         <i v-html="icons.filter"></i>
         <span>Filter</span>
       </button>
@@ -212,19 +211,16 @@ function refreshData() {
 
     <template #add-action>
       <button
-        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-white"
-        :class="isClaimCreationMode ? 'bg-gray-500' : 'bg-primary'"
-        @click="isClaimCreationMode = !isClaimCreationMode"
+        class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-white bg-primary"
+        @click="isClaimCreationMode = true"
       >
         <i v-html="icons.add"></i>
-        <span>{{ isClaimCreationMode ? "Back" : "Create Claims" }}</span>
+        <span>Create Claims</span>
       </button>
     </template>
 
     <template #default="{ search }">
-      <!-- Batch Data Provider (shown when not in creation mode) -->
       <batchDataProvider
-        v-if="!isClaimCreationMode"
         ref="batchProvider"
         :providerUuid="providerUuid"
         :search="search"
@@ -265,147 +261,133 @@ function refreshData() {
           }"
         />
       </batchDataProvider>
-
-      <!-- Submit Claims Data Provider (shown in creation mode) -->
-      <submitClaimsDataProvider
-        v-else
-        ref="dataProvider"
-        :providerUuid="providerUuid"
-        :search="search"
-        v-slot="{ pending, currentPage, itemsPerPage, totalPages }"
-      >
-        <div class="space-y-4 mb-4">
-          <div class="border rounded-lg p-4 border-[#ECECEE] gap-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
-             <div class="grid grid-cols-1 md:grid-cols-2 pt-2  gap-4">
-              <Input
-                v-model="fromDate"
-                label="Credits From"
-                :validation="'required'"
-                :validationMessage="'Start date is required'"
-                :attributes="{
-                  placeholder: 'Select start date',
-                  type: 'date',
-                  max: toDate,
-                }"
-              />
-              <Input
-                v-model="toDate"
-                label="Credits To"
-                :validation="'required'"
-                :attributes="{
-                  placeholder: 'Select end date',
-                  type: 'date',
-                  min: fromDate,
-                }"
-              />
-              </div>
-                 <div class="flex w-full gap-4 pt-2">
-              <div class="w-full pr-2">
-                <Select
-                  :obj="true"
-                  name="payerUuid"
-                  label="Payer Name"
-                  validation="required"
-                  :options="payerOptions"
-                  :attributes="{
-                    placeholder: 'Select Payer',
-                    clearable: true,
-                  }"
-                  v-model="selectedPayerUuid"
-                />
-              </div>
-              <div class="justify-end pt-6 w-28">
-          <ModalFormSubmitButton
-              :pending="isGenerating"
-              :btn-text="'Generate'"
-              :disabled="!isPayerSelected"
-              :title="!isPayerSelected ? 'Please select a payer first' : ''"
-              @click="generateClaims"
-              class="bg-[#02676B] hover:bg-[#014F4F] text-white px-6 py-3 border-[#02676B] hover:border-[#014F4F]"
-            />
-              </div>
-            </div>
-         
-            </div>
-          </div>
-
-          <div class="border rounded-lg p-4 border-[#ECECEE]">
-            <div
-              v-if="hasGenerated"
-              class="flex justify-between items-center p-3.5 mb-4 rounded-lg bg-[#F6F7FA]"
-            >
-              <p class="font-medium text-base">
-                Result for claims from "{{ fromDate }}" to "{{ toDate }}" for
-                {{ selectedPayerName }} ({{ selectedClaims.length }} selected)
-              </p>
-              <ModalFormSubmitButton
-                :pending="isSubmitting"
-                :btn-text="`Create Claims for ${selectedClaims.length} services `"
-                :disabled="selectedClaims.length === 0"
-                class="bg-primary hover:bg-[#014F4F] text-white px-6 py-3"
-                @click="submitClaims"
-              />
-            </div>
-            <div
-              v-else
-              class="flex justify-center items-center p-3.5 mb-4 rounded-lg bg-[#F6F7FA] text-gray-700 italic"
-            >
-              Please select a payer and date range and click on
-              <strong class="px-1 text-base"> Generate </strong> to submit
-              claims.
-            </div>
-          </div>
-        </div>
-        <Table
-          :pending="pending"
-          :headers="{
-            head: [
-              'Invoice ID',
-              'Payer',
-              'Patient Name',
-              'Encounter Date',
-              'Branch',
-              'Credit Amount',
-              'Status',
-              'Actions',
-            ],
-            row: [
-              'invoiceNumber',
-              'payerName',
-              'patientName',
-              'dispensingDate',
-              'branchName',
-              'totalAmount',
-              'status',
-            ],
-          }"
-          :rows="selectedClaims"
-          :customActions="true"
-          :pagination="{
-            currentPage,
-            itemsPerPage,
-            totalPages,
-            onPageChange: handlePageChange,
-            onLimitChange: handleLimitChange,
-          }"
-        >
-          <template #actions="{ row }">
-            <button
-              @click.stop="removeClaim(row.dispensingUuid)"
-              class="text-red-500 hover:text-red-700"
-              title="Remove claim"
-            >
-              <i v-html="icons.trash"></i>Remove
-            </button>
-          </template>
-        </Table>
-      </submitClaimsDataProvider>
     </template>
   </DefaultPage>
+
+  <!-- Compact claim creation mode without back button -->
+  <div v-else class="p-4 bg-white rounded-lg shadow-md">
+    <submitClaimsDataProvider
+      ref="dataProvider"
+      :providerUuid="providerUuid"
+      :search="''"
+      v-slot="{ pending, currentPage, itemsPerPage, totalPages }"
+    >
+      <!-- Compact filter form -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2 ml-4 justify-end items-end pl-[55rem]">
+        <Input
+          v-model="fromDate"
+          label="From"
+          :validation="'required'"
+          :attributes="{
+            placeholder: 'Start date',
+            type: 'date',
+            max: toDate,
+          }"
+        />
+        <Input
+          v-model="toDate"
+          label="To"
+          :validation="'required'"
+          :attributes="{
+            placeholder: 'End date',
+            type: 'date',
+            min: fromDate,
+          }"
+        />
+        <Select
+          :obj="true"
+          name="payerUuid"
+          label="Payer"
+          validation="required"
+          :options="payerOptions"
+          :attributes="{
+            placeholder: 'Select Payer',
+            clearable: true,
+          }"
+          v-model="selectedPayerUuid"
+        />
+        <div class="flex items-end">
+          <ModalFormSubmitButton
+            :pending="isGenerating"
+            :btn-text="'Generate'"
+            :disabled="!isPayerSelected"
+            :title="!isPayerSelected ? 'Please select a payer first' : ''"
+            @click="generateClaims"
+            class="bg-[#02676B] hover:bg-[#014F4F] text-white px-4 py-2 h-[42px]"
+          />
+        </div>
+      </div>
+
+      <!-- Results summary (only shown after generation) -->
+      <div  class="mb-4 p-3 bg-[#F6F7FA] rounded-lg">
+        <div class="flex justify-between items-center">
+          <p class="text-sm">
+            Showing claims from {{ fromDate }} to {{ toDate }} for
+            {{ selectedPayerName }} ({{ selectedClaims.length }} selected)
+          </p>
+          <ModalFormSubmitButton
+            :pending="isSubmitting"
+            :btn-text="`Submit ${selectedClaims.length} Claims`"
+            :disabled="selectedClaims.length === 0"
+            class="bg-primary hover:bg-[#014F4F] text-white px-4 py-2 text-sm"
+            @click="submitClaims"
+          />
+        </div>
+      </div>
+      <!-- <div v-else class="mb-4 p-3 bg-[#F6F7FA] rounded-lg text-sm italic text-gray-600 text-center">
+        Select filters and click Generate to view claims
+      </div> -->
+
+      <!-- Main table -->
+      <Table
+       
+        :pending="pending"
+        :headers="{
+          head: [
+            'Invoice ID',
+            'Payer',
+            'Patient',
+            'Date',
+            'Branch',
+            'Amount',
+            'Status',
+            'Actions',
+          ],
+          row: [
+            'invoiceNumber',
+            'payerName',
+            'patientName',
+            'dispensingDate',
+            'branchName',
+            'totalAmount',
+            'status',
+          ],
+        }"
+        :rows="selectedClaims"
+        :customActions="true"
+        :pagination="{
+          currentPage,
+          itemsPerPage,
+          totalPages,
+          onPageChange: handlePageChange,
+          onLimitChange: handleLimitChange,
+        }"
+      >
+        <template #actions="{ row }">
+          <button
+            @click.stop="removeClaim(row.dispensingUuid)"
+            class="text-red-500 hover:text-red-700 text-sm"
+            title="Remove claim"
+          >
+            <i v-html="icons.trash"></i> Remove
+          </button>
+        </template>
+      </Table>
+    </submitClaimsDataProvider>
+  </div>
 </template>
+
 <style scoped>
-/* Add this to your styles */
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;

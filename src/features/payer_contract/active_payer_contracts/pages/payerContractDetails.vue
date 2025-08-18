@@ -289,15 +289,15 @@ watch(contractData, (newVal) => {
             Employee Groups
           </button>
             <button
-            @click="activeTab = 'packages'"
+            @click="activeTab = 'Benefits'"
             :class="[
               'px-6 py-3 text-sm font-medium',
-              activeTab === 'packages'
+              activeTab === 'Benefits'
                 ? 'bg-[#75778B] text-white'
                 : 'text-[#75778B] hover:bg-gray-100'
             ]"
           >
-             packages
+             Benefits
           </button>
           <button
             @click="activeTab = 'services'"
@@ -587,7 +587,7 @@ watch(contractData, (newVal) => {
       <div v-if="activeTab === 'groups'" class="bg-white p-6 rounded-lg shadow-sm">
         <FamilyGroup />
       </div>
-   <div v-if="activeTab === 'packages'" class="bg-white p-6 rounded-lg shadow-sm">
+   <div v-if="activeTab === 'Benefits'" class="bg-white p-6 rounded-lg shadow-sm">
           <ServicePayerGroup />
       </div>
       <div v-if="activeTab === 'services'" class="bg-white p-6 rounded-lg shadow-sm">

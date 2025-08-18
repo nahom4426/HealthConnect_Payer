@@ -20,8 +20,10 @@ const formRef = ref();
 
 async function handleSubmit(values) {
   try {
+    console.log('Form values received:', values);
+    
     // Validate required fields
-    if (!values.payerUuid || !values.dispensingDate || 
+    if (!values.dispensingDate || 
         (!values.insuredUuid && !values.dependantUuid)) {
       throw new Error('Please fill all required fields');
     }
@@ -30,39 +32,55 @@ async function handleSubmit(values) {
       throw new Error('Please add at least one medication item');
     }
 
+    // Build the payload according to the API specification
     const payload = {
-      providerUuid: auth.auth?.user?.providerUuid || "",
-      payerUuid: values.payerUuid,
-      insuredUuid: values.insuredUuid,
       contractHeaderUuid: values.contractHeaderUuid,
-      dependantUuid: values.dependantUuid,
-      phone: values.phone,
-      patientName: values.patientName || `${values.employeeId} - ${values.phone}`,
-      employeeId: values.employeeId,
-      dispensingDate: values.dispensingDate,
-      prescriptionNumber: values.prescriptionNumber || '',
-      pharmacyTransactionId: values.pharmacyTransactionId || '',
+      insuredUuid: values.insuredUuid,
+      dependantUuid: values.dependantUuid || null,
       primaryDiagnosis: values.primaryDiagnosis || '',
       secondaryDiagnosis: values.secondaryDiagnosis || '',
-      medicationItems: values.medicationItems.map(item => ({
-        contractDetailUuid: item.contractDetailUuid || '',
-        itemType: item.itemType,
-        remark: item.remark || '',
-        price: item.price || 
-              (item.itemType === 'SERVICE' 
-                ? (typeof item.paymentAmount === 'string' 
-                    ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
-                    : Number(item.paymentAmount) || 0)
-                : item.price || 0),
-        quantity: Number(item.quantity) || 1,
-        ...(item.itemType === 'DRUG' ? {
-          route: item.route || 'oral',
-          frequency: item.frequency || 'daily',
-          dose: item.dose || '1',
-          duration: item.duration || '7 days'
-        } : {})
-      }))
+      isInsurance: values.isInsurance || false,
+      packageUuid: values.isInsurance ? values.packageUuid : null,
+      dispensingDate: values.dispensingDate,
+      medicationItems: values.medicationItems.map(item => {
+        console.log('Processing medication item:', item);
+        
+        // For insurance claims, use serviceId from packageEligibleServices
+        // For non-insurance claims, use contractDetailUuid from contract services
+        const medicationItem = {
+          itemType: item.itemType || 'SERVICE',
+          remark: item.remark || '',
+          price: item.price || 
+                (item.itemType === 'SERVICE' 
+                  ? (typeof item.paymentAmount === 'string' 
+                      ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
+                      : Number(item.paymentAmount) || 0)
+                  : item.price || 0),
+          quantity: Number(item.quantity) || 1
+        };
+
+        // Add the correct identifier based on insurance type
+        if (values.isInsurance) {
+          // For insurance claims, use serviceId from packageEligibleServices
+          medicationItem.serviceId = item.serviceId || item.eligibleServiceUuid;
+        } else {
+          // For non-insurance claims, use contractDetailUuid from contract services
+          medicationItem.contractDetailUuid = item.contractDetailUuid;
+        }
+
+        // Add drug-specific fields if it's a drug
+        if (item.itemType === 'DRUG') {
+          medicationItem.route = item.route || 'oral';
+          medicationItem.frequency = item.frequency || 'daily';
+          medicationItem.dose = item.dose || '1';
+          medicationItem.duration = item.duration || '7 days';
+        }
+
+        return medicationItem;
+      })
     };
+
+    console.log('Final payload:', payload);
 
     const result = await createCreditService(payload);
 

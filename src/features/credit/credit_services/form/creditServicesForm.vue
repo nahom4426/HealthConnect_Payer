@@ -11,7 +11,7 @@ import { toasted } from "@/utils/utils";
 import Spinner from '@/components/pageSpinner.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Input from '@/components/new_form_elements/Input.vue';
-import { getEligibleServicesAndDrugs, getInstitutionsByContractUuid, getInsuredEligibility } from '../api/creditServicesApi';
+import { getEligibleServicesAndDrugs, getInstitutionsByContractUuid, getInsuredEligibility, getEligibleCategoriesFromInsurance, getActivePackageCategories, getEligibleServicesFromInsurance, getEligibleServicesByCategory } from '../api/creditServicesApi';
 import selectServices from '../components/selectServices.vue';
 import EmployeeDetails from '../components/EmployeeDetails.vue';
 import { getPayerContractById } from '@/features/provider_contract/active_provider_contracts/api/providerContractApi';
@@ -344,49 +344,57 @@ function goToServices() {
     serviceSubTab.value = 'services';
   }
 }
-
-async function handleSearchItems({ type, query, searchType, insuredUuid, contractHeaderUuid }) {
-  try {
-    fetchPending.value = true;
-
-    const isDependant = selectedEmployee.value?.isDependant;
-    const uuid = selectedEmployee.value?.insuredUuid;
-
-    const response = await getEligibleServicesAndDrugs(
-      selectedContract.value,
-      uuid,
-      isDependant,
-      query,
-      searchType
-    );
-
-    const items = response.data?.content || response.data || [];
-
-    if (selectServicesRef.value) {
-      selectServicesRef.value.setSearchResults(items);
-    } else {
-      console.error('selectServicesRef is not available');
-    }
-  } catch (error) {
-    console.error('Error searching items:', error);
-    if (selectServicesRef.value) {
-      selectServicesRef.value.setSearchResults([]);
-    }
-  } finally {
-    fetchPending.value = false;
+const setSearchResults = (results, packageResponse = null) => {
+  if (packageResponse) {
+    searchResults.value = packageResponse;
+  } else {
+    searchResults.value = results;
   }
-}
+};
+
+const setAvailablePackages = (packages) => {
+  availablePackages.value = packages;
+};
+
+const setAvailableCategories = (categories) => {
+  availableCategories.value = categories;
+};
+
+// Expose these methods to parent component
+defineExpose({
+  setSearchResults,
+  setAvailablePackages,
+  setAvailableCategories
+});
+
 
 function handleUpdateRemarks(newRemarks) {
   remarks.value = newRemarks;
 }
 
 function handleAddItem(item) {
+  console.log('handleAddItem received:', item);
+  
+  // Don't generate temp IDs - preserve the original identifiers
+  const processedItem = {
+    ...item,
+    // Keep the original ID structure based on insurance type
+    id: item.id || (isInsurancePayer.value ? item.serviceId : item.contractDetailUuid),
+    // Ensure we don't override the correct identifiers
+    contractDetailUuid: isInsurancePayer.value ? undefined : item.contractDetailUuid,
+    serviceId: isInsurancePayer.value ? item.serviceId : undefined,
+    // Add computed fields
+    totalCost: (item.price || 0) * (item.quantity || 1),
+    fsNumber: item.fsNumber || 'N/A'
+  };
+
   if (serviceSubTab.value === 'services') {
-    addedServices.value.push(item);
+    addedServices.value.push(processedItem);
   } else {
-    addedDrugs.value.push(item);
+    addedDrugs.value.push(processedItem);
   }
+  
+  console.log('Item added to list:', processedItem);
 }
 
 function handleRemoveItem(index) {
@@ -460,39 +468,54 @@ function handleSubmit() {
 
   const isDependant = selectedEmployee.value.isDependant;
   const formData = {
-    providerUuid: providerUuid.value,
-    payerUuid: selectedPayer.value,
     contractHeaderUuid: selectedContract.value,
     insuredUuid: isDependant ? selectedEmployee.value.employeeUuid : selectedEmployee.value.insuredUuid,
     dependantUuid: isDependant ? selectedEmployee.value.insuredUuid : null,
-    patientName: selectedEmployee.value.fullName,
-    medicationItems: [
-      ...addedServices.value.map(item => ({
-        contractDetailUuid: item.contractDetailUuid,
-        serviceUuid: item.serviceUuid,
-        itemType: 'SERVICE',
-        remark: item.remark || '',
-        quantity: item.quantity || 1,
-        price: item.price || 0
-      })),
-      ...addedDrugs.value.map(item => ({
-        contractDetailUuid: item.contractDetailUuid,
-        drugUuid: item.drugUuid,
-        itemType: 'DRUG',
-        quantity: item.quantity || 1,
-        price: item.price || 0,
-        route: item.route || 'oral',
-        frequency: item.frequency || 'daily',
-        dose: item.dose || '1',
-        duration: item.duration || '7 days'
-      }))
-    ],
-    dispensingDate: dispensingDate.value,
-    prescriptionNumber: prescriptionNumber.value,
-    pharmacyTransactionId: pharmacyTransactionId.value,
     primaryDiagnosis: primaryDiagnosis.value,
     secondaryDiagnosis: secondaryDiagnosis.value,
-    medicalServiceFiles: medicalServiceFiles.value
+    isInsurance: isInsurancePayer.value,
+    packageUuid: isInsurancePayer.value ? selectedPackage.value : null,
+    dispensingDate: dispensingDate.value,
+    medicationItems: [
+      ...addedServices.value.map(item => {
+        const medicationItem = {
+          itemType: 'SERVICE',
+          remark: item.remark || '',
+          price: item.price || 0,
+          quantity: item.quantity || 1
+        };
+
+        // Add the correct identifier based on insurance type
+        if (isInsurancePayer.value) {
+          medicationItem.serviceId = item.serviceId;
+        } else {
+          medicationItem.contractDetailUuid = item.contractDetailUuid;
+        }
+
+        return medicationItem;
+      }),
+      ...addedDrugs.value.map(item => {
+        const medicationItem = {
+          itemType: 'DRUG',
+          remark: item.remark || '',
+          price: item.price || 0,
+          quantity: item.quantity || 1,
+          route: item.route || 'oral',
+          frequency: item.frequency || 'daily',
+          dose: item.dose || '1',
+          duration: item.duration || '7 days'
+        };
+
+        // Add the correct identifier based on insurance type
+        if (isInsurancePayer.value) {
+          medicationItem.serviceId = item.serviceId;
+        } else {
+          medicationItem.contractDetailUuid = item.contractDetailUuid;
+        }
+
+        return medicationItem;
+      })
+    ]
   };
 
   console.log('Final submission data:', formData);
@@ -573,6 +596,156 @@ watch([addedServices, addedDrugs], () => {
   console.log('Services:', addedServices.value);
   console.log('Drugs:', addedDrugs.value);
 }, { deep: true });
+
+// Add new reactive state for categories and packages
+const categories = ref([]);
+const packages = ref([]);
+const selectedCategory = ref(null);
+const selectedPackage = ref(null);
+
+// Add computed property to check if payer is insurance
+
+// Add function to fetch categories/packages
+async function fetchCategoriesOrPackages() {
+  if (!selectedEmployee.value) return;
+
+  try {
+    fetchPending.value = true;
+    error.value = null;
+
+    if (isInsurancePayer.value) {
+      // For insurance payers, fetch eligible categories
+      const response = await getEligibleCategoriesFromInsurance(selectedEmployee.value.insuredUuid);
+      packages.value = response.data.map(pkg => ({
+        packageUuid: pkg.packageUuid,
+        packageName: pkg.packageName,
+        sumAssured: pkg.sumAssured
+      }));
+    } else {
+      // For non-insurance payers, fetch active package categories
+      const response = await getActivePackageCategories({ payerUuid: selectedPayer.value });
+      categories.value = response.data.content.map(category => ({
+        categoryUuid: category.categoryUuid,
+        categoryName: category.categoryName,
+        categoryCode: category.categoryCode,
+        description: category.description,
+        totalServices: category.totalServices
+      }));
+    }
+  } catch (err) {
+    console.error('Error fetching categories/packages:', err);
+    error.value = `Failed to load ${isInsurancePayer.value ? 'packages' : 'categories'}: ${err.message}`;
+  } finally {
+    fetchPending.value = false;
+  }
+}
+
+// Add computed options for categories and packages
+const categoryOptions = computed(() => {
+  return categories.value.map(category => ({
+    label: `${category.categoryName} (${category.totalServices} services)`,
+    value: category.categoryUuid
+  }));
+});
+
+const packageOptions = computed(() => {
+  return packages.value.map(pkg => ({
+    label: `${pkg.packageName} - ETB ${pkg.sumAssured}`,
+    value: pkg.packageUuid
+  }));
+});
+
+// Watch for employee selection to fetch categories/packages
+watch(selectedEmployee, async (newEmployee) => {
+  if (newEmployee) {
+    await fetchCategoriesOrPackages();
+  }
+});
+
+// Watch for category/package selection
+watch([selectedCategory, selectedPackage], () => {
+  // Clear search results when category/package changes
+  if (selectServicesRef.value) {
+    selectServicesRef.value.setSearchResults([]);
+  }
+});
+watch(packages, (newPackages) => {
+  console.log('Packages updated:', newPackages);
+  if (selectServicesRef.value && selectServicesRef.value.setAvailablePackages) {
+    selectServicesRef.value.setAvailablePackages(newPackages);
+  } else {
+    console.error('selectServicesRef.value.setAvailablePackages not available');
+  }
+});
+
+watch(categories, (newCategories) => {
+  console.log('Categories updated:', newCategories);
+  if (selectServicesRef.value && selectServicesRef.value.setAvailableCategories) {
+    selectServicesRef.value.setAvailableCategories(newCategories);
+  } else {
+    console.error('selectServicesRef.value.setAvailableCategories not available');
+  }
+});
+
+// Update the handleSearchItems function with better debugging
+async function handleSearchItems({ type, query, searchType, insuredUuid, contractHeaderUuid, selectedCategory, selectedPackage, isInsurance }) {
+  try {
+    fetchPending.value = true;
+    console.log('handleSearchItems called with:', { type, query, searchType, selectedCategory, selectedPackage, isInsurance });
+    console.log('selectServicesRef.value:', selectServicesRef.value);
+
+    let response;
+    
+    if (isInsurance && selectedPackage) {
+      console.log('Fetching insurance package services...');
+      response = await getEligibleServicesFromInsurance(
+        selectedContract.value,
+        selectedPackage,
+        selectedEmployee.value.insuredUuid,
+        query ? { search: query } : {}
+      );
+      
+      console.log('Insurance package response:', response.data);
+      
+      if (selectServicesRef.value && selectServicesRef.value.setSearchResults) {
+        selectServicesRef.value.setSearchResults([], response.data);
+      } else {
+        console.error('selectServicesRef.value.setSearchResults not available');
+      }
+    } else if (!isInsurance && selectedCategory) {
+      console.log('Fetching category services...');
+      response = await getEligibleServicesByCategory(
+        selectedContract.value,
+        selectedCategory,
+        query || ''
+      );
+
+      console.log('Category response:', response.data);
+      console.log('Category response content:', response.data?.content);
+      
+      const items = response.data?.content || [];
+      if (selectServicesRef.value && selectServicesRef.value.setSearchResults) {
+        console.log('Calling setSearchResults with items:', items);
+        selectServicesRef.value.setSearchResults(items);
+      } else {
+        console.error('selectServicesRef.value.setSearchResults not available');
+      }
+    } else {
+      console.warn('No category or package selected for service search');
+      if (selectServicesRef.value && selectServicesRef.value.setSearchResults) {
+        selectServicesRef.value.setSearchResults([]);
+      }
+    }
+  } catch (error) {
+    console.error('Error searching items:', error);
+    if (selectServicesRef.value && selectServicesRef.value.setSearchResults) {
+      selectServicesRef.value.setSearchResults([]);
+    }
+  } finally {
+    fetchPending.value = false;
+  }
+}
+  
 </script>
 
 <template>
@@ -656,7 +829,7 @@ watch([addedServices, addedDrugs], () => {
         </div>
 
         <!-- Search and Filter Section (Always Visible) -->
-        <div class="bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-lg border border-gray-200">
+        <div class="bg-gradient-to-r from-blue-100 to-gray-50 p-4 rounded-lg border border-gray-200">
           <div class="flex flex-wrap gap-4">
             <div class="w-full md:w-72">
               <Select :obj="true" name="payer" label="Select Payer" validation="required" :options="payerOptions"
@@ -1087,40 +1260,79 @@ watch([addedServices, addedDrugs], () => {
           {{ error }}
         </div>
 
-        <selectServices ref="selectServicesRef" v-model:activeTab="serviceSubTab"
-          :added-items="serviceSubTab === 'services' ? addedServices : addedDrugs" :remarks="remarks"
-          :primary-diagnosis="primaryDiagnosis" :secondary-diagnosis="secondaryDiagnosis"
-          :insured-uuid="selectedEmployee?.insuredUuid" :contract-header-uuid="selectedContract"
-          @update:remarks="handleUpdateRemarks" @add-item="handleAddItem" @remove-item="handleRemoveItem"
-          @update-quantity="handleUpdateQuantity" @update-diagnosis="handleUpdateDiagnosis"
-          @update-item="handleUpdateItem" @search-items="handleSearchItems" @clear-items="handleClearItems"
-          @update:primary-diagnosis="primaryDiagnosis = $event"
-          @update:secondary-diagnosis="secondaryDiagnosis = $event" />
+        <!-- Services Selection Component -->
+        <div>
+          <selectServices 
+            ref="selectServicesRef" 
+            v-model:activeTab="serviceSubTab"
+            :added-items="serviceSubTab === 'services' ? addedServices : addedDrugs" 
+            :remarks="remarks"
+            :primary-diagnosis="primaryDiagnosis" 
+            :secondary-diagnosis="secondaryDiagnosis"
+            :insured-uuid="selectedEmployee?.insuredUuid" 
+            :contract-header-uuid="selectedContract"
+            :selected-category="selectedCategory"
+            :selected-package="selectedPackage"
+            :is-insurance="isInsurancePayer"
+            :available-packages="packages"
+            :available-categories="categories"
+            :fetch-pending="fetchPending"
+            @update:remarks="handleUpdateRemarks" 
+            @add-item="handleAddItem" 
+            @remove-item="handleRemoveItem"
+            @update-quantity="handleUpdateQuantity" 
+            @update-diagnosis="handleUpdateDiagnosis"
+            @update-item="handleUpdateItem" 
+            @search-items="handleSearchItems" 
+            @clear-items="handleClearItems"
+            @update:primary-diagnosis="primaryDiagnosis = $event"
+            @update:secondary-diagnosis="secondaryDiagnosis = $event"
+            @update:selected-package="selectedPackage = $event"
+            @update:selected-category="selectedCategory = $event"
+          />
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Medical Service</label>
-            <Input type="file" name="medicalServiceFiles" multiple @change="handleMedicalServiceFiles"
-              class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-4 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Medical Service Files</label>
+            <Input 
+              type="file" 
+              name="medicalServiceFiles" 
+              multiple 
+              @change="handleMedicalServiceFiles"
+              class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-4 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
+            />
           </div>
           <div>
-            <Input v-model="dispensingDate" name="dispensingDate" label="Dispensing Date" validation="required"
+            <Input 
+              v-model="dispensingDate" 
+              name="dispensingDate" 
+              label="Dispensing Date" 
+              validation="required"
               :attributes="{
                 type: 'date',
                 placeholder: 'Select dispensing date',
                 required: true
-              }" />
+              }" 
+            />
           </div>
         </div>
 
         <div class="pt-4 px-6 border-t border-gray-200 flex justify-between">
-          <Button type="button" @click="goToDetails"
-            class="text-gray-600 px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50" :disabled="pending">
+          <Button 
+            type="button" 
+            @click="goToDetails"
+            class="text-gray-600 px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50" 
+            :disabled="pending"
+          >
             Back to Details
           </Button>
-          <ModalFormSubmitButton :pending="pending"
-            :btn-text="serviceSubTab === 'services' ? 'Add Service to Credit' : 'Add Drug to Credit'"
-            class="bg-primary hover:bg-teal-700 text-white px-6 py-2 rounded-md" :disabled="pending" />
+          <ModalFormSubmitButton 
+            :pending="pending"
+            :btn-text="'Submit Credit Services'"
+            class="bg-primary hover:bg-teal-700 text-white px-6 py-2 rounded-md" 
+            :disabled="pending || (addedServices.length === 0 && addedDrugs.length === 0)" 
+          />
         </div>
       </div>
     </div>

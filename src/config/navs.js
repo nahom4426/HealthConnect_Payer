@@ -143,8 +143,8 @@ export default [
     privilege: ["Create Employees"],
   },
   {
-    path: "/package_list",
-    name: "Package List",
+    path: "/benefits",
+    name: "Benefits",
     icon: icons.active_insured_persons,
     privilege: ["Create Employees"],
   },

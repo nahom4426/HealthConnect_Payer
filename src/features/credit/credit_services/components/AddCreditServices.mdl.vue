@@ -23,7 +23,7 @@ async function handleSubmit(formValues: any) {
     formPending.value = true;
 
     // Validate required fields
-    if (!formValues.payerUuid || !formValues.dispensingDate || 
+    if ( !formValues.dispensingDate || 
         (!formValues.insuredUuid && !formValues.dependantUuid)) {
       throw new Error('Please fill all required fields');
     }

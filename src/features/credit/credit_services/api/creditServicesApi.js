@@ -192,3 +192,36 @@ export function getInsuredEligibility(contractUuid, institutionUuid, search = ""
     }
   });
 }
+export function getEligibleCategoriesFromInsurance(insuredUuid) {
+  return api.addAuthenticationHeader().get(`/package-categories/packageInsurance/eligible-categories/${insuredUuid}`);
+}
+
+export function getActivePackageCategories(query = {}) {
+  const payerUuid = query.payerUuid;  // Extract payerUuid from the query object
+  return api.addAuthenticationHeader().get(`/package-categories`, {
+    params: {
+      status: 'ACTIVE',
+      ...query,
+      payerUuid,  // Include payerUuid in the params
+    },
+  });
+}
+export function getEligibleServicesFromInsurance(contractUuid, packageUuid, insuredUuid, query = {}) {
+  return api.addAuthenticationHeader().get(`/service-category-mappings/packageInsurance/eligible-services`, {
+    params: {
+      contractUuid,
+      packageUuid,
+      insuredUuid,
+      ...query,  // Spread the query parameters to include any additional ones
+    }
+  });
+}
+export function getEligibleServicesByCategory(contractUuid, categoryName, searchKey) {
+  return api.addAuthenticationHeader().get(`/service-category-mappings/eligible-services`, {
+    params: {
+      contractUuid,
+      categoryName,
+      searchKey
+    }
+  });
+}

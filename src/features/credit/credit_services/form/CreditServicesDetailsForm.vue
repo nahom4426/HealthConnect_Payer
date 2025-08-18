@@ -176,7 +176,7 @@ async function fetchServices(query) {
       serviceUuid: service.serviceUuid,
       serviceCode: service.serviceCode,
       serviceName: service.serviceName,
-      paymentAmount: `ETB ${service.price?.toFixed(2) || '0.00'}`,
+      paymentAmount: `ETB ${service.totalPrice?.toFixed(2) || '0.00'}`,
       status: service.status || 'UNKNOWN',
       quantity: 1
     }));
@@ -202,7 +202,7 @@ async function fetchDrugs(query) {
       quantity: 1,
       route: 'oral',
       frequency: 'daily',
-      dose: drug.dosage || '1',
+      dosageInstructions: drug.dosageInstructions || '1',
       duration: '7 days'
     }));
   } catch (error) {
@@ -299,7 +299,7 @@ async function handleSubmit() {
           quantity: Number(item.quantity) || 1,
           route: item.route || 'oral',
           frequency: item.frequency || 'daily',
-          dose: item.dose || '1',
+          dose: item.dosageInstructions || '1',
           duration: item.duration || '7 days',
           primaryDiagnosis: item.primaryDiagnosis || primaryDiagnosis.value,
           secondaryDiagnosis: item.secondaryDiagnosis || secondaryDiagnosis.value
@@ -367,7 +367,7 @@ onMounted(async () => {
               serviceUuid: item.itemUuid,
               serviceCode: item.medicationCode,
               serviceName: item.medicationName,
-              paymentAmount: `ETB ${item.unitPrice?.toFixed(2) || '0.00'}`
+              paymentAmount: `ETB ${item.totalPrice?.toFixed(2) || '0.00'}`
             });
           } else if (item.itemType === 'DRUG') {
             addedDrugs.value.push({
@@ -379,7 +379,7 @@ onMounted(async () => {
               price: item.unitPrice || 0,
               route: item.route,
               frequency: item.frequency,
-              dose: item.dose,
+              dosageInstructions: item.dosageInstructions,
               duration: item.duration
             });
           }
@@ -639,47 +639,7 @@ watch(searchDrugQuery, () => {
         <EmployeeDetails :employee="employeeDetails" />
 
         <!-- Credit Service Details -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-          <div>
-            <Input
-              v-model="prescriptionNumber"
-              name="prescriptionNumber"
-              label="Prescription Number"
-              validation="required"
-              disabled
-              :attributes="{
-                placeholder: 'Enter prescription number',
-              }"
-            />
-          </div>
-          <div>
-            <Input
-              v-model="pharmacyTransactionId"
-              name="pharmacyTransactionId"
-              label="Pharmacy Transaction ID"
-              validation="required"
-              disabled
-              :attributes="{
-                placeholder: 'Enter pharmacy transaction ID',
-                disabled
-              }"
-            />
-          </div> 
-          <div>
-            <Input
-              v-model="dispensingDate"
-              name="dispensingDate"
-              label="Dispensing Date"
-              validation="required"
-              disabled
-              :attributes="{
-                type: 'date',
-                placeholder: 'Select dispensing date',
-                required: true
-              }"
-            />
-          </div>
-        </div>
+    
 
         <!-- Services/Drugs Section -->
         <viewServices
@@ -703,7 +663,47 @@ watch(searchDrugQuery, () => {
           @update:primary-diagnosis="primaryDiagnosis = $event"
           @update:secondary-diagnosis="secondaryDiagnosis = $event"
         />
-
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <!-- <div>
+            <Input
+              v-model="prescriptionNumber"
+              name="prescriptionNumber"
+              label="Prescription Number"
+              validation="required"
+              disabled
+              :attributes="{
+                placeholder: 'Enter prescription number',
+              }"
+            />
+          </div>
+          <div>
+            <Input
+              v-model="pharmacyTransactionId"
+              name="pharmacyTransactionId"
+              label="Pharmacy Transaction ID"
+              validation="required"
+              disabled
+              :attributes="{
+                placeholder: 'Enter pharmacy transaction ID',
+                disabled
+              }"
+            />
+          </div>  -->
+          <div>
+            <Input
+              v-model="dispensingDate"
+              name="dispensingDate"
+              label="Dispensing Date"
+              validation="required"
+              disabled
+              :attributes="{
+                type: 'date',
+                placeholder: 'Select dispensing date',
+                required: true
+              }"
+            />
+          </div>
+        </div>
         <!-- Form Actions -->
         <div class="pt-4 px-6 border-t border-[#DFDEF2] flex justify-end space-x-4">
           <Button

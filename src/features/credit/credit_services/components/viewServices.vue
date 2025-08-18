@@ -41,12 +41,12 @@ const localSearchQuery = ref(props.searchQuery);
 const localPrimaryDiagnosis = ref(props.primaryDiagnosis);
 const localSecondaryDiagnosis = ref(props.secondaryDiagnosis);
 const localRemarks = ref(props.remarks || {});
-const availableItems = ref([]); // Now managed internally
+const availableItems = ref([]);
 
 function changeTab(tab) {
   emit('update:activeTab', tab);
   localSearchQuery.value = '';
-  availableItems.value = []; // Clear search results when changing tabs
+  availableItems.value = [];
 }
 
 watch(localSearchQuery, (newValue) => {
@@ -59,7 +59,7 @@ watch(localSearchQuery, (newValue) => {
       contractHeaderUuid: props.contractHeaderUuid
     });
   } else {
-    availableItems.value = []; // Clear results if search query is empty
+    availableItems.value = [];
   }
 });
 
@@ -70,17 +70,7 @@ watch(localPrimaryDiagnosis, (newValue) => {
 watch(localSecondaryDiagnosis, (newValue) => {
   emit('update:secondaryDiagnosis', newValue);
 });
-watch(availableItems, (newItems) => {
-  newItems.forEach(item => {
-    if (props.activeTab === 'services' && !item.serviceName) {
-      console.warn('Service item missing name:', item);
-    }
-    if (props.activeTab === 'drugs' && !item.drugName) {
-      console.warn('Drug item missing name:', item);
-    }
-  });
-}, { deep: true });
-// This function should be called by the parent component when search results arrive
+
 function setSearchResults(items) {
   if (!items) {
     availableItems.value = [];
@@ -88,55 +78,36 @@ function setSearchResults(items) {
   }
 
   availableItems.value = items.map(item => {
-    // Determine if it's a service or drug
-    const isService = item.serviceUuid !== null && item.serviceUuid !== undefined && item.serviceName !== "N/A";
-    const isDrug = item.drugUuid !== null && item.drugUuid !== undefined && item.drugName !== "N/A";
-
-    // Create the base item structure
-    const mappedItem = {
-      id: item.contractDetailUuid,
+    const baseItem = {
+      id: item.contractDetailUuid || item.id,
       contractDetailUuid: item.contractDetailUuid,
-      price: item.negotiatedPrice || 0,
-      paymentAmount: `ETB ${(item.negotiatedPrice || 0).toFixed(2)}`,
+      price: item.unitPrice || item.price || 0,
+      paymentAmount: `ETB ${(item.unitPrice || item.price || 0).toFixed(2)}`,
       status: item.status || 'UNKNOWN',
-      itemType: isService ? 'SERVICE' : 'DRUG'
+      itemType: item.itemType || (item.serviceUuid ? 'SERVICE' : 'DRUG'),
+      quantity: item.quantity || 1
     };
 
-    // Add service or drug specific fields
-    if (isService) {
-      Object.assign(mappedItem, {
-        serviceUuid: item.serviceUuid,
-        serviceName: item.serviceName,
-        serviceCode: item.serviceCode,
-        drugUuid: null,
-        drugName: null,
-        drugCode: null
-      });
-    } else if (isDrug) {
-      Object.assign(mappedItem, {
-        drugUuid: item.drugUuid,
-        drugName: item.drugName,
-        drugCode: item.drugCode || 'N/A', // Fallback if drugCode is missing
-        serviceUuid: null,
-        serviceName: null,
-        serviceCode: null
-      });
+    if (baseItem.itemType === 'SERVICE') {
+      return {
+        ...baseItem,
+        serviceUuid: item.itemUuid || item.serviceUuid,
+        serviceName: item.medicationName || item.serviceName,
+        serviceCode: item.medicationCode || item.serviceCode,
+        remark: item.remark || ''
+      };
+    } else {
+      return {
+        ...baseItem,
+        drugUuid: item.itemUuid || item.drugUuid,
+        drugName: item.medicationName || item.drugName,
+        drugCode: item.medicationCode || item.drugCode,
+        dosageInstructions: item.dosageInstructions || 'N/A',
+        totalPrice: item.totalPrice || (baseItem.price * baseItem.quantity)
+      };
     }
-
-    return mappedItem;
-  }).filter(item => {
-    // Filter based on active tab
-    if (props.activeTab === 'services') {
-      return item.itemType === 'SERVICE';
-    } else if (props.activeTab === 'drugs') {
-      return item.itemType === 'DRUG';
-    }
-    return false;
   });
-
-  console.log('Mapped and filtered items:', availableItems.value);
 }
-
 
 const isItemAdded = (itemId) => {
   return props.addedItems.some(item => item.contractDetailUuid === itemId);
@@ -149,7 +120,6 @@ const filteredItems = computed(() => {
 
   const searchTerm = localSearchQuery.value.toLowerCase();
   return availableItems.value.filter(item => {
-    // Get the appropriate name and code based on item type
     const name = props.activeTab === 'services' 
       ? item.serviceName 
       : item.drugName;
@@ -158,28 +128,26 @@ const filteredItems = computed(() => {
       : item.drugCode;
 
     return (
-      name.toLowerCase().includes(searchTerm) ||
-      code.toLowerCase().includes(searchTerm)
+      name?.toLowerCase().includes(searchTerm) ||
+      code?.toLowerCase().includes(searchTerm)
     ) && !isItemAdded(item.id);
   });
 });
+
 function handleAddItem(item) {
   if (isItemAdded(item.id)) return;
   
   const newItem = { 
     ...item,
     itemType: props.activeTab === 'services' ? 'SERVICE' : 'DRUG',
-    contractDetailUuid: item.contractDetailUuid, // Include contractDetailUuid
+    contractDetailUuid: item.contractDetailUuid,
+    price: item.unitPrice || item.price,
     ...(props.activeTab === 'drugs' ? {
-      quantity: 1,
-      totalCost: item.price * 1,
-      route: 'oral',
-      frequency: 'daily',
-      dose: '1',
-      duration: '7 days'
+      quantity: item.quantity || 1,
+      dosageInstructions: item.dosageInstructions || 'N/A',
+      totalPrice: item.totalPrice || (item.price * (item.quantity || 1))
     } : {
-      remark: localRemarks.value[item.id] || '',
-      quantity: 1
+      remark: localRemarks.value[item.id] || ''
     })
   };
   
@@ -204,39 +172,31 @@ function handleUpdateItem(index, field, value) {
   const updatedItem = { [field]: value };
 
   if (field === 'quantity' && 'price' in currentItem) {
-    const quantity = Number(value) || 0;
-    updatedItem.totalCost = currentItem.price * quantity;
+    updatedItem.totalPrice = currentItem.price * Number(value);
   }
 
-  const fullUpdate = { ...currentItem, ...updatedItem };
-  
   emit('update-item', { 
     index, 
-    item: fullUpdate
+    item: { ...currentItem, ...updatedItem }
   });
 }
 
 const displayedItems = computed(() => {
   return props.addedItems.filter(item => 
     props.activeTab === 'services' ? item.itemType === 'SERVICE' : item.itemType === 'DRUG'
-  );
+  ).map(item => ({
+    ...item,
+    paymentAmount: item.paymentAmount || `ETB ${(item.price || 0).toFixed(2)}`, // Preserve existing paymentAmount
+    totalPrice: item.totalPrice || (item.price * (item.quantity || 1))
+  }));
 });
 
-// Expose the setSearchResults function to parent
 defineExpose({ setSearchResults });
 </script>
 
 <template>
   <div class="bg-[#F6F7FA] p-4">
     <!-- Tab Navigation -->
-     <div class="debug-section" style="display: none;">
-  <h3>Debug Info:</h3>
-  <p>Search Query: {{ localSearchQuery }}</p>
-  <p>Available Items Count: {{ availableItems.length }}</p>
-  <p>Filtered Items Count: {{ filteredItems.length }}</p>
-  <pre>Available Items: {{ JSON.stringify(availableItems, null, 2) }}</pre>
-  <pre>Filtered Items: {{ JSON.stringify(filteredItems, null, 2) }}</pre>
-</div>
     <div class="flex items-center mb-6">
       <div class="flex border border-gray-300 rounded w-fit">
         <button
@@ -251,7 +211,7 @@ defineExpose({ setSearchResults });
         >
           Services
         </button>
-        <!-- <button
+        <button
           type="button"
           @click="changeTab('drugs')"
           :class="[
@@ -262,7 +222,7 @@ defineExpose({ setSearchResults });
           ]"
         >
           Drugs
-        </button> -->
+        </button>
       </div>
       
       <!-- Search Input -->
@@ -271,7 +231,6 @@ defineExpose({ setSearchResults });
           <input
             v-model="localSearchQuery"
             :placeholder="`Search ${activeTab}...`"
-            hidden
             class="w-full p-4 rounded-md focus:ring-teal-500 focus:border-teal-500"
             @keyup.enter="$emit('search-items', { 
               type: activeTab, 
@@ -335,7 +294,6 @@ defineExpose({ setSearchResults });
         <thead class="border-b px-2">
           <tr>
             <th class="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
             <th v-if="activeTab === 'services'" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</th>
@@ -347,9 +305,6 @@ defineExpose({ setSearchResults });
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="(item, index) in displayedItems" :key="item.contractDetailUuid">
             <td class="px-1 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
-            <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-              {{ item.serviceCode || item.drugCode }}
-            </td>
             <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
               {{ item.serviceName || item.drugName }}
             </td>
@@ -363,8 +318,7 @@ defineExpose({ setSearchResults });
             <td v-if="activeTab === 'services'" class="px-3 py-4 whitespace-nowrap">
               <input
                 type="text"
-                :value="localRemarks[item.contractDetailUuid]"
-                disabled
+                :value="item.remark || localRemarks[item.contractDetailUuid]"
                 @input="handleUpdateRemark(index, item.contractDetailUuid, $event.target.value)"
                 class="w-full px-3 py-3 bg-[#F6F7FA]"
                 placeholder="Service remark"
@@ -374,33 +328,24 @@ defineExpose({ setSearchResults });
             <!-- Drug-specific fields -->
             <template v-if="activeTab === 'drugs'">
               <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ item.dose }}
+                {{ item.dosageInstructions || 'N/A' }}
               </td>
               <td class="px-3 py-4 whitespace-nowrap">
                 <input
                   type="number"
                   min="1"
-                  disabled
                   :value="item.quantity"
                   @input="handleUpdateItem(index, 'quantity', $event.target.value)"
                   class="w-20 px-3 py-3 bg-[#F6F7FA]"
                 />
               </td>
               <td class="px-3 py-3 whitespace-nowrap">
-                <input
-                  type="text"
-                  :value="item.totalCost?.toFixed(2) || '0.00'"
-                  readonly
-                  class="w-40 px-3 py-3 bg-[#F6F7FA]"
-                  placeholder="Total Cost"
-                />
+                ETB {{ (item.totalPrice || 0).toFixed(2) }}
               </td>
             </template>
-            
-           
           </tr>
           <tr v-if="displayedItems.length === 0">
-            <td :colspan="activeTab === 'services' ? 5 : 8" class="px-3 py-4 text-center text-sm text-gray-500">
+            <td :colspan="activeTab === 'services' ? 4 : 7" class="px-3 py-4 text-center text-sm text-gray-500">
               No {{ activeTab }} added yet
             </td>
           </tr>
@@ -413,8 +358,7 @@ defineExpose({ setSearchResults });
           <label class="block text-sm font-medium text-gray-700 mb-1">Primary Diagnosis</label>
           <input
             v-model="localPrimaryDiagnosis"
-            disabled
-            class="w-[95%] pl-2  py-3 bg-[#F6F7FA]"
+            class="w-[95%] pl-2 py-3 bg-[#F6F7FA]"
             placeholder="Enter primary diagnosis"
           />
         </div>
@@ -422,15 +366,22 @@ defineExpose({ setSearchResults });
           <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Diagnosis</label>
           <input
             v-model="localSecondaryDiagnosis"
-            disabled
             class="w-[95%] pl-3 py-3 bg-[#F6F7FA]"
             placeholder="Enter secondary diagnosis"
           />
         </div>
+         <!-- <div  class="p-4 bg-yellow-50 my-4">
+  <h3 class="font-bold">Debug Data:</h3>
+  <pre>API Items: {{ JSON.stringify(props.addedItems, null, 2) }}</pre>
+  <pre>Mapped Items: {{ JSON.stringify(displayedItems, null, 2) }}</pre>
+</div> -->
       </div>
     </div>
+    
   </div>
+  
 </template>
+
 
 <style scoped>
 .tab-container {

@@ -3,8 +3,12 @@ import ApiService from "@/service/ApiService";
 const api = new ApiService();
 const path = "/package-categories";
 export function getPackages(query = {}) {
+  const payerUuid = query.payerUuid;  // Extract payerUuid from the query object
   return api.addAuthenticationHeader().get(`${path}`, {
-    params: query,
+    params: {
+      ...query,
+      payerUuid,  // Include payerUuid in the params
+    },
   });
 }
 

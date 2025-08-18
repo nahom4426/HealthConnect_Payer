@@ -10,6 +10,7 @@ import { closeModal } from "@customizer/modal-x";
 import { useToast } from "@/toast/store/toast";
 import PackageForm from "../components/form/PackageForm.vue";
 import { ref } from "vue";
+import { toasted } from "@/utils/utils";
 
 const { submit } = useForm("createPackageForm");
 const { addToast } = useToast();
@@ -36,7 +37,7 @@ function handleCreate({ values, reset }) {
     (response) => {
       if (response.success) {
         coverageStore.addPackage(response.data);
-        addToast('Package created successfully', '', 'success');
+        toasted(response.success, 'Package created successfully', response.error);
         reset();
         closeModal();
         

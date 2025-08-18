@@ -4,6 +4,7 @@ import { useCoverage } from "../store/coverageStore";
 import { getPackages } from "../api/coverageApi";
 import { watch } from "vue";
 import { removeUndefined } from "@/utils/utils";
+import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps({
   auto: {
@@ -22,16 +23,19 @@ const props = defineProps({
 
 const store = useCoverage();
 
+const auth  = useAuthStore();
+const payerUuid= auth.auth?.user?.payerUuid; // Assuming useAuth is your hook to get authentication data
 const pagination = usePagination({
   store: store,
   cb: (data) =>
-    getPackages(
-      removeUndefined({
+    getPackages({
+      ...removeUndefined({
         ...data,
         status: props.status,
         search: props.search.trim(),
-      })
-    ),
+      }),
+      payerUuid,  // Add payerUuid to the query parameters
+    }),
   storeKey: 'packages'
 });
 

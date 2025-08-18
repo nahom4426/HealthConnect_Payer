@@ -105,7 +105,7 @@ onMounted(() => {
       <NavBar :breadcrumbs="breadcrumbs" />
 
       <div
-        class="show-scrollbar w-full h-[calc(100%-var(--navbar-height))] overflow-auto"
+        class="show-scrollbar  w-full h-[calc(100%-var(--navbar-height))] overflow-auto"
       >
         <RouterView />
       </div>
