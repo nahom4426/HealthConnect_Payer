@@ -63,6 +63,7 @@ async function handleSubmit(values) {
         if (values.isInsurance) {
           // For insurance claims, use serviceId from packageEligibleServices
           medicationItem.serviceId = item.serviceId || item.eligibleServiceUuid;
+          medicationItem.contractDetailUuid = item.contractDetailUuid || item.eligibleServiceUuid;
         } else {
           // For non-insurance claims, use contractDetailUuid from contract services
           medicationItem.contractDetailUuid = item.contractDetailUuid;

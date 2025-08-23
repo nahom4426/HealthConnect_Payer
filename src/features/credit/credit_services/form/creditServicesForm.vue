@@ -381,7 +381,7 @@ function handleAddItem(item) {
     // Keep the original ID structure based on insurance type
     id: item.id || (isInsurancePayer.value ? item.serviceId : item.contractDetailUuid),
     // Ensure we don't override the correct identifiers
-    contractDetailUuid: isInsurancePayer.value ? undefined : item.contractDetailUuid,
+    contractDetailUuid: isInsurancePayer.value ? item.contractDetailUuid : item.contractDetailUuid,
     serviceId: isInsurancePayer.value ? item.serviceId : undefined,
     // Add computed fields
     totalCost: (item.price || 0) * (item.quantity || 1),
@@ -396,7 +396,6 @@ function handleAddItem(item) {
   
   console.log('Item added to list:', processedItem);
 }
-
 function handleRemoveItem(index) {
   if (serviceSubTab.value === 'services') {
     addedServices.value.splice(index, 1);
@@ -476,7 +475,7 @@ function handleSubmit() {
     isInsurance: isInsurancePayer.value,
     packageUuid: isInsurancePayer.value ? selectedPackage.value : null,
     dispensingDate: dispensingDate.value,
-    medicationItems: [
+  medicationItems: [
       ...addedServices.value.map(item => {
         const medicationItem = {
           itemType: 'SERVICE',
@@ -485,8 +484,10 @@ function handleSubmit() {
           quantity: item.quantity || 1
         };
 
-        // Add the correct identifier based on insurance type
+        // For insurance: send both contractDetailUuid (eligibleServiceUuid) and serviceId
+        // For non-insurance: send only contractDetailUuid
         if (isInsurancePayer.value) {
+          medicationItem.contractDetailUuid = item.contractDetailUuid; // This is eligibleServiceUuid
           medicationItem.serviceId = item.serviceId;
         } else {
           medicationItem.contractDetailUuid = item.contractDetailUuid;
@@ -506,8 +507,10 @@ function handleSubmit() {
           duration: item.duration || '7 days'
         };
 
-        // Add the correct identifier based on insurance type
+        // For insurance: send both contractDetailUuid (eligibleServiceUuid) and serviceId
+        // For non-insurance: send only contractDetailUuid
         if (isInsurancePayer.value) {
+          medicationItem.contractDetailUuid = item.contractDetailUuid; // This is eligibleServiceUuid
           medicationItem.serviceId = item.serviceId;
         } else {
           medicationItem.contractDetailUuid = item.contractDetailUuid;

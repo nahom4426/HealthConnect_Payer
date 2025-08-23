@@ -43,6 +43,9 @@ const props = defineProps({
     default: () => []
   }
 });
+const isMaxQuantity = computed(() => {
+  return parseInt(currentQuantity.value) >= 5;
+});
 function handleBlur() {
   nextTick(() => {
     showDropdown.value = false;
@@ -130,7 +133,7 @@ defineExpose({
   setAvailableCategories
 });
 
-// Update processedSearchResults to include the correct identifiers
+// Update processedSearchResults to include iligiblSServiceUuid doo inrurance insurance
 const processedSearchResults = computed(() => {
   console.log('processedSearchResults computed with:', searchResults.value);
   
@@ -141,7 +144,7 @@ const processedSearchResults = computed(() => {
     return searchResults.value.packageEligibleServices.map(service => ({
       id: service.serviceId,
       serviceId: service.serviceId, // For insurance claims
-      serviceId: service.serviceId, // Alternative identifier
+      eligibleServiceUuid: service.eligibleServiceUuid, // This will be used as contractDetailUuid
       serviceName: service.item,
       serviceCode: service.itemCode,
       price: service.price,
@@ -289,7 +292,8 @@ function selectFromDropdown(item, source = 'name') {
     
     // Set the correct identifier based on insurance type
     if (props.isInsurance) {
-      searchForm.value.serviceId = item.serviceId || item.serviceId;
+      searchForm.value.serviceId = item.serviceId;
+      searchForm.value.eligibleServiceUuid = item.eligibleServiceUuid; // Store for later use
     } else {
       searchForm.value.contractDetailUuid = item.contractDetailUuid;
     }
@@ -300,7 +304,8 @@ function selectFromDropdown(item, source = 'name') {
     
     // Set the correct identifier based on insurance type
     if (props.isInsurance) {
-      searchForm.value.serviceId = item.serviceId || item.serviceId;
+      searchForm.value.serviceId = item.serviceId;
+      searchForm.value.eligibleServiceUuid = item.eligibleServiceUuid; // Store for later use
     } else {
       searchForm.value.contractDetailUuid = item.contractDetailUuid;
     }
@@ -337,7 +342,6 @@ function fetchServicesForCategory(categoryUuid) {
     isInsurance: props.isInsurance
   });
 }
-
 function addItem(event) {
   if (event) {
     event.preventDefault();
@@ -345,6 +349,13 @@ function addItem(event) {
   }
 
   if (!currentName.value || !currentPrice.value) {
+    return;
+  }
+
+  // Check if quantity exceeds maximum
+  if (parseInt(currentQuantity.value) > 5) {
+    // You could show an alert or notification here
+    console.warn('Maximum quantity is 5');
     return;
   }
 
@@ -362,11 +373,12 @@ function addItem(event) {
   if (props.activeTab === 'services') {
     item.serviceName = currentName.value;
     item.serviceCode = currentCode.value;
-    
-    // Preserve the original identifier based on insurance type
+
+    // Handle insurance specifics for services
     if (props.isInsurance) {
       item.id = searchForm.value.serviceId;
       item.serviceId = searchForm.value.serviceId;
+      item.contractDetailUuid = searchForm.value.eligibleServiceUuid; // This is the key change
     } else {
       item.id = searchForm.value.contractDetailUuid;
       item.contractDetailUuid = searchForm.value.contractDetailUuid;
@@ -374,10 +386,11 @@ function addItem(event) {
   } else {
     item.drugName = currentName.value;
     item.drugCode = currentCode.value;
-    
-    // Preserve the original identifier based on insurance type
+
+    // Handle insurance specifics for drugs
     if (props.isInsurance) {
       item.id = searchForm.value.serviceId;
+      item.contractDetailUuid = searchForm.value.eligibleServiceUuid; // This is the key change
       item.serviceId = searchForm.value.serviceId;
     } else {
       item.id = searchForm.value.contractDetailUuid;
@@ -389,7 +402,6 @@ function addItem(event) {
   emit('add-item', item);
   resetSearchForm();
 }
-
 function handleUpdateItem(index, field, value) {
   const currentItem = { ...props.addedItems[index] };
   const updatedItem = { [field]: value };
@@ -716,12 +728,23 @@ onMounted(() => {
             text-gray-700 placeholder-gray-400" readonly />
       </div>
     </div>
-    <div class="space-y-1">
-      <label class="block text-xs font-medium text-gray-700">Quantity</label>
-      <input v-model="currentQuantity" type="number" min="1"
-        class="w-[6rem] px-3 py-4 bg-white border border-gray-300 rounded-lg
-          focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
-          text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400" />
+   <div class="space-y-1">
+      <div class="flex items-center justify-between">
+        <label class="block text-xs font-medium text-gray-700">Quantity</label>
+        <span v-if="isMaxQuantity" class="text-xs text-red-500 font-medium">Max: 5</span>
+      </div>
+      <input 
+        v-model="currentQuantity" 
+        type="number" 
+        min="1" 
+        max="5"
+        :class="[
+          'w-[6rem] px-3 py-4 bg-white border rounded-lg text-sm shadow-sm transition-all duration-200',
+          isMaxQuantity 
+            ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
+            : 'border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500'
+        ]" 
+      />
     </div>
   </div>
 
@@ -813,10 +836,21 @@ onMounted(() => {
                 ETB {{ item.price?.toFixed(2) || '0.00' }}
               </td>
               <td class="px-4 py-3">
-                <input type="number" min="1" :value="item.quantity"
-                  @input="handleUpdateItem(index, 'quantity', $event.target.value)"
-                  class="w-16 px-2 py-1 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm text-center font-medium" />
-              </td>
+      <input 
+        type="number" 
+        min="1" 
+        max="5"
+        :value="item.quantity"
+        @input="handleUpdateItem(index, 'quantity', Math.min(5, $event.target.value))"
+        :class="[
+          'w-16 px-2 py-1 border rounded text-sm text-center font-medium',
+          item.quantity >= 5 
+            ? 'border-red-300 focus:ring-1 focus:ring-red-500 focus:border-red-500' 
+            : 'border-gray-200 focus:ring-1 focus:ring-teal-500 focus:border-teal-500'
+        ]" 
+      />
+      <div v-if="item.quantity >= 5" class="text-xs text-red-500 mt-1">Max: 5</div>
+    </td>
               <td class="px-4 py-3 text-sm font-medium text-gray-700">
                 ETB {{ item.totalCost?.toFixed(2) || '0.00' }}
               </td>
