@@ -836,21 +836,10 @@ onMounted(() => {
                 ETB {{ item.price?.toFixed(2) || '0.00' }}
               </td>
               <td class="px-4 py-3">
-      <input 
-        type="number" 
-        min="1" 
-        max="5"
-        :value="item.quantity"
-        @input="handleUpdateItem(index, 'quantity', Math.min(5, $event.target.value))"
-        :class="[
-          'w-16 px-2 py-1 border rounded text-sm text-center font-medium',
-          item.quantity >= 5 
-            ? 'border-red-300 focus:ring-1 focus:ring-red-500 focus:border-red-500' 
-            : 'border-gray-200 focus:ring-1 focus:ring-teal-500 focus:border-teal-500'
-        ]" 
-      />
-      <div v-if="item.quantity >= 5" class="text-xs text-red-500 mt-1">Max: 5</div>
-    </td>
+                <input type="number" min="1" :value="item.quantity"
+                  @input="handleUpdateItem(index, 'quantity', $event.target.value)"
+                  class="w-16 px-2 py-1 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm text-center font-medium" />
+              </td>
               <td class="px-4 py-3 text-sm font-medium text-gray-700">
                 ETB {{ item.totalCost?.toFixed(2) || '0.00' }}
               </td>

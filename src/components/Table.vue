@@ -126,7 +126,6 @@ const range = (start, end) => {
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 };
 </script>
-
 <template>
   <div class="space-y-6 bg-white">
     <DataTable
@@ -138,11 +137,12 @@ const range = (start, end) => {
       <template v-if="lastCol" #lastColHeader="{ row }">
         <slot name="lastColHeader" :row="row" />
       </template>
+
       <template v-if="firstCol" #headerFirst="{ row }">
         <slot name="headerFirst" :row="row" />
       </template>
-      
-      <!-- Show row component if we have data -->
+
+      <!-- If data is available -->
       <template v-if="hasData">
         <template v-if="rowCom">
           <component
@@ -157,6 +157,7 @@ const range = (start, end) => {
             @select-payer="handleRowSelection"
           />
         </template>
+
         <template v-else>
           <GenericTableRow
             @row="(row) => emit('row', row)"
@@ -170,18 +171,24 @@ const range = (start, end) => {
             <template v-if="firstCol" #select="{ row }">
               <slot name="select" :row="row" />
             </template>
+
+            <!-- 👇 New checkbox slot for row selection -->
+            <template #selection="{ row }">
+              <slot name="cell-selection" :row="row" />
+            </template>
+
             <template v-if="lastCol" #lastCol="{ row }">
               <slot name="lastCol" :row="row" />
             </template>
-  
+
             <template #actions="{ row }">
               <slot name="actions" :row="row" />
             </template>
           </GenericTableRow>
         </template>
       </template>
-      
-      <!-- Empty state - show when no data and not loading -->
+
+      <!-- Empty state -->
       <tr v-if="showEmptyState">
         <td :colspan="spec.head.length + 1">
           <slot name="placeholder">
@@ -196,8 +203,8 @@ const range = (start, end) => {
           </slot>
         </td>
       </tr>
-      
-      <!-- Loading state -->
+
+      <!-- Loading -->
       <template v-if="pending">
         <component
           :cols="spec.head.length + 1"
@@ -227,11 +234,11 @@ const range = (start, end) => {
         </select>
         <span class="text-gray-600">entries</span>
       </div>
-      
+
       <div class="text-gray-600">
         Showing {{ rows?.length || 0 }} of {{ totalElements || 0 }} records
       </div>
-      
+
       <div class="flex gap-2 items-center justify-center flex-wrap">
         <button
           @click="previousPage"
@@ -240,7 +247,7 @@ const range = (start, end) => {
         >
           <i v-html="icons.chevron_left"></i>
         </button>
-        
+
         <template v-if="totalPages <= 7">
           <button
             v-for="pageNum in totalPages"
@@ -252,7 +259,7 @@ const range = (start, end) => {
             {{ pageNum }}
           </button>
         </template>
-        
+
         <template v-else>
           <button
             @click="handlePageChange(1)"
@@ -261,7 +268,7 @@ const range = (start, end) => {
           >
             1
           </button>
-          
+
           <template v-if="page < 4">
             <button
               v-for="pageNum in range(2, 4)"
@@ -274,7 +281,7 @@ const range = (start, end) => {
             </button>
             <span class="px-2">...</span>
           </template>
-          
+
           <template v-else-if="page > totalPages - 3">
             <span class="px-2">...</span>
             <button
@@ -287,7 +294,7 @@ const range = (start, end) => {
               {{ pageNum }}
             </button>
           </template>
-          
+
           <template v-else>
             <span class="px-2">...</span>
             <button
@@ -301,7 +308,7 @@ const range = (start, end) => {
             </button>
             <span class="px-2">...</span>
           </template>
-          
+
           <button
             @click="handlePageChange(totalPages)"
             class="pagination-button"
@@ -310,7 +317,7 @@ const range = (start, end) => {
             {{ totalPages }}
           </button>
         </template>
-        
+
         <button
           @click="nextPage"
           class="pagination-button"

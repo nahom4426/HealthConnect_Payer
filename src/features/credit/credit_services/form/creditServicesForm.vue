@@ -126,7 +126,7 @@ async function fetchPayers() {
   try {
     fetchPending.value = true;
     error.value = null;
-    const response = await getPayersWithContractForLoggedInProvider({ page: 1, limit: 1000 });
+    const response = await getPayersWithContractForLoggedInProvider({ page: 1,size:10000 });
 
     if (!response?.data?.content || !Array.isArray(response.data.content)) {
       throw new Error('Invalid data format: missing content array');

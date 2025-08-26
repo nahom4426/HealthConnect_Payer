@@ -1,10 +1,11 @@
 <script setup>
 import navs from "@/config/navs";
 import icons from "@/utils/icons";
-import { useAuthStore } from "@/stores/auth";
+// import { useAuthStore } from "@/stores/auth";
 import { useColorStore } from "@/stores/colorStore";
 import { ref, computed, defineProps, defineEmits } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 
 const auth = useAuthStore();
 

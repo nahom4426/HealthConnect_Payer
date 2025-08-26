@@ -305,59 +305,52 @@ onMounted(() => {
           totalPages,
         }"
       >
-        <Table
-          :pending="pending"
-          :headers="{
-            head: [
-              '', // For the selection checkbox column
-           
-              'Payer Name',
-              'Contracts',
-              'Payer Admin User',
-              'Contact',
-              'Category',
-              'Status',
-              'Actions',
-            ],
-            row: [
-              'selection',
-          
-              'payerName',
-              'totalContracts',
-              'email',
-              'telephone',
-              'category',
-              'status',
-            ],
-          }"
-          :rows="institutions"
-          :rowCom="contractRequestStatusRow"
-          :row-props="{
-            selectedPayers
-          }"
-          :cells="{
-            selection: (_, row) => row.payerUuid,
-            index: (_, idx) => idx + 1
-          }"
-          :pagination="{
-            currentPage,
-            itemsPerPage,
-            totalPages,
-            onPageChange: handlePageChange,
-            onLimitChange: handleLimitChange
-          }"
-          @select-payer="togglePayerSelection"
-        >
-          <template #header-selection>
-            <input
-              type="checkbox"
-              :checked="allSelected"
-              @change="toggleSelectAll"
-              class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-              @click.stop
-            />
-          </template>
-        </Table>
+      <!-- Inside your parent component's template -->
+<Table
+  :pending="pending"
+  :headers="{ 
+    head: [ '', 'Payer Name', 'Contracts', 'Payer Admin User', 'Contact', 'Category', 'Status', 'Actions' ],
+    row: [ 'selection', 'payerName', 'totalContracts', 'email', 'telephone', 'category', 'status' ]
+  }"
+  :rows="institutions"
+  :rowCom="contractRequestStatusRow"
+  :row-props="{ selectedPayers }"
+  :cells="{ 
+    selection: (_, row) => row.payerUuid,
+    index: (_, idx) => idx + 1 
+  }"
+  :pagination="{
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    onPageChange: handlePageChange,
+    onLimitChange: handleLimitChange
+  }"
+  @select-payer="togglePayerSelection"
+>
+  <!-- Header checkbox for select all -->
+  <template #header-selection>
+    <input
+      type="checkbox"
+      :checked="allSelected"
+      @change="toggleSelectAll"
+      @click.stop
+      class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+    />
+  </template>
+
+  <!-- Row checkbox -->
+  <template #cell-selection="{ row }">
+    <input
+      type="checkbox"
+      :checked="selectedPayers.includes(row.payerUuid)"
+      @change="() => togglePayerSelection(row.payerUuid)"
+      @click.stop
+      class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+    />
+  </template>
+</Table>
+
       </kenemaPayersContractsDataProvider>
     </template>
   </DefaultPage>
