@@ -1,6 +1,6 @@
 <script setup>
 import pdfMake from 'pdfmake/build/pdfmake.js';
-import pdfFonts from 'pdfmake/build/vfs_fonts.js';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts.js';
 import { ref, onMounted } from "vue";
 
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
@@ -73,4 +73,5 @@ onMounted(() => {
     <p class="text-gray-500">Loading PDF...</p>
   </div>
 </template>
+
 
