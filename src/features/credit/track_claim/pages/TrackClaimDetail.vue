@@ -1,6 +1,7 @@
 <script setup>
 import DefaultPage from "@/components/DefaultPage.vue";
 import Table from "@/components/Table.vue";
+import Button from "@/components/Button.vue";
 import { useApiRequest } from "@/composables/useApiRequest";
 import DynamicForm from "@/features/credit/authorization/form/DynamicForm.vue";
 import { convertBase64Image } from "@/utils/utils";
@@ -9,7 +10,8 @@ import { useRoute } from "vue-router";
 import track_row from "../components/track_row.vue";
 import { useClinical } from "@/features/claim/store/clinicalStore";
 import { getClaimByID } from "../api/trackClaimApi";
-
+import { openModal } from "@customizer/modal-x";
+import icons from "@/utils/icons";
 
 const route = useRoute();
 
@@ -18,6 +20,7 @@ const providerInfo = ref([]);
 const claimSummary = ref([]);
 const clinicalStore = useClinical();
 const api = useApiRequest();
+
 api.send(
   () => getClaimByID(route.params?.id),
   (res) => {
@@ -60,6 +63,14 @@ async function processProfilePicture() {
   } catch (error) {}
 }
 
+function openPdfModal() {
+  openModal('ClaimPdfViewer', {
+    claimData: api.response.value,
+    providerInfo: providerInfo.value,
+    claimSummary: claimSummary.value
+  });
+}
+
 watch(profilePicture, () => {
   processProfilePicture();
 });
@@ -93,7 +104,19 @@ watch(profilePicture, () => {
         />
       </div>
     </template>
+
     <div class="bg-base-clr3 rounded-md p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Claim Details</h3>
+        <Button
+          @click="openPdfModal"
+          class="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+        >
+          <i v-html="icons.document" class="w-4 h-4"></i>
+          View PDF
+        </Button>
+      </div>
+      
       <Table
         :pending="api.pending.value"
         :rows="clinicalStore.clinicalClaim || []"

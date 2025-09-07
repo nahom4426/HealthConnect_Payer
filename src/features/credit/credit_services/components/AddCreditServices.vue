@@ -61,11 +61,9 @@ async function handleSubmit(values) {
 
         // Add the correct identifier based on insurance type
         if (values.isInsurance) {
-          // For insurance claims, use serviceId from packageEligibleServices
-          medicationItem.serviceId = item.serviceId || item.eligibleServiceUuid;
-          medicationItem.contractDetailUuid = item.contractDetailUuid || item.eligibleServiceUuid;
+          medicationItem.serviceId = item.serviceId; // This should be the actual serviceId
+          medicationItem.contractDetailUuid = item.eligibleServiceUuid || item.contractDetailUuid; // Use eligibleServiceUuid as contractDetailUuid
         } else {
-          // For non-insurance claims, use contractDetailUuid from contract services
           medicationItem.contractDetailUuid = item.contractDetailUuid;
         }
 

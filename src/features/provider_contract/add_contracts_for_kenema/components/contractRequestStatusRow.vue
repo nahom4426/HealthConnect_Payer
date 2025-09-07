@@ -164,10 +164,15 @@ function refreshData() {
           class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
         />
       </th>
-      <th v-for="key in headKeys" :key="key" class="p-3 py-4 text-left capitalize">
-        {{ key }}
+      <th  class="p-3 py-4 text-left capitalize">
+        Payer Name
       </th>
-      <th class="p-3 py-4 text-left">Actions</th>
+      <th class="p-3 py-4 text-left capitalize">Contracts</th>
+      <th class="p-3 py-4 text-left capitalize">Payer Admin User</th>
+      <th class="p-3 py-4 text-left capitalize">Contact</th>
+      <th class="p-3 py-4 text-left capitalize">Category</th>
+      <th class="p-3 py-4 text-left capitalize">Status</th>
+      <th class="p-3 py-4 text-left capitalize">Actions</th>
     </tr>
   </thead>
 

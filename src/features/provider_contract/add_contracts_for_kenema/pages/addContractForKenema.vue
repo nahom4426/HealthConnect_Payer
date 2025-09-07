@@ -309,15 +309,14 @@ onMounted(() => {
 <Table
   :pending="pending"
   :headers="{ 
-    head: [ '', 'Payer Name', 'Contracts', 'Payer Admin User', 'Contact', 'Category', 'Status', 'Actions' ],
-    row: [ 'selection', 'payerName', 'totalContracts', 'email', 'telephone', 'category', 'status' ]
+   
+    row: [  'payerName', 'totalContracts', 'email', 'telephone', 'category', 'status' ]
   }"
   :rows="institutions"
   :rowCom="contractRequestStatusRow"
   :row-props="{ selectedPayers }"
   :cells="{ 
-    selection: (_, row) => row.payerUuid,
-    index: (_, idx) => idx + 1 
+    selection: (_, row) => row.payerUuid
   }"
   :pagination="{
     currentPage,
@@ -337,6 +336,7 @@ onMounted(() => {
       @click.stop
       class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
     />
+  
   </template>
 
   <!-- Row checkbox -->

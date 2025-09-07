@@ -1,19 +1,21 @@
 <script setup>
-// import pdfMake from 'pdfmake/build/pdfmake.js';
-// import pdfFonts from 'pdfmake/build/vfs_fonts.js';
-import { ref } from "vue";
+import pdfMake from 'pdfmake/build/pdfmake.js';
+import pdfFonts from 'pdfmake/build/vfs_fonts.js';
+import { ref, onMounted } from "vue";
 
-// pdfMake.vfs = pdfFonts.pdfMake.vfs;
-// pdfMake.fonts = {
-//   Roboto: {
-//     normal: 'Roboto-Regular.ttf',
-//     bold: 'Roboto-Bold.ttf',
-//   },
-//   'NotoSansEthiopic': {
-//     normal: 'NotoSansEthiopic-Regular.ttf',
-//     bold: 'NotoSansEthiopic-Bold.ttf',
-//   }
-// }
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+// Configure fonts for Ethiopian text
+pdfMake.fonts = {
+  Roboto: {
+    normal: 'Roboto-Regular.ttf',
+    bold: 'Roboto-Bold.ttf',
+  },
+  'NotoSansEthiopic': {
+    normal: 'Roboto-Regular.ttf', // Fallback to Roboto for now
+    bold: 'Roboto-Bold.ttf',
+  }
+};
 
 const props = defineProps({
   content: {
@@ -24,46 +26,51 @@ const props = defineProps({
   },
 });
 
-// if(!props.blob || !props.content) {
-//   throw new Error('[Content] or Blob is required')
-// }
-
 const file = ref("");
 
-if (props.content) {
-  const pdf = pdfMake.createPdf({
-    pageMargins: [20, 70, 20, 20],
-    ...props.content,
-    defaultStyle: {
-      font: "NotoSansEthiopic",
-      fontSize: 11,
-    },
-    styles: {
-      ...props.content?.styles,
-      header: {
-        alignment: "center",
-        fontSize: 20,
-        bold: true,
-        decoration: "underline",
-        ...props.content?.styles?.header,
+onMounted(() => {
+  if (props.content) {
+    const pdf = pdfMake.createPdf({
+      pageMargins: [40, 60, 40, 40],
+      ...props.content,
+      defaultStyle: {
+        font: "Roboto", // Use Roboto as fallback
+        fontSize: 11,
+        lineHeight: 1.4,
+        ...props.content?.defaultStyle,
       },
-    },
-  });
-  pdf.download = "filename.pdf";
-  pdf.getBlob((blob) => {
-    file.value = URL.createObjectURL(blob);
-  });
-} else if (props.blob) {
-  file.value = URL.createObjectURL(props.blob);
-}
+      styles: {
+        ...props.content?.styles,
+        header: {
+          alignment: "center",
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 20],
+          ...props.content?.styles?.header,
+        },
+      },
+    });
+    
+    pdf.getBlob((blob) => {
+      file.value = URL.createObjectURL(blob);
+    });
+  } else if (props.blob) {
+    file.value = URL.createObjectURL(props.blob);
+  }
+});
 </script>
 <template>
   <embed
+    v-if="file"
     type="application/pdf"
     :src="file"
     frameborder="0"
     width="100%"
-    height="600"
-    class="h-screen"
+    height="100%"
+    class="w-full h-full"
   />
+  <div v-else class="flex items-center justify-center h-full">
+    <p class="text-gray-500">Loading PDF...</p>
+  </div>
 </template>
+
