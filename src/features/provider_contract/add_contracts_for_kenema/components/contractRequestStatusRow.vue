@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, defineProps, defineEmits, watch } from 'vue';
+import { ref, onMounted, onUnmounted, defineProps, defineEmits, computed, watch, nextTick } from 'vue';
 import { openModal } from '@customizer/modal-x';
 import { useToast } from '@/toast/store/toast';
 import { institutions } from "@/features/instution_settings/store/InstitutionsStore";
@@ -7,6 +7,8 @@ import icons from "@/utils/icons";
 import { changeInstutionStatus } from '@/features/instution_settings/api/institutionsApi';
 import { createKenemaContracts } from '../api/contractRequestApi';
 import { useRouter } from 'vue-router';
+
+const log = (...args) => console.log('[PayersTable]', ...args);
 
 const router = useRouter();
 const props = defineProps({
@@ -22,27 +24,41 @@ const props = defineProps({
 const emit = defineEmits(['select-payer', 'refresh-data', 'clear-selection']);
 const { addToast } = useToast();
 const payersStore = institutions();
-const allSelected = ref(false);
 
+// ✅ Compute if all rows are selected
+const allSelected = computed(() => {
+  const allUuids = props.rowData.map(r => r.payerUuid).filter(Boolean);
+  const value = allUuids.length > 0 && allUuids.every(uuid => props.selectedPayers.includes(uuid));
+  return value;
+});
+
+// ---- DEBUG WATCHERS ----
+watch(() => props.rowData.map(r => r?.payerUuid), (nv, ov) => {
+  log('rowData changed. count=', nv?.length, 'uuids=', nv);
+}, { immediate: true });
+
+watch(() => [...props.selectedPayers], (nv, ov) => {
+  log('selectedPayers changed ->', nv);
+}, { immediate: true });
+
+watch(allSelected, (nv) => {
+  log('allSelected computed ->', nv);
+});
+
+// ---- helpers / ui ----
 function getStatusStyle(status) {
   const base = "inline-flex justify-center items-center min-w-[80px] px-3 py-1 rounded text-sm font-semibold";
   switch (status?.toUpperCase()) {
     case "APPROVED":
-    case "ACTIVE":
-      return `${base} bg-green-100 text-green-800`;
+    case "ACTIVE": return `${base} bg-green-100 text-green-800`;
     case "SUBMITTED":
     case "PENDING":
-    case "SUSPENDED":
-      return `${base} bg-yellow-100 text-yellow-800`;
+    case "SUSPENDED": return `${base} bg-yellow-100 text-yellow-800`;
     case "REJECTED":
-    case "INACTIVE":
-      return `${base} bg-red-100 text-red-800`;
-    case "ACCEPTED":
-      return `${base} bg-blue-100 text-blue-800`;
-    case "RESUBMITTED":
-      return `${base} bg-purple-100 text-purple-800`;
-    default:
-      return `${base} bg-gray-100 text-gray-800`;
+    case "INACTIVE": return `${base} bg-red-100 text-red-800`;
+    case "ACCEPTED": return `${base} bg-blue-100 text-blue-800`;
+    case "RESUBMITTED": return `${base} bg-purple-100 text-purple-800`;
+    default: return `${base} bg-gray-100 text-gray-800`;
   }
 }
 
@@ -77,30 +93,45 @@ function closeAllDropdowns() {
 
 onMounted(() => {
   window.addEventListener('click', closeAllDropdowns);
+  log('mounted. initial selectedPayers=', props.selectedPayers);
 });
 
 onUnmounted(() => {
   window.removeEventListener('click', closeAllDropdowns);
 });
 
+// ✅ Individual checkbox handler
 function handleCheckboxChange(row) {
-  if (!row.payerUuid) return;
-  emit('select-payer', row.payerUuid);
+  const isSelected = !props.selectedPayers.includes(row.payerUuid);
+  log('row checkbox click -> uuid=', row.payerUuid, 'emitting select-payer with', isSelected);
+  emit('select-payer', row.payerUuid, isSelected);
 }
+// ✅ Select All with detailed logs
+async function toggleSelectAll() {
+  const allUuids = props.rowData.map(r => r.payerUuid).filter(Boolean);
+  const isAllSelected = allUuids.length > 0 && allUuids.every(uuid => props.selectedPayers.includes(uuid));
 
-function toggleSelectAll() {
-  if (allSelected.value) {
-    const uuids = props.rowData.map(row => row.payerUuid).filter(Boolean);
-    uuids.forEach(uuid => emit('select-payer', uuid));
-  } else {
+  log('SELECT ALL clicked. allUuids=', allUuids, 'isAllSelected=', isAllSelected, 'current selectedPayers=', props.selectedPayers);
+
+  if (isAllSelected) {
+    log('Emitting clear-selection');
     emit('clear-selection');
+  } else {
+    // emit one-by-one so it works with your current parent handler
+    allUuids.forEach(uuid => {
+      if (!props.selectedPayers.includes(uuid)) {
+        log('Emitting select-payer for uuid=', uuid);
+        emit('select-payer', uuid, true);
+      } else {
+        log('uuid already selected, skipping:', uuid);
+      }
+    });
   }
-}
 
-watch(() => props.selectedPayers, (newSelected) => {
-  const allUuids = props.rowData.map(row => row.payerUuid).filter(Boolean);
-  allSelected.value = allUuids.length > 0 && allUuids.every(uuid => newSelected.includes(uuid));
-});
+  // log again on next tick to see if props changed
+  await nextTick();
+  log('after toggleSelectAll nextTick, selectedPayers (child view)=', props.selectedPayers);
+}
 
 async function handleActivateWithClose(payerUuid) {
   closeAllDropdowns();
@@ -154,42 +185,39 @@ function refreshData() {
 </script>
 
 <template>
-  <thead class="bg-gray-100 text-gray-700">
-    <tr>
-      <th class="p-4">
-        <input
-          type="checkbox"
-          v-model="allSelected"
-          @change="toggleSelectAll"
-          class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-        />
-      </th>
-      <th  class="p-3 py-4 text-left capitalize">
-        Payer Name
-      </th>
-      <th class="p-3 py-4 text-left capitalize">Contracts</th>
-      <th class="p-3 py-4 text-left capitalize">Payer Admin User</th>
-      <th class="p-3 py-4 text-left capitalize">Contact</th>
-      <th class="p-3 py-4 text-left capitalize">Category</th>
-      <th class="p-3 py-4 text-left capitalize">Status</th>
-      <th class="p-3 py-4 text-left capitalize">Actions</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <tr 
-      v-for="(row, idx) in rowData" 
-      :key="idx"
-      class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out" 
-    >  
-      <td class="p-4" @click.stop>
-        <input
-          type="checkbox"
-          :checked="props.selectedPayers.includes(row.payerUuid)"
-          @change="() => handleCheckboxChange(row)"
-          class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-        />
-      </td>
+ <thead class="bg-gray-100 text-gray-700">
+  <tr>
+    <th class="p-4">
+      <input
+        type="checkbox"
+        :checked="allSelected"
+        @change="toggleSelectAll"
+        class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+      />
+    </th>
+    <th class="p-3 py-4 text-left capitalize">Payer Name</th>
+    <th class="p-3 py-4 text-left capitalize">Contracts</th>
+    <th class="p-3 py-4 text-left capitalize">Payer Admin User</th>
+    <th class="p-3 py-4 text-left capitalize">Contact</th>
+    <th class="p-3 py-4 text-left capitalize">Category</th>
+    <th class="p-3 py-4 text-left capitalize">Status</th>
+    <th class="p-3 py-4 text-left capitalize">Actions</th>
+  </tr>
+</thead>
+<tbody>
+  <tr 
+    v-for="(row, idx) in rowData" 
+    :key="row.payerUuid || idx"
+    class="bg-white border-b hover:bg-gray-50 transition-colors duration-150 ease-in-out" 
+  >  
+    <td class="p-4" @click.stop>
+      <input
+        type="checkbox"
+        :checked="props.selectedPayers.includes(row.payerUuid)"
+        @change="() => handleCheckboxChange(row)"
+        class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+      />
+    </td>
 
       <td class="p-3 py-4" v-for="key in rowKeys" :key="key">  
         <div v-if="key === 'status'" class="truncate">  
@@ -275,24 +303,9 @@ function refreshData() {
 </template>
 
 <style scoped>
-.dropdown-container {
-  min-width: 80px;
-}
-.dropdown-menu {
-  min-width: 150%;
-  transition: all 0.2s ease-out;
-  transform-origin: top right;
-}
-.dropdown-menu.hidden {
-  opacity: 0;
-  transform: scale(0.95);
-  pointer-events: none;
-}
-.dropdown-menu:not(.hidden) {
-  opacity: 1;
-  transform: scale(1);
-}
-.dropdown-container button {
-  width: 100%;
-}
+.dropdown-container { min-width: 80px; }
+.dropdown-menu { min-width: 150%; transition: all 0.2s ease-out; transform-origin: top right; }
+.dropdown-menu.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
+.dropdown-menu:not(.hidden) { opacity: 1; transform: scale(1); }
+.dropdown-container button { width: 100%; }
 </style>

@@ -207,7 +207,7 @@ const range = (start, end) => {
       <!-- Loading -->
       <template v-if="pending">
         <component
-          :cols="spec.head.length + 1"
+          :cols="spec.head.length + 2"
           :key="num"
           v-for="num in 25"
           :is="Fallback"

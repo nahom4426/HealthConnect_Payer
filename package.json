@@ -21,7 +21,7 @@
     "axios": "^1.7.5",
     "bootstrap-icons": "^1.11.3",
     "chart.js": "^4.4.9",
-    "pdfmake": "^0.2.14",
+    "pdfmake": "^0.2.20",
     "pinia": "^2.1.7",
     "postcss": "^8.4.45",
     "qs": "^6.14.0",
@@ -39,7 +39,7 @@
     "@vue/tsconfig": "^0.5.1",
     "npm-run-all2": "^6.2.0",
     "typescript": "~5.4.0",
-    "vite": "^5.3.1",
+    "vite": "^6.3.6",
     "vite-plugin-vue-devtools": "^7.3.1",
     "vue-tsc": "^2.0.21"
   }

@@ -12,7 +12,7 @@ export const claimServices = defineStore("submitServicesStore", () => {
   const fetchActiveInstitutions = async () => {
     loadingInstitutions.value = true;
     try {
-     const response = await getPayersWithContractForLoggedInProvider({ page: 1, limit: 1000 });
+     const response = await getPayersWithContractForLoggedInProvider({ page: 1, size:10000 });
       
       // Handle the nested content array in the response
       if (response?.data?.content && Array.isArray(response.data.content)) {
@@ -36,7 +36,7 @@ export const claimServices = defineStore("submitServicesStore", () => {
     try {
       fetchPending.value = true;
       error.value = null;
-      const response = await getPayersWithContractForLoggedInProvider({ page: 1, limit: 1000 });
+      const response = await getPayersWithContractForLoggedInProvider({ page: 1, size:10000 });
       
       if (!response?.data?.content || !Array.isArray(response.data.content)) {
         throw new Error('Invalid data format: missing content array');

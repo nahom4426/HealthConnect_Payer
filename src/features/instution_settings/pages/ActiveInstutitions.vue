@@ -160,14 +160,14 @@ function handleImageError(event) {
   <DefaultPage placeholder="Search Active Institutions">
     
     <!-- Filter Button -->
-     <template #filter>
+       <!-- <template #filter>
       <button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 text-primary bg-base-clr3"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
-    </template>
+    </template> -->
     <!-- Add Button -->
     <template #add-action>
        <button

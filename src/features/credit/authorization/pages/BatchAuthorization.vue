@@ -35,7 +35,7 @@ function remove(id) {
 
 <template>
   <DefaultPage placeholder="Search Claim Batch">
-    <template #filter>
+    <!-- <template #filter>
       <Dropdown v-slot="{ setRef, toggleDropdown }">
         <button
           @click.prevent="toggleDropdown"
@@ -55,7 +55,7 @@ function remove(id) {
           </button>
         </div>
       </Dropdown>
-    </template>
+    </template> -->
 
     <template #default="{ search }">
       <AuthorizationBatchDataProvider

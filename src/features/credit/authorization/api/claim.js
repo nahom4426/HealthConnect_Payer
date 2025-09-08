@@ -5,8 +5,8 @@ const api = new ApiService();
 const path = "/claims";
 const baseUrl = import.meta.env.v_API_URI;
 
-export function claimApproval(id) {
-  return api.addAuthenticationHeader().post(`${path}/createBatchClaim/${id}`);
+export function claimApproval(id, payerName) {
+  return api.addAuthenticationHeader().post(`${path}/createBatchClaim/${id}?payerName=${payerName}`);
 }
 
 export function claimRejection(id, data) {

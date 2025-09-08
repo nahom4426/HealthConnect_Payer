@@ -21,14 +21,14 @@ const pagination = usePagination({
 
 <template>
   <DefaultPage placeholder="Search Claim Batch">
-    <template #add-action
+    <!-- <template #add-action
       ><button
         class="flex justify-center items-center gap-2 rounded-md px-6 py-4 bg-base-clr3"
       >
         <i v-html="icons.filter"></i>
         <p class="text-base">Filters</p>
       </button>
-    </template>
+    </template> -->
     <SubmittedClaimDataProvider
       :id="$route.params.id"
       :search="search"

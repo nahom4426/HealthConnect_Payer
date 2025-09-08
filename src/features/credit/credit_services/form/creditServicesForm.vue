@@ -65,6 +65,10 @@ const dispensingDate = ref(new Date().toISOString().split('T')[0]);
 const remarks = ref({});
 const selectServicesRef = ref(null);
 const medicalServiceFiles = ref([]);
+const payerSearchTerm = ref('');
+const showPayerDropdown = ref(false);
+const availableContracts = ref([]);
+const availableInstitutions = ref([]);
 
 function handleMedicalServiceFiles(event) {
   medicalServiceFiles.value = Array.from(event.target.files);
@@ -103,6 +107,38 @@ const payerOptions = computed(() => {
     value: payer.payerUuid,
   }));
 });
+
+// Filtered payer options with search
+const filteredPayerOptions = computed(() => {
+  if (!payerSearchTerm.value) return payerOptions.value;
+
+  return payerOptions.value.filter((option) =>
+    option.label.toLowerCase().includes(payerSearchTerm.value.toLowerCase())
+  );
+});
+
+function selectPayer(option) {
+  selectedPayer.value = option.value;
+  payerSearchTerm.value = option.label;
+  showPayerDropdown.value = false;
+}
+
+function handlePayerInputFocus() {
+  showPayerDropdown.value = true;
+}
+
+function handlePayerInputBlur() {
+  // Delay hiding to allow click events on dropdown items
+  setTimeout(() => {
+    showPayerDropdown.value = false;
+  }, 200);
+}
+
+function clearPayerSearch() {
+  payerSearchTerm.value = '';
+  selectedPayer.value = '';
+  showPayerDropdown.value = false;
+}
 
 const contractOptions = computed(() => {
   if (!selectedPayer.value) return [];
@@ -835,45 +871,97 @@ async function handleSearchItems({ type, query, searchType, insuredUuid, contrac
         <div class="bg-gradient-to-r from-blue-100 to-gray-50 p-4 rounded-lg border border-gray-200">
           <div class="flex flex-wrap gap-4">
             <div class="w-full md:w-72">
-              <Select :obj="true" name="payer" label="Select Payer" validation="required" :options="payerOptions"
-                :disabled="fetchPending" :attributes="{
-                  placeholder: 'Select a Payer'
-                }" v-model="selectedPayer" />
-            </div>
-
-            <div class="w-full md:w-72" v-if="selectedPayer && contractOptions.length > 0">
-              <div v-if="contractOptions.length === 1">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Contract</label>
-                <div class="p-2 min-h-9 bg-gray-100 rounded-md text-sm text-gray-700">
-                  {{ contractOptions[0].label }}
+              <label class="block text-sm font-medium text-gray-700 mb-2">Select Payer</label>
+              <div class="relative">
+                <div class="relative">
+                  <input
+                    v-model="payerSearchTerm"
+                    type="text"
+                    placeholder="Search payers..."
+                    @focus="handlePayerInputFocus"
+                    @blur="handlePayerInputBlur"
+                    class="w-48 px-3 py-4 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-white"
+                  />
+                  <button
+                    v-if="payerSearchTerm"
+                    @click="clearPayerSearch"
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
                 </div>
-                <input type="hidden" :value="contractOptions[0].value" />
+                
+                <div 
+                  v-if="showPayerDropdown && filteredPayerOptions.length > 0"
+                  class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                >
+                  <div
+                    v-for="option in filteredPayerOptions"
+                    :key="option.value"
+                    @mousedown.prevent="selectPayer(option)"
+                    class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 transition-colors"
+                    :class="{ 'bg-blue-100': selectedPayer === option.value }"
+                  >
+                    <div class="font-medium text-gray-900">{{ option.label }}</div>
+                    <div class="text-xs text-gray-500 mt-1">{{ option.email || 'No email' }}</div>
+                  </div>
+                </div>
+                
+                <div 
+                  v-else-if="showPayerDropdown && payerSearchTerm && filteredPayerOptions.length === 0"
+                  class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg p-3"
+                >
+                  <div class="text-sm text-gray-500 text-center">
+                    <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    No payers found matching "{{ payerSearchTerm }}"
+                  </div>
+                </div>
               </div>
-              <Select v-else :obj="true" name="contract" label="Select Contract" validation="required"
-                :options="contractOptions" :disabled="fetchPending" :attributes="{
-                  placeholder: 'Select a Contract'
-                }" v-model="selectedContract" />
             </div>
 
-            <!-- Institution Selection (only for insurance payers) -->
-            <div class="w-full md:w-72" v-if="selectedContract && isInsurancePayer">
-              <Select :obj="true" name="institution" label="Select Institution" validation="required"
-                :options="institutionOptions" :disabled="fetchPending" :attributes="{
-                  placeholder: 'Select an Institution'
-                }" v-model="selectedInstitution" />
+            <div class="w-full md:w-72" v-if="availableContracts.length > 0">
+              <Select
+                :obj="true"
+                name="contract"
+                label="Select Contract"
+                validation="required"
+                :options="contractOptions"
+                :disabled="fetchPending || !selectedPayer"
+                :attributes="{ placeholder: 'Select a Contract' }"
+                v-model="selectedContract"
+              />
+            </div>
+
+            <div class="w-full md:w-72" v-if="isInsurancePayer && availableInstitutions.length > 0">
+              <Select
+                :obj="true"
+                name="institution"
+                label="Select Institution"
+                validation="required"
+                :options="institutionOptions"
+                :disabled="fetchPending || !selectedContract"
+                :attributes="{ placeholder: 'Select an Institution' }"
+                v-model="selectedInstitution"
+              />
             </div>
 
             <div class="w-full md:flex-1">
-              <Input name="searchEmployeeQuery" label="Search Employees" :attributes="{
-                placeholder: 'Search by name, ID, or insurance number',
-              }" v-model="searchEmployeeQuery">
-              <template #suffix>
-                <Spinner v-if="fetchPending" class="ml-2" />
-                <svg v-else class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-              </template>
+              <Input
+                name="searchEmployeeQuery"
+                label="Search Employees"
+                :attributes="{ placeholder: 'Search by name, ID, or insurance number' }"
+                v-model="searchEmployeeQuery"
+              >
+                <template #suffix>
+                  <Spinner v-if="fetchPending" class="ml-2" />
+                  <svg v-else class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                </template>
               </Input>
             </div>
           </div>

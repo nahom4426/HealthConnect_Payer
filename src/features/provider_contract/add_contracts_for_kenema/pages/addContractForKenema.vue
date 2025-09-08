@@ -7,7 +7,6 @@ import Button from "@/components/Button.vue";
 import { addToast } from "@/toast";
 import { openModal } from "@customizer/modal-x";
 import { useApiRequest } from "@/composables/useApiRequest";
-import contractRequestStatusRow from "../components/contractRequestStatusRow.vue";
 import { createKenemaContracts } from "../api/contractRequestApi";
 import icons from '@/utils/icons';
 import KenemaPayersContractsDataProvider from '../components/kenemaPayersContractsDataProvider.vue';
@@ -16,56 +15,45 @@ const router = useRouter();
 const search = ref("");
 const dataProvider = ref(null);
 const selectedPayers = ref([]);
-const allSelected = ref(false);
-const isLoading = ref(false); // Explicit loading state
-const showDropdown = ref(false); // For dropdown menu
+const isSelected = ref(false);
+const isLoading = ref(false);
+const showDropdown = ref(false);
 
 // Computed property for selected count
 const selectedCount = computed(() => selectedPayers.value.length);
 
-// Toggle selection for a single payer
-function togglePayerSelection(payerUuid) {
-  const index = selectedPayers.value.indexOf(payerUuid);
-  if (index === -1) {
-    selectedPayers.value.push(payerUuid);
-    
-    // Check if all items are now selected
-    if (dataProvider.value && dataProvider.value.institutions) {
-      const allPayerUuids = dataProvider.value.institutions
-        .map(inst => inst.payerUuid)
-        .filter(Boolean);
-      
-      if (selectedPayers.value.length === allPayerUuids.length) {
-        allSelected.value = true;
+function handleSelectAll(checked, data = []) {
+  if (checked) {
+    selectedPayers.value = [];
+    data.forEach((el) => {
+      if (el?.payerUuid) {
+        selectedPayers.value.push(el.payerUuid);
       }
-    }
+    });
+    isSelected.value = true;
   } else {
-    selectedPayers.value.splice(index, 1);
-    allSelected.value = false;
+    isSelected.value = false;
+    selectedPayers.value = [];
   }
 }
 
-// Toggle select all
-function toggleSelectAll() {
-  if (!dataProvider.value || !dataProvider.value.institutions) return;
-  
-  const institutions = dataProvider.value.institutions;
-  
-  if (allSelected.value) {
-    // Deselect all
-    selectedPayers.value = [];
+function selectPayer(id, data = []) {
+  const idx = selectedPayers.value.findIndex((el) => el == id);
+  if (idx > -1) {
+    selectedPayers.value = selectedPayers.value.filter((el) => el != id);
+    isSelected.value = false;
   } else {
-    // Select all
-    selectedPayers.value = institutions.map(inst => inst.payerUuid).filter(Boolean);
+    selectedPayers.value.push(id);
+    if (selectedPayers.value.length === data.length) {
+      isSelected.value = true;
+    }
   }
-  
-  allSelected.value = !allSelected.value;
 }
 
 // Toggle dropdown menu
-function toggleDropdown() {
-  showDropdown.value = !showDropdown.value;
-}
+// function toggleDropdown() {
+//   showDropdown.value = !showDropdown.value;
+// }
 
 // Close dropdown when clicking outside
 function closeDropdown() {
@@ -74,12 +62,9 @@ function closeDropdown() {
 
 // Clear all selections
 function clearSelections() {
-  // Clear the array by setting it to an empty array
   selectedPayers.value = [];
-  // Reset the allSelected flag
-  allSelected.value = false;
+  isSelected.value = false;
   
-  // Force a UI update
   nextTick(() => {
     console.log("Selections cleared:", selectedPayers.value);
   });
@@ -97,15 +82,13 @@ async function createContracts() {
   }
 
   try {
-    isLoading.value = true; // Set loading state
+    isLoading.value = true;
     
-    // Store the selected payers count for the success message
     const selectedCount = selectedPayers.value.length;
     
     const response = await createKenemaContracts(selectedPayers.value);
     
     if (response.success) {
-      // Clear selections BEFORE showing the toast
       clearSelections();
       
       addToast({
@@ -114,12 +97,7 @@ async function createContracts() {
         message: `${selectedCount} contract(s) created successfully`,
       });
       
-     router.push('/provider_contracts'); // Redirect to the contracts page
-      // Emit events to parent component if needed
-      // emit('clear-selection');
-      // emit('refresh-data');
-      
-      // Optionally, refresh data in the data provider
+      router.push('/provider_contracts');
       refreshData();
     } else {
       throw new Error(response.error || "Failed to create contracts");
@@ -132,7 +110,7 @@ async function createContracts() {
       message: error.message || "An error occurred while creating contracts",
     });
   } finally {
-    isLoading.value = false; // Clear loading state
+    isLoading.value = false;
   }
 }
 
@@ -176,18 +154,55 @@ function handleImportPayers() {
 
 onMounted(() => {
   refreshData();
-  // Add click event listener to close dropdown when clicking outside
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.dropdown-container')) {
-      closeDropdown();
+      closeAllDropdowns();
     }
   });
 });
+function toggleDropdown(event, rowId) {
+  event.stopPropagation();
+  closeAllDropdowns();
+  const dropdown = document.getElementById(`dropdown-${rowId}`);
+  if (dropdown) dropdown.classList.toggle('hidden');
+}
+function handleEdit(row) {
+  openModal('EditPayer', {
+    payerUuid: row.payerUuid,
+    payer: row,
+    onUpdated: (updatedPayer) => {
+      payersStore.update(updatedPayer.payerUuid, updatedPayer);
+    }
+  });
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.add('hidden'));
+}
+async function handleCreateContracts(payerUuids) {
+  closeAllDropdowns();
+  const uuids = Array.isArray(payerUuids) ? payerUuids : [payerUuids];
+  if (uuids.length === 0) {
+    addToast({ type: "warning", title: "No Selection", message: "Please select at least one payer to create contracts" });
+    return;
+  }
+  try {
+    const response = await createKenemaContracts(uuids);
+    if (response.success) {
+      addToast({ type: "success", title: "Contracts Created", message: `${uuids.length} contract(s) created successfully` });
+      router.push('/provider_contracts');
+      emit('clear-selection');
+      emit('refresh-data');
+    } else throw new Error(response.error || "Failed to create contracts");
+  } catch (error) {
+    addToast({ type: "error", title: "Creation Failed", message: error.message });
+  }
+}
 </script>
 
 <template>
   <DefaultPage placeholder="Search Active Institutions">
-    <template #filter>
+    <!-- <template #filter>
       <button
         class="btn flex justify-center items-center text-center gap-2 mx-4 btn-outline border-[1px] rounded-lg h-14 px-6 text-primary border-primary hover:bg-primary/10"
       >
@@ -204,7 +219,7 @@ onMounted(() => {
         </svg>
         <p class="text-base">Filters</p>
       </button>
-    </template>
+    </template> -->
 
     <template #add-action>
       <div class="flex gap-4">
@@ -217,7 +232,6 @@ onMounted(() => {
           <p class="text-base">Create Contracts{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}</p>
         </button>
         
-        <!-- Dropdown container -->
         <div class="dropdown-container relative">
           <button
             @click.stop="toggleDropdown"
@@ -251,7 +265,6 @@ onMounted(() => {
             </svg>
           </button>
           
-          <!-- Dropdown menu -->
           <div 
             v-if="showDropdown" 
             class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
@@ -305,53 +318,94 @@ onMounted(() => {
           totalPages,
         }"
       >
-      <!-- Inside your parent component's template -->
-<Table
-  :pending="pending"
-  :headers="{ 
-   
-    row: [  'payerName', 'totalContracts', 'email', 'telephone', 'category', 'status' ]
-  }"
-  :rows="institutions"
-  :rowCom="contractRequestStatusRow"
-  :row-props="{ selectedPayers }"
-  :cells="{ 
-    selection: (_, row) => row.payerUuid
-  }"
-  :pagination="{
-    currentPage,
-    itemsPerPage,
-    totalPages,
-    onPageChange: handlePageChange,
-    onLimitChange: handleLimitChange
-  }"
-  @select-payer="togglePayerSelection"
->
-  <!-- Header checkbox for select all -->
-  <template #header-selection>
-    <input
-      type="checkbox"
-      :checked="allSelected"
-      @change="toggleSelectAll"
-      @click.stop
-      class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-    />
-  
-  </template>
+        <div class="flex flex-col gap-4 bg-white p-3">
+          <div class="flex w-full justify-between items-center">
+            <h1 class="text-base-clr">
+              Selected Payers ({{ selectedPayers.length }})
+            </h1>
+          </div>
+          
+          <Table
+            :firstCol="true"
+            :pending="pending"
+            :rows="institutions"
+            :headers="{
+              head: [
+                'Payer Name',
+                'Contracts',
+                'Payer Admin User',
+                'Contact',
+                'Category',
+                'Status',
+                'actions',
+              ],
+              row: ['payerName', 'totalContracts', 'email', 'telephone', 'category', 'status'],
+            }"
+          >
+            <template #headerFirst="{ row }">
+              <Button>
+                <input
+                  :checked="isSelected"
+                  @change="
+                    handleSelectAll($event.target.checked, institutions)
+                  "
+                  class="size-4 "
+                  type="checkbox"
+                />
+              </Button>
+            </template>
+            <template #select="{ row }">
+              <Button>
+                <input
+                  type="checkbox"
+                  :checked="selectedPayers.includes(row?.payerUuid)"
+                  @change="selectPayer(row?.payerUuid, institutions)"
+                  class="size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+              </Button>
+            </template>
+            <template #actions="{ row }">
+               <div class="dropdown-container relative">
+          <button 
+            @click.stop="toggleDropdown($event, row.payerUuid || row.id)"
+            class="inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
+            type="button"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+            </svg>
+          </button>
 
-  <!-- Row checkbox -->
-  <template #cell-selection="{ row }">
-    <input
-      type="checkbox"
-      :checked="selectedPayers.includes(row.payerUuid)"
-      @change="() => togglePayerSelection(row.payerUuid)"
-      @click.stop
-      class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-    />
-  </template>
-</Table>
-
-      </kenemaPayersContractsDataProvider>
+          <div 
+            :id="`dropdown-${row.payerUuid || row.id}`"
+            class="dropdown-menu hidden absolute right-0 z-10 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5"
+          >
+            <div class="py-1" role="none">
+              <button 
+                @click.stop="handleEdit(row)"
+                class="block w-full text-left py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <div class="flex items-center justify-start pl-4 gap-4">
+                  <i v-html="icons.edits" />
+                  Edit
+                </div>
+              </button>
+              <button 
+                @click.stop="handleCreateContracts(row.payerUuid)"
+                class="block w-full text-left py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <div class="flex items-center justify-start pl-4 gap-4">
+                  <i v-html="icons.edits" />
+                  Create Contract
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+            </template>
+          </Table>
+        </div>
+      </KenemaPayersContractsDataProvider>
     </template>
   </DefaultPage>
 </template>

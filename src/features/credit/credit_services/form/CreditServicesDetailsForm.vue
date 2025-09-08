@@ -104,7 +104,7 @@ async function fetchEmployees() {
     const response = await searchInsuredByInstitution(selectedPayer.value, {
       search: searchEmployeeQuery.value ,
   page: 1,
-  size: 100000 
+  size: 10000000 
     });
     const employeesData = Array.isArray(response) ? response :
       response?.content || response?.data?.content || [];
