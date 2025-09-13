@@ -45,7 +45,24 @@ export function createInsuredPerson(data: any) {
 }
 
 export function updateInsuredPerson(uuid: string, data: any) {
-	return api.addAuthenticationHeader().put(`${baseUrl}/insuredperson/${uuid}`, data)
+  const formData = new FormData();
+  
+  // Append all data fields to FormData
+   const fd = new FormData();
+  const logo = data.logo;
+  delete data.logo
+   fd.append('provider', JSON.stringify(data));
+   fd.append('logo', logo);
+  
+  return api.addAuthenticationHeader().put(
+    `${baseUrl}/insuredperson/${uuid}`, 
+    fd,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }
+  );
 }
 
 export function getInsuredPersonById(uuid: string) {
