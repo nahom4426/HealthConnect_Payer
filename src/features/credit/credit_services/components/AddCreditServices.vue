@@ -81,7 +81,12 @@ async function handleSubmit(values) {
 
     console.log('Final payload:', payload);
 
-    const result = await createCreditService(payload);
+    // Extract attachment from payload if present
+    const attachment = payload.attachment;
+    delete payload.attachment; // Remove from main payload
+      console.log('Final payloadsss:', attachment);
+
+    const result = await createCreditService(payload, attachment);
 
     if (result.success) {
       const storeData = {

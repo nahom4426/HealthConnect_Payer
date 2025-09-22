@@ -69,8 +69,12 @@ async function handleSubmit(formValues: any) {
       }))
     };
 
+    // Extract attachment from form values if present
+    const attachment = formValues.attachment || null;
+    console.log('Modal attachment:', attachment);
+
     // Submit the claim
-    const result = await createCreditService(payload);
+    const result = await createCreditService(payload, attachment);
 
     if (result.success) {
       // Prepare data for store

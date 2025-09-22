@@ -17,6 +17,7 @@ const route = useRoute();
 
 const profilePicture = ref("");
 const providerInfo = ref([]);
+const payerInfo = ref([]);
 const claimSummary = ref([]);
 const clinicalStore = useClinical();
 const api = useApiRequest();
@@ -32,6 +33,12 @@ api.send(
         { title: "Category", value: res.data?.providerCategory || "N/A" },
         { title: "Phone", value: res.data?.providerPhone || "N/A" },
         { title: "Email", value: res.data?.providerEmail || "N/A" },
+      ];
+        payerInfo.value = [
+        { title: "Payer Name", value: res.data?.payerName || "N/A" },
+        { title: "MRN", value: res.data?.mrnNumber || "N/A" },
+        { title: "Phone", value: res.data?.payerPhone || "N/A" },
+        { title: "Email", value: res.data?.payerEmail || "N/A" },
       ];
       claimSummary.value = [
         { title: "Claim Amount", value: res.data?.totalAmount || "N/A" },
@@ -92,9 +99,9 @@ watch(profilePicture, () => {
           </div>
 
           <DynamicForm
-            header="About Provider"
+            header="About Payer"
             customClass="bg-base-clr3 col-span-2"
-            :data="providerInfo"
+            :data="payerInfo"
           />
         </div>
         <DynamicForm

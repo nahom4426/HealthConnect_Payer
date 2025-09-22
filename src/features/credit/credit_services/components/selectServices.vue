@@ -738,6 +738,7 @@ onMounted(() => {
         type="number" 
         min="1" 
         max="5"
+        readonly
         :class="[
           'w-[6rem] px-3 py-4 bg-white border rounded-lg text-sm shadow-sm transition-all duration-200',
           isMaxQuantity 
@@ -835,11 +836,16 @@ onMounted(() => {
               <td class="px-4 py-3 text-sm text-gray-700">
                 ETB {{ item.price?.toFixed(2) || '0.00' }}
               </td>
-              <td class="px-4 py-3">
-                <input type="number" min="1" :value="item.quantity"
-                  @input="handleUpdateItem(index, 'quantity', $event.target.value)"
-                  class="w-16 px-2 py-1 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm text-center font-medium" />
+                <td class="px-4 py-3">
+                <input
+                  type="number"
+                  min="1"
+                  :value="item.quantity"
+                  readonly
+                  class="w-16 px-2 py-1 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm text-center font-medium"
+                />
               </td>
+
               <td class="px-4 py-3 text-sm font-medium text-gray-700">
                 ETB {{ item.totalCost?.toFixed(2) || '0.00' }}
               </td>

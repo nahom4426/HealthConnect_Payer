@@ -65,6 +65,7 @@ const dispensingDate = ref(new Date().toISOString().split('T')[0]);
 const remarks = ref({});
 const selectServicesRef = ref(null);
 const medicalServiceFiles = ref([]);
+const attachmentFile = ref(null);
 const payerSearchTerm = ref('');
 const showPayerDropdown = ref(false);
 const availableContracts = ref([]);
@@ -72,6 +73,11 @@ const availableInstitutions = ref([]);
 
 function handleMedicalServiceFiles(event) {
   medicalServiceFiles.value = Array.from(event.target.files);
+}
+
+function handleAttachmentFile(event) {
+  const file = event.target.files[0];
+  attachmentFile.value = file || null;
 }
 
 const isInsurancePayer = computed(() => {
@@ -936,7 +942,7 @@ async function handleSearchItems({ type, query, searchType, insuredUuid, contrac
               />
             </div>
 
-            <div class="w-full md:w-72" v-if="isInsurancePayer && availableInstitutions.length > 0">
+            <div class="w-full md:w-72" v-if=" isInsurancePayer">
               <Select
                 :obj="true"
                 name="institution"
@@ -948,7 +954,7 @@ async function handleSearchItems({ type, query, searchType, insuredUuid, contrac
                 v-model="selectedInstitution"
               />
             </div>
-
+            
             <div class="w-full md:flex-1">
               <Input
                 name="searchEmployeeQuery"

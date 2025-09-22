@@ -4,13 +4,33 @@ const api = new ApiService();
 const path = '/integration/pharmacy';
 
 // Credit Services API
-export function createCreditService(data) {
-  return api.addAuthenticationHeader().post(`${path}/dispensing-records`, data, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
+export function createCreditService(data, attachment = null) {
+  // If attachment is provided, use FormData for multipart upload
+  if (attachment) {
+    const formData = new FormData();
+    
+    // Add the JSON data as a string
+    formData.append('request', JSON.stringify(data));
+    
+    // Add the attachment file
+    formData.append('attachment', attachment);
+    
+    return api.addAuthenticationHeader().post(`${path}/dispensing-records`, formData, {
+      headers: {
+        // Let the browser/axios set the correct multipart/form-data boundary
+        // DO NOT set 'Content-Type' manually here
+      }
+    });
+  } else {
+    // If no attachment, send as regular JSON
+    return api.addAuthenticationHeader().post(`${path}/dispensing-records`, data, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  }
 }
+
 
 export function updateCreditService(uuid, data) {
   return api.addAuthenticationHeader().put(`${path}/dispensing-records/${uuid}`, data, {
