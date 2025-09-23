@@ -71,9 +71,7 @@ const showPayerDropdown = ref(false);
 const availableContracts = ref([]);
 const availableInstitutions = ref([]);
 
-function handleMedicalServiceFiles(event) {
-  medicalServiceFiles.value = Array.from(event.target.files);
-}
+
 
 function handleAttachmentFile(event) {
   const file = event.target.files[0];
@@ -86,6 +84,16 @@ const isInsurancePayer = computed(() => {
   return payer?.insurance === true;
 });
 
+const medicalServicePreviews = ref([]); // Array of { name, type, preview }
+
+
+
+
+
+function handleFileDragOver(event) {
+  event.preventDefault();
+  event.currentTarget.classList.add('border-primary');
+}
 const employeeDetails = computed(() => {
   if (!selectedEmployee.value) return null;
   return {
@@ -406,7 +414,9 @@ const setAvailableCategories = (categories) => {
 defineExpose({
   setSearchResults,
   setAvailablePackages,
-  setAvailableCategories
+  setAvailableCategories,
+  getFormState,
+  submit: handleSubmit
 });
 
 
@@ -416,18 +426,31 @@ function handleUpdateRemarks(newRemarks) {
 
 function handleAddItem(item) {
   console.log('handleAddItem received:', item);
-  
-  // Don't generate temp IDs - preserve the original identifiers
+
+  // Normalize and preserve identifiers across insurance and non-insurance flows.
+  const normalizedServiceId = item.serviceId ?? item.serviceUuid ?? item.serviceCode ?? null;
+  const normalizedContractDetailUuid = item.contractDetailUuid ?? item.contractDetailId ?? null;
+  const normalizedId = item.id ?? normalizedContractDetailUuid ?? normalizedServiceId ?? null;
+
+  const quantity = item.quantity ?? 1;
+  const price = item.price ?? 0;
+
   const processedItem = {
     ...item,
-    // Keep the original ID structure based on insurance type
-    id: item.id || (isInsurancePayer.value ? item.serviceId : item.contractDetailUuid),
-    // Ensure we don't override the correct identifiers
-    contractDetailUuid: isInsurancePayer.value ? item.contractDetailUuid : item.contractDetailUuid,
-    serviceId: isInsurancePayer.value ? item.serviceId : undefined,
-    // Add computed fields
-    totalCost: (item.price || 0) * (item.quantity || 1),
-    fsNumber: item.fsNumber || 'N/A'
+    // stable id - prefer explicit id, then contract detail uuid, then service id if present
+    id: normalizedId,
+    // always keep contractDetailUuid if present
+    contractDetailUuid: normalizedContractDetailUuid,
+    // ALWAYS preserve serviceId when available (do not set to undefined)
+    serviceId: normalizedServiceId,
+    // ensure sensible defaults
+    quantity,
+    price,
+    totalCost: price * quantity,
+    fsNumber: item.fsNumber ?? 'N/A',
+    // carry through diagnosis if provided or fallback to current form values
+    primaryDiagnosis: item.primaryDiagnosis ?? primaryDiagnosis.value ?? '',
+    secondaryDiagnosis: item.secondaryDiagnosis ?? secondaryDiagnosis.value ?? ''
   };
 
   if (serviceSubTab.value === 'services') {
@@ -435,7 +458,7 @@ function handleAddItem(item) {
   } else {
     addedDrugs.value.push(processedItem);
   }
-  
+
   console.log('Item added to list:', processedItem);
 }
 function handleRemoveItem(index) {
@@ -501,72 +524,182 @@ function validateForm() {
   return true;
 }
 
+const isDragOver = ref(false);
+
+// Enhanced file handling functions
+
+
+function handleFileDragLeave(event) {
+  event.preventDefault();
+  // Only remove drag-over state if leaving the actual drop zone
+  const rect = event.currentTarget.getBoundingClientRect();
+  if (
+    event.clientX <= rect.left || 
+    event.clientX >= rect.right ||
+    event.clientY <= rect.top || 
+    event.clientY >= rect.bottom
+  ) {
+    isDragOver.value = false;
+  }
+}
+
+function handleFileDrop(event) {
+  event.preventDefault();
+  isDragOver.value = false;
+  
+  const files = Array.from(event.dataTransfer?.files || []);
+  if (files.length > 0) {
+    processMedicalFiles(files);
+  }
+}
+
+function handleMedicalServiceFiles(event) {
+  const files = Array.from(event.target.files || []);
+  if (files.length > 0) {
+    processMedicalFiles(files);
+    // Reset the input to allow selecting the same file again
+    event.target.value = '';
+  }
+}
+
+function processMedicalFiles(files) {
+  const validFiles = files.filter(file => {
+    // Check file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toasted(false, "File Too Large", `${file.name} exceeds 5MB limit`);
+      return false;
+    }
+    
+    // Check file type
+    const validTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf', 
+      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+    
+    if (!validTypes.includes(file.type)) {
+      toasted(false, "Invalid File Type", `${file.name} is not a supported format`);
+      return false;
+    }
+    
+    return true;
+  });
+  
+  if (validFiles.length === 0) return;
+  
+  // Process each valid file
+  validFiles.forEach(file => {
+    const filePreview = { 
+      name: file.name, 
+      type: file.type, 
+      file: file, // Store the actual file object
+      preview: '' 
+    };
+    
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        filePreview.preview = e.target?.result || '';
+        medicalServicePreviews.value.push(filePreview);
+      };
+      reader.onerror = () => {
+        // If image preview fails, still add the file without preview
+        medicalServicePreviews.value.push(filePreview);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // For non-image files, add directly
+      medicalServicePreviews.value.push(filePreview);
+    }
+  });
+}
+
+function removeFile(index) {
+  medicalServicePreviews.value.splice(index, 1);
+}
+
+function getFileTypeIcon(fileType) {
+  if (fileType.startsWith('image/')) return '🖼️ Image';
+  if (fileType === 'application/pdf') return '📄 PDF';
+  if (fileType.includes('word')) return '📝 Document';
+  if (fileType.includes('excel') || fileType.includes('sheet')) return '📊 Spreadsheet';
+  return '📁 File';
+}
+
+// Add this method to expose form state
+function getFormState() {
+  return {
+    selectedContract: selectedContract.value,
+    selectedEmployee: selectedEmployee.value,
+    primaryDiagnosis: primaryDiagnosis.value,
+    secondaryDiagnosis: secondaryDiagnosis.value,
+    isInsurancePayer: isInsurancePayer.value,
+    selectedPackage: selectedPackage.value,
+    dispensingDate: dispensingDate.value,
+    addedServices: [...addedServices.value],
+    addedDrugs: [...addedDrugs.value],
+    // Return actual File objects collected via previews so parent can append them
+    attachmentFile: attachmentFile.value,
+    medicalServiceFiles: medicalServicePreviews.value.map(p => p.file || null).filter(Boolean)
+  };
+}
+
+function triggerMedicalFileBrowse() {
+  const input = document.getElementById('medical-service-file-upload');
+  if (input) input.click();
+}
+
+// Update your form submission to delegate FormData building to the parent
 function handleSubmit() {
   if (!selectedEmployee.value) {
     toasted.error('No employee selected');
     return;
   }
 
-  const isDependant = selectedEmployee.value.isDependant;
-  const formData = {
-    contractHeaderUuid: selectedContract.value,
-    insuredUuid: isDependant ? selectedEmployee.value.employeeUuid : selectedEmployee.value.insuredUuid,
-    dependantUuid: isDependant ? selectedEmployee.value.insuredUuid : null,
-    primaryDiagnosis: primaryDiagnosis.value,
-    secondaryDiagnosis: secondaryDiagnosis.value,
-    isInsurance: isInsurancePayer.value,
-    packageUuid: isInsurancePayer.value ? selectedPackage.value : null,
-    dispensingDate: dispensingDate.value,
-  medicationItems: [
-      ...addedServices.value.map(item => {
-        const medicationItem = {
-          itemType: 'SERVICE',
-          remark: item.remark || '',
-          price: item.price || 0,
-          quantity: item.quantity || 1
-        };
+  // 🔹 Debugging: log everything in a readable format (keep helpful info for parent)
+  const medicationItems = [
+    ...addedServices.value.map(item => ({
+      itemType: 'SERVICE',
+      remark: item.remark || '',
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      contractDetailUuid: item.contractDetailUuid,
+      ...(isInsurancePayer.value && { serviceId: item.serviceId })
+    })),
+    ...addedDrugs.value.map(item => ({
+      itemType: 'DRUG',
+      remark: item.remark || '',
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      route: item.route || 'oral',
+      frequency: item.frequency || 'daily',
+      dose: item.dose || '1',
+      duration: item.duration || '7 days',
+      contractDetailUuid: item.contractDetailUuid,
+      ...(isInsurancePayer.value && { serviceId: item.serviceId })
+    }))
+  ];
 
-        // For insurance: send both contractDetailUuid (eligibleServiceUuid) and serviceId
-        // For non-insurance: send only contractDetailUuid
-        if (isInsurancePayer.value) {
-          medicationItem.contractDetailUuid = item.contractDetailUuid; // This is eligibleServiceUuid
-          medicationItem.serviceId = item.serviceId;
-        } else {
-          medicationItem.contractDetailUuid = item.contractDetailUuid;
-        }
+  console.log('--- Form Submission Debug ---');
+  console.log('Selected Contract:', selectedContract.value);
+  console.log('Selected Employee:', selectedEmployee.value);
+  console.log('Primary Diagnosis:', primaryDiagnosis.value);
+  console.log('Secondary Diagnosis:', secondaryDiagnosis.value);
+  console.log('Is Insurance Payer:', isInsurancePayer.value);
+  console.log('Selected Package:', selectedPackage.value);
+  console.log('Dispensing Date:', dispensingDate.value);
+  console.log('Added Services:', addedServices.value);
+  console.log('Added Drugs:', addedDrugs.value);
+  console.log('Medication Items JSON:', JSON.stringify(medicationItems, null, 2));
+  console.log('Files:', medicalServicePreviews.value.map(f => f.name));
+  console.log('--- End Debug ---');
 
-        return medicationItem;
-      }),
-      ...addedDrugs.value.map(item => {
-        const medicationItem = {
-          itemType: 'DRUG',
-          remark: item.remark || '',
-          price: item.price || 0,
-          quantity: item.quantity || 1,
-          route: item.route || 'oral',
-          frequency: item.frequency || 'daily',
-          dose: item.dose || '1',
-          duration: item.duration || '7 days'
-        };
-
-        // For insurance: send both contractDetailUuid (eligibleServiceUuid) and serviceId
-        // For non-insurance: send only contractDetailUuid
-        if (isInsurancePayer.value) {
-          medicationItem.contractDetailUuid = item.contractDetailUuid; // This is eligibleServiceUuid
-          medicationItem.serviceId = item.serviceId;
-        } else {
-          medicationItem.contractDetailUuid = item.contractDetailUuid;
-        }
-
-        return medicationItem;
-      })
-    ]
-  };
-
-  console.log('Final submission data:', formData);
-  props.onSubmit(formData);
+  // Delegate to parent: call the provided onSubmit handler without passing the child's FormData.
+  // Parent will call getFormState() and build the correct "request" + "attachment" multipart form.
+  props.onSubmit();
 }
-
+  
 onMounted(async () => {
   await fetchPayers();
 });
@@ -929,14 +1062,13 @@ async function handleSearchItems({ type, query, searchType, insuredUuid, contrac
               </div>
             </div>
 
-            <div class="w-full md:w-72" v-if="availableContracts.length > 0">
+            <div class="w-full md:w-72">
               <Select
                 :obj="true"
                 name="contract"
                 label="Select Contract"
                 validation="required"
                 :options="contractOptions"
-                :disabled="fetchPending || !selectedPayer"
                 :attributes="{ placeholder: 'Select a Contract' }"
                 v-model="selectedContract"
               />
@@ -1390,16 +1522,79 @@ async function handleSearchItems({ type, query, searchType, insuredUuid, contrac
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Medical Service Files</label>
-            <Input 
-              type="file" 
-              name="medicalServiceFiles" 
-              multiple 
-              @change="handleMedicalServiceFiles"
-              class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-4 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
-            />
+         <div class="space-y-2 mt-6">
+    <label class="block text-sm font-medium text-gray-700">
+      Medical Service Files
+    </label>
+
+    <div 
+      @dragover.prevent="handleFileDragOver"
+      @dragleave.prevent="handleFileDragLeave"
+      @drop.prevent="handleFileDrop"
+      class="border-[1px] bg-[#F6F7FA] border-dashed border-[#75778B] rounded-md items-center justify-center p-6 flex flex-col cursor-pointer hover:border-primary transition-colors duration-200"
+      :class="{ 'border-primary': isDragOver }"
+    >
+      <div v-if="medicalServicePreviews.length" class="w-full grid grid-cols-2 gap-4 mb-4">
+        <div v-for="(file, index) in medicalServicePreviews" :key="index" class="relative border rounded-md p-2 bg-white">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium truncate max-w-[120px]">{{ file.name }}</span>
+            <button 
+              type="button" 
+              @click.stop="removeFile(index)"
+              class="text-red-500 hover:text-red-700 text-sm font-bold"
+            >
+              ×
+            </button>
           </div>
+          
+          <img 
+            v-if="file.type.startsWith('image/') && file.preview"
+            :src="file.preview" 
+            alt="Preview"
+            class="h-20 w-full object-contain mx-auto"
+          />
+          <div v-else class="flex items-center justify-center h-20 bg-gray-100 rounded">
+            <span class="text-xs text-gray-500">{{ getFileTypeIcon(file.type) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <template v-if="!medicalServicePreviews.length">
+          <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <p class="text-sm text-[#75778B] mt-2">Drag your files here to upload</p>
+          <p class="text-sm text-[#75778B] mt-1">or</p>
+        </template>
+        
+        <button 
+          type="button" 
+          @click="triggerMedicalFileBrowse"
+          class="mt-2 px-4 py-2 text-sm font-medium text-[#75778B] border border-[#75778B] rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
+          {{ medicalServicePreviews.length ? 'Add More Files' : 'Browse Files' }}
+        </button>
+        
+        <p v-if="medicalServicePreviews.length" class="text-xs text-gray-500 mt-2">
+          {{ medicalServicePreviews.length }} file(s) selected
+        </p>
+      </div>
+
+      <input 
+        id="medical-service-file-upload" 
+        type="file" 
+        accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" 
+        multiple 
+        class="hidden" 
+        @change="handleMedicalServiceFiles" 
+      />
+    </div>
+    
+    <p class="text-xs text-gray-500 mt-1">
+      Supported formats: images, PDF, Word, Excel. Max file size: 5MB each.
+    </p>
+  </div>
           <div>
             <Input 
               v-model="dispensingDate" 

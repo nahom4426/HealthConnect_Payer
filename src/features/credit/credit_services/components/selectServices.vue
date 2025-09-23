@@ -162,6 +162,8 @@ const processedSearchResults = computed(() => {
       id: item.contractDetailUuid || item.serviceUuid,
       contractDetailUuid: item.contractDetailUuid, // For non-insurance claims
       serviceUuid: item.serviceUuid,
+      // Preserve serviceId when present (fallback to serviceUuid or serviceCode)
+      serviceId: item.serviceId || item.serviceUuid || item.serviceCode || null,
       price: item.contractPrice || item.negotiatedPrice || item.price || 0,
       paymentAmount: `ETB ${(item.contractPrice || item.negotiatedPrice || item.price || 0).toFixed(2)}`,
       status: item.status || 'ACTIVE',
@@ -290,10 +292,12 @@ function selectFromDropdown(item, source = 'name') {
     searchForm.value.serviceCode = item.serviceCode || item.itemCode;
     searchForm.value.servicePrice = item.price || item.contractPrice || item.negotiatedPrice || 0;
     
-    // Set the correct identifier based on insurance type
+    // Always keep serviceId when present (works for both insurance and non-insurance)
+    searchForm.value.serviceId = item.serviceId || item.serviceUuid || item.serviceCode || null;
+
+    // Set contractDetailUuid for non-insurance list items (preserve eligibleServiceUuid for insurance)
     if (props.isInsurance) {
-      searchForm.value.serviceId = item.serviceId;
-      searchForm.value.eligibleServiceUuid = item.eligibleServiceUuid; // Store for later use
+      searchForm.value.eligibleServiceUuid = item.eligibleServiceUuid;
     } else {
       searchForm.value.contractDetailUuid = item.contractDetailUuid;
     }
@@ -302,10 +306,11 @@ function selectFromDropdown(item, source = 'name') {
     searchForm.value.drugCode = item.drugCode || item.itemCode;
     searchForm.value.drugPrice = item.price || item.contractPrice || item.negotiatedPrice || 0;
     
-    // Set the correct identifier based on insurance type
+    // Keep serviceId/identifier for drugs too when available
+    searchForm.value.serviceId = item.serviceId || item.serviceUuid || item.drugCode || null;
+
     if (props.isInsurance) {
-      searchForm.value.serviceId = item.serviceId;
-      searchForm.value.eligibleServiceUuid = item.eligibleServiceUuid; // Store for later use
+      searchForm.value.eligibleServiceUuid = item.eligibleServiceUuid;
     } else {
       searchForm.value.contractDetailUuid = item.contractDetailUuid;
     }
@@ -354,7 +359,6 @@ function addItem(event) {
 
   // Check if quantity exceeds maximum
   if (parseInt(currentQuantity.value) > 5) {
-    // You could show an alert or notification here
     console.warn('Maximum quantity is 5');
     return;
   }
@@ -374,11 +378,12 @@ function addItem(event) {
     item.serviceName = currentName.value;
     item.serviceCode = currentCode.value;
 
-    // Handle insurance specifics for services
+    // Preserve serviceId regardless of insurance flag
+    item.serviceId = searchForm.value.serviceId || null;
+
     if (props.isInsurance) {
       item.id = searchForm.value.serviceId;
-      item.serviceId = searchForm.value.serviceId;
-      item.contractDetailUuid = searchForm.value.eligibleServiceUuid; // This is the key change
+      item.contractDetailUuid = searchForm.value.eligibleServiceUuid; // insurance uses eligibleServiceUuid
     } else {
       item.id = searchForm.value.contractDetailUuid;
       item.contractDetailUuid = searchForm.value.contractDetailUuid;
@@ -387,11 +392,12 @@ function addItem(event) {
     item.drugName = currentName.value;
     item.drugCode = currentCode.value;
 
-    // Handle insurance specifics for drugs
+    // Preserve serviceId/identifier for drugs
+    item.serviceId = searchForm.value.serviceId || null;
+
     if (props.isInsurance) {
       item.id = searchForm.value.serviceId;
-      item.contractDetailUuid = searchForm.value.eligibleServiceUuid; // This is the key change
-      item.serviceId = searchForm.value.serviceId;
+      item.contractDetailUuid = searchForm.value.eligibleServiceUuid;
     } else {
       item.id = searchForm.value.contractDetailUuid;
       item.contractDetailUuid = searchForm.value.contractDetailUuid;

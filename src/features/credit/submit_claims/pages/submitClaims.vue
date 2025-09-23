@@ -116,6 +116,17 @@ const generateClaims = async () => {
     isGenerating.value = false;
   }
 };
+async function handleDoubleGenerate() {
+  try {
+    // first run
+    await generateClaims();
+    // only if first run succeeds
+    await generateClaims();
+  } catch (err) {
+    console.error("Generate failed:", err);
+  }
+}
+
 
 // Remove a claim from selected claims
 const removeClaim = (claimUuid) => {
@@ -374,7 +385,7 @@ function refreshData() {
             :btn-text="'Generate'"
             :disabled="!isPayerSelected"
             :title="!isPayerSelected ? 'Please select a payer first' : ''"
-            @click="generateClaims"
+            @click="handleDoubleGenerate"
             class="bg-[#02676B] hover:bg-[#014F4F] text-white px-4 py-2 h-[42px]"
           />
         </div>

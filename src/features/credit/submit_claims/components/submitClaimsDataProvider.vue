@@ -35,6 +35,10 @@ const totalItems = ref(0);
 const pagination = usePagination({
   auto: false,
   cb: async (data: any) => {
+    // DEBUG: log pagination callback invocation and current filters
+    console.log('[DataProvider] pagination.cb called, incoming data:', data);
+    console.log('[DataProvider] current filters:', JSON.parse(JSON.stringify(filters)));
+
     const params = removeUndefined({
       ...data,
       ...(filters.startDate && { startDate: filters.startDate }),
@@ -45,8 +49,11 @@ const pagination = usePagination({
       sortDirection: "desc"
     });
 
+    console.log('[DataProvider] calling getCreditClaimsbyProviderUuid with params:', params);
     const response = await getCreditClaimsbyProviderUuid(props.providerUuid, params);
+    console.log('[DataProvider] raw response:', response);
     const paginated = response?.data || response;
+    console.log('[DataProvider] normalized paginated:', paginated);
 
     if (paginated?.content) {
       claimServicesStore.set(paginated.content);
@@ -54,56 +61,55 @@ const pagination = usePagination({
       itemsPerPage.value = paginated.size ?? 25;
       totalPages.value = paginated.totalPages ?? 1;
       totalItems.value = paginated.totalElements ?? paginated.content.length;
+      console.log('[DataProvider] stored content length:', (paginated.content || []).length);
     } else {
-      claimServicesStore.set(paginated);
+      claimServicesStore.set(Array.isArray(paginated) ? paginated : []);
+      totalItems.value = Array.isArray(paginated) ? paginated.length : 0;
+      totalPages.value = 1;
+      console.log('[DataProvider] stored fallback length:', totalItems.value);
     }
 
     return paginated;
   }
 });
 
-// Method to update filters
+// Method to update filters and optionally trigger fetch
 const setFilters = (newFilters: {
   startDate?: string;
   endDate?: string;
   payerUuid?: string;
 }) => {
+  console.log('[DataProvider] setFilters called with:', newFilters);
   Object.assign(filters, newFilters);
+  console.log('[DataProvider] filters after assign:', JSON.parse(JSON.stringify(filters)));
+  // Only send when payerUuid exists
+  if (filters.payerUuid) {
+    console.log('[DataProvider] payerUuid present, calling pagination.send()');
+    return pagination.send();
+  }
+  console.log('[DataProvider] payerUuid missing, skipping pagination.send()');
+  // return a resolved promise for caller convenience
+  return Promise.resolve({ content: [] });
 };
 
-// Debounced search
-const debouncedSearch = debounce((newSearch: string) => {
-  pagination.search.value = newSearch;
-  pagination.send();
-}, 300);
-
-watch(() => props.search, debouncedSearch);
-
-// Watch filter changes and trigger API call
-watch(
-  () => [filters.startDate, filters.endDate, filters.payerUuid],
-  () => {
-    if (filters.startDate || filters.endDate || filters.payerUuid) {
-      pagination.send();
-    }
-  },
-  { deep: true }
-);
-
-// Auto fetch on mount
-onMounted(() => {
-  pagination.search.value = props.search;
-  if (props.auto) pagination.send();
-});
-
-// Expose methods
+// Expose methods (add refresh)
 defineExpose({
-  refresh: pagination.send,
+  // refresh explicitly triggers pagination.send and returns the response
+  refresh: async () => {
+    console.log('[DataProvider] refresh called, filters:', JSON.parse(JSON.stringify(filters)));
+    if (!filters.payerUuid) {
+      console.log('[DataProvider] refresh aborted - no payerUuid');
+      return Promise.resolve({ content: [] });
+    }
+    const res = await pagination.send();
+    console.log('[DataProvider] refresh result received');
+    return res;
+  },
   currentPage: computed(() => currentPage.value),
   itemsPerPage: computed(() => itemsPerPage.value),
   setPage: pagination.setPage,
   setLimit: pagination.setLimit,
-  setFilters // Expose the setFilters method
+  setFilters
 });
 </script>
 
