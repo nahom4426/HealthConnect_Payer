@@ -17,14 +17,27 @@ export async function responseHandler<T>(
     // this is true when the request gets to the server
     // and there is some error on the server
     if (error.response) {
-      let errMsg = (error.response?.data?.substr
-        ? error.response.data.substr(6)
-        : error.response?.data?.message) || error.message
+      // Prefer message from server without arbitrarily trimming characters
+      const data = error.response?.data as any;
+      let errMsg: string = '';
+
+      if (typeof data === 'string') {
+        // If server returned a raw string (e.g., "Error: Failed ..."),
+        // strip a leading "Error: " prefix if present, but do not trim arbitrarily
+        errMsg = data.replace(/^Error:\s*/i, '').trim();
+      } else if (data?.message) {
+        errMsg = String(data.message);
+      } else if (data?.error) {
+        errMsg = String(data.error);
+      } else {
+        errMsg = error.message || 'Request failed';
+      }
+
       toasted(false, '', errMsg)
       return {
         success: false,
         status: error.response.status,
-        error:errMsg
+        error: errMsg
       };
     }
     // this is true when the request cant get to the server

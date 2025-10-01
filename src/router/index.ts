@@ -18,6 +18,7 @@ import submitClaimsRoutes from "./submit_claims.routes";
 import authorizationRoutes from "./authorization.routes";
 import Profile from "@/features/profile/pages/profile.vue";
 import product_settingsRoutes from "./product_settings.routes";
+import awashRoutes from "./awash.routes";
 
 function addMetaToRoutes(routes) {
   return routes.map(route => {
@@ -72,6 +73,7 @@ const router = createRouter({
         ...submitClaimsRoutes,
         ...authorizationRoutes,
         ...product_settingsRoutes,
+        ...awashRoutes,
        
       ],
     },

@@ -92,6 +92,7 @@ export default [
     icon: icons.Services,
     privilege: ["Create Services"],
   },
+
    {
         path: "/create_credit_service",
         name: "Credits Services",
@@ -132,6 +133,12 @@ export default [
         name: "Track Claims",
         icon: icons.completedClaims,
         category: "pages",
+        privilege: ["Create Services"],
+      },
+      {
+        path: "/awash-integration",
+        name: "Track Awash Services",
+        icon: icons.services,
         privilege: ["Create Services"],
       },
     ],
