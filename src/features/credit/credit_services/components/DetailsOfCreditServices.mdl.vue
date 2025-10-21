@@ -21,7 +21,7 @@ function handleClose() {
   <ModalParent>
     <NewFormParent
       class=""
-      size="xlg"
+      size="lg"
       title="Credit Service Details"
       subtitle="View credit service information"
     >

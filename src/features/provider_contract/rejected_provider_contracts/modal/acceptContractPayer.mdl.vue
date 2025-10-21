@@ -7,7 +7,7 @@ import { useApiRequest } from "@/composables/useApiRequest";
 import { toasted } from "@/utils/utils";
 import { closeModal } from "@customizer/modal-x";
 import { activateApproveContract } from "../api/rejectedPayerContractApi";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import Textarea from "@/components/new_form_elements/Textarea.vue";
 
 const props = defineProps({
@@ -22,7 +22,7 @@ const req = useApiRequest();
 const remark = ref("");
 const termsAccepted = ref(false);
 const accepting = ref(false);
-const route = useRoute();
+const router = useRouter();
 const contractHeaderUuid = ref("");
 
 // ✅ Correctly assign contractHeaderUuid as a string
@@ -51,10 +51,11 @@ const acceptContract = async () => {
       () => activateApproveContract(contractHeaderUuid.value, remark.value),
       () => {
         if (req.success) {
-          toasted(true, "Contract approved successfully");
+          toasted(res.success, "Contract approved successfully",res.error);
+            router.push("/privileges");
           closeModal();
         } else {
-          toasted(false,"", req.response.value?.message || "Failed to approve contract");
+          // toasted(false,"", req.response.value?.message || "Failed to approve contract");
         }
       }
     );

@@ -58,19 +58,20 @@ const store = useAwashFailedStore();
         <span class="text-sm text-gray-600">Status</span>
         <div class="inline-flex rounded-lg overflow-hidden border border-gray-200">
           <button
-            class="px-3 py-1.5 text-sm"
-            :class="store.status === 'INACTIVE' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
-            @click="store.status = 'INACTIVE'"
-          >
-            Inactive
-          </button>
-          <button
             class="px-3 py-1.5 text-sm border-l border-gray-200"
-            :class="store.status === 'ACTIVE' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+            :class="store.status === 'ACTIVE' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
             @click="store.status = 'ACTIVE'"
           >
-            Active
+            Failed
           </button>
+           <button
+            class="px-3 py-1.5 text-sm"
+            :class="store.status === 'COMPLETED' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+            @click="store.status = 'COMPLETED'"
+          >
+            Completed
+          </button>
+         
         </div>
       </div>
     </div>

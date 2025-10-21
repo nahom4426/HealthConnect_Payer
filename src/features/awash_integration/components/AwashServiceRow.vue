@@ -51,7 +51,7 @@ function truncate(text, length = 80) {
       <template v-else-if="key === 'status'">
         <span
           class="px-2 py-1 text-xs font-medium rounded"
-          :class="row.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+          :class="row.status === 'ACTIVE' ? 'bg-red-100 text-red-700'  :  'bg-green-100 text-green-700'"
         >
           {{ row.status }}
         </span>
@@ -72,7 +72,7 @@ function truncate(text, length = 80) {
     <td class="p-3" v-if="props.headKeys.includes('Actions')">
       <div class="flex items-center gap-2">
         <Button
-          v-if="store.status === 'INACTIVE'"
+          v-if="store.status === 'ACTIVE'"
           type="primary"
           class="!text-white"
           @click="onRetry(row.logUuid)"

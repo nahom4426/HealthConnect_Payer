@@ -13,8 +13,9 @@ function handleForgotPassword({ values }) {
   forgotReq.send(
     () => forgotPassword({ email: values.email }),
     (res) => {
-      toasted(res.success, "Confirmation code sent", res.error);
       if (res.success) {
+      toasted(res.success, "Confirmation code sent", res.error);
+
         emit("user");
       }
     }

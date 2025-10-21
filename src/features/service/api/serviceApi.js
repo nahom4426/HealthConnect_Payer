@@ -26,9 +26,7 @@ export function createService(id, data) {
 export async function updateService(uuid, formData) {
   try {
     const response = await api.put(`${basePath}/${uuid}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+      
     });
 
     return {

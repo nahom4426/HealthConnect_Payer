@@ -197,7 +197,7 @@ function areAllClaimsApproved() {
         >
           <!-- Details Button in Dropdown -->
           <button
-            @click.prevent="openModal('ClaimDetail', row)"
+            @click.prevent="openModal('DetailsOfCreditServices', row)"
             class="p-2 flex text-base-clr pr-8 items-center gap-2 rounded-lg hover:bg-gray-100"
           >
             <i v-html="icons.details" />

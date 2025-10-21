@@ -45,7 +45,7 @@ const formData = ref({
   contractDescription: '',
   beginDate: '',
   endDate: '',
-  status: 'RESUBMIT',
+  status: 'PENDING',
   payerUuid: auth.auth.user?.payerUuid || '',
   providerUuid: '',
   contractDetails: [],
@@ -420,7 +420,7 @@ onMounted(async () => {
 
   <div v-else class="bg-white rounded-md p-6 space-y-6">
     <!-- Rejection Notice (shown only for rejected contracts) -->
-    <div v-if="formData.status === 'RESUBMITTED' || 'REJECTED'" class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+    <div v-if="formData.status === 'REJECTED'" class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
       <div class="flex items-start">
         <div class="flex-shrink-0">
           <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

@@ -26,6 +26,42 @@ const accepting = ref(false);
 const route = useRoute();
 const contractHeaderUuid = route.params.id;
 
+// const acceptContract = async () => {
+//   if (!termsAccepted.value) {
+//     toasted(false, "", "Please accept the terms and conditions");
+//     return;
+//   }
+
+//   accepting.value = true;
+  
+//   try {
+//     const result = await req.send(() => 
+//       approveContract(contractHeaderUuid, remark.value)
+//     );
+
+//     if (result?.success) {
+//       toasted(res.success, "Contract approved successfully",res.error);
+      
+//       try {
+//         // First try to close the modal
+//         await closeModal();
+//       } catch (modalError) {
+//         console.error("Error closing modal:", modalError);
+//         // Even if modal fails to close, proceed with navigation
+//       }
+      
+//       // Navigate after modal close attempt
+//       router.push("/provider_contracts");
+//     } else {
+//       // toasted(false, "", result?.message || "Failed to approve contract");
+//     }
+//   } catch (error) {
+//     console.error("Acceptance error:", error);
+//     toasted(false, "", error.message || "An error occurred during acceptance.");
+//   } finally {
+//     accepting.value = false;
+//   }
+// };
 const acceptContract = async () => {
   if (!termsAccepted.value) {
     toasted(false, "", "Please accept the terms and conditions");
@@ -34,33 +70,24 @@ const acceptContract = async () => {
 
   accepting.value = true;
   
-  try {
-    const result = await req.send(() => 
-      approveContract(contractHeaderUuid, remark.value)
-    );
-
-    if (result?.success) {
-      toasted(true, "Contract approved successfully");
-      
-      try {
-        // First try to close the modal
-        await closeModal();
-      } catch (modalError) {
-        console.error("Error closing modal:", modalError);
-        // Even if modal fails to close, proceed with navigation
+  await req.send(
+    () =>  approveContract(contractHeaderUuid, remark.value),
+    (res) => {
+      if (res.success) {
+          toasted(res.success, "Contract approved successfully",res.error);
+        closeModal();
+        router.push("/contract_requests");
+      } else {
+        // toasted(false,"", res.error || "Failed to reject contract");
       }
-      
-      // Navigate after modal close attempt
-      router.push("/provider_contracts");
-    } else {
-      // toasted(false, "", result?.message || "Failed to approve contract");
+       accepting.value
+    },
+    (error) => {
+      console.error("Rejection error:", error);
+      toasted(false,"", "An error occurred during rejection.");
+       accepting.value
     }
-  } catch (error) {
-    console.error("Acceptance error:", error);
-    toasted(false, "", error.message || "An error occurred during acceptance.");
-  } finally {
-    accepting.value = false;
-  }
+  );
 };
 
 const handleButtonClick = (e) => {

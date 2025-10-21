@@ -77,7 +77,7 @@ const props = defineProps({
 
 .lg {
   width: 65rem;
-  height: 100%;
+  height: auto;
 }
 .xlg {
   width: 95rem;

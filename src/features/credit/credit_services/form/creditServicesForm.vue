@@ -14,6 +14,8 @@ import Input from '@/components/new_form_elements/Input.vue';
 import { getEligibleServicesAndDrugs, getInstitutionsByContractUuid, getInsuredEligibility, getEligibleCategoriesFromInsurance, getActivePackageCategories, getEligibleServicesFromInsurance, getEligibleServicesByCategory } from '../api/creditServicesApi';
 import selectServices from '../components/selectServices.vue';
 import EmployeeDetails from '../components/EmployeeDetails.vue';
+import EmployeeTable from '../components/EmployeeTable.vue';
+import MedicalFilesUploader from '../components/MedicalFilesUploader.vue';
 import { getPayerContractById } from '@/features/provider_contract/active_provider_contracts/api/providerContractApi';
 import { debounce } from '@/utils/debounce';
 
@@ -282,7 +284,16 @@ async function fetchEmployees() {
         phone: employee.insuredPhone,
         eligible: true,
         isDependant: false,
-        dependants: []
+        // Use the provided presigned image URL for display in EmployeeDetails
+        profilePictureBase64: employee.profilePicture || null,
+        // Normalize dependantResponses from insurance API to UI expected shape
+        dependants: Array.isArray(employee.dependantResponses)
+          ? employee.dependantResponses.map(d => ({
+              dependantUuid: d.dependantUuid,
+              fullName: `${d.firstName || ''} ${d.fatherName || ''} ${d.grandFatherName || ''}`.trim(),
+              relationshipType: d.relationship || '',
+            }))
+          : []
       }));
 
     } else {
@@ -711,6 +722,12 @@ watch(selectedPayer, async (newPayerId) => {
   institutions.value = [];
   employees.value = [];
   error.value = null;
+  // Clear selections and added items when payer changes
+  addedServices.value = [];
+  addedDrugs.value = [];
+  remarks.value = {};
+  if (selectServicesRef.value?.resetAll) selectServicesRef.value.resetAll();
+  if (selectServicesRef.value?.setSearchResults) selectServicesRef.value.setSearchResults([]);
 
   if (!newPayerId) return;
 
@@ -732,6 +749,12 @@ watch(selectedContract, async (newContractId) => {
   institutions.value = [];
   employees.value = [];
   error.value = null;
+  // Clear items on contract change
+  addedServices.value = [];
+  addedDrugs.value = [];
+  remarks.value = {};
+  if (selectServicesRef.value?.resetAll) selectServicesRef.value.resetAll();
+  if (selectServicesRef.value?.setSearchResults) selectServicesRef.value.setSearchResults([]);
 
   if (!newContractId) return;
 
@@ -746,6 +769,12 @@ watch(selectedInstitution, async (newInstitution) => {
   selectedEmployee.value = null;
   employees.value = [];
   error.value = null;
+  // Clear items on institution change
+  addedServices.value = [];
+  addedDrugs.value = [];
+  remarks.value = {};
+  if (selectServicesRef.value?.resetAll) selectServicesRef.value.resetAll();
+  if (selectServicesRef.value?.setSearchResults) selectServicesRef.value.setSearchResults([]);
 
   if (newInstitution && isInsurancePayer.value) {
     await fetchEmployees();
@@ -834,8 +863,16 @@ const packageOptions = computed(() => {
 });
 
 // Watch for employee selection to fetch categories/packages
-watch(selectedEmployee, async (newEmployee) => {
+watch(selectedEmployee, async (newEmployee, oldEmployee) => {
   if (newEmployee) {
+    // If switching employee, clear any previously added items and reset child inputs
+    if (!oldEmployee || newEmployee?.insuredUuid !== oldEmployee?.insuredUuid) {
+      addedServices.value = [];
+      addedDrugs.value = [];
+      remarks.value = {};
+      if (selectServicesRef.value?.resetAll) selectServicesRef.value.resetAll();
+      if (selectServicesRef.value?.setSearchResults) selectServicesRef.value.setSearchResults([]);
+    }
     await fetchCategoriesOrPackages();
   }
 });
@@ -1154,280 +1191,16 @@ async function handleSearchItems({ type, query, searchType, insuredUuid, contrac
           </div>
         </template>
 
-        <!-- Enhanced Table (Always Visible) -->
-        <div class="border rounded-xl flex-1 flex flex-col overflow-hidden shadow-sm bg-white">
-          <div class="overflow-auto" style="max-height: calc(100vh - 350px); min-height: 300px;">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10">
-                <tr>
-                  <th
-                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                    <div class="flex items-center space-x-1">
-                      <span>#</span>
-                      <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
-                      </svg>
-                    </div>
-                  </th>
-                  <th
-                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V4a2 2 0 114 0v2m-4 0a2 2 0 104 0m-4 0H9m4 0h1m-5 8l2 2 4-4">
-                        </path>
-                      </svg>
-                      <span>Employee ID</span>
-                    </div>
-                  </th>
-                  <th
-                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                      </svg>
-                      <span>Patient Name</span>
-                    </div>
-                  </th>
-                  <th
-                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
-                        </path>
-                      </svg>
-                      <span>Type</span>
-                    </div>
-                  </th>
-                  <th
-                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      <span>Eligibility</span>
-                    </div>
-                  </th>
-                  <th
-                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                    <div class="flex items-center space-x-1">
-                      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                      </svg>
-                      <span>Action</span>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-100">
-                <template v-if="employees.length > 0">
-                  <template v-for="(employee, index) in employees" :key="employee.insuredUuid">
-                    <!-- Main employee row with enhanced styling -->
-                    <tr v-if="!employee.isDependant" :class="{
-                      'bg-gradient-to-r from-teal-50 to-cyan-50 border-l-4 border-teal-400': selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid,
-                      'hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-200': !(selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid),
-                      'border-b-2 border-blue-200': employee.dependants && employee.dependants.length > 0
-                    }" class="group cursor-pointer">
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div
-                          class="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-semibold group-hover:bg-blue-200 transition-colors">
-                          {{ index + 1 }}
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        <div class="flex items-center space-x-2">
-                          <div class="flex-shrink-0 w-2 h-2 bg-green-400 rounded-full"></div>
-                          <span>{{ employee.membershipNumber || employee.idNumber }}</span>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div class="flex items-center space-x-3">
-                          <div
-                            class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-xs">
-                            {{ employee.fullName.charAt(0).toUpperCase() }}
-                          </div>
-                          <span class="font-medium text-gray-900">{{ employee.fullName }}</span>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span
-                          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">
-                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6">
-                            </path>
-                          </svg>
-                          Employee
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span
-                          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-green-100 to-emerald-200 text-green-800 border border-green-300">
-                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                          Eligible
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button type="button" @click="selectEmployee(employee)" :class="{
-                          'bg-gradient-to-r from-primary to-teal-600 text-white shadow-lg transform scale-105':
-                            selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid,
-                          'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 hover:from-primary hover:to-teal-600 hover:text-white hover:shadow-md transform hover:scale-105':
-                            !(selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid)
-                        }"
-                          class="px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2">
-                          <svg v-if="selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid"
-                            class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                            </path>
-                          </svg>
-                          <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                          </svg>
-                          <span>{{ selectedEmployee && selectedEmployee.insuredUuid === employee.insuredUuid ?
-                            'Detail' : 'Detail' }}</span>
-                        </button>
-                      </td>
-                    </tr>
-
-                    <!-- Enhanced Dependants rows -->
-                    <template
-                      v-if="!employee.isDependant && employee.dependants && employee.dependants.length > 0 && !isInsurancePayer">
-                      <tr v-for="(dependant, dIndex) in employee.dependants" :key="dependant.dependantUuid" :class="{
-                        'bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-400': selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid,
-                        'bg-gradient-to-r from-blue-25 to-indigo-25 hover:from-blue-50 hover:to-indigo-50': !(selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid)
-                      }" class="group cursor-pointer transition-all duration-200">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 pl-10">
-                          <div class="flex items-center space-x-2">
-                            <span class="text-purple-600 font-bold">↳</span>
-                            <div
-                              class="flex items-center justify-center w-6 h-6 bg-purple-100 rounded-full text-purple-600 font-semibold text-xs">
-                              {{ dIndex + 1 }}
-                            </div>
-                          </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <div class="flex items-center space-x-2">
-                            <div class="flex-shrink-0 w-2 h-2 bg-purple-400 rounded-full"></div>
-                            <span>{{ employee.membershipNumber }}</span>
-                            <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">(Employee ID)</span>
-                          </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 pl-2">
-                          <div class="flex items-center space-x-3">
-                            <div
-                              class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-xs">
-                              {{ dependant.fullName.charAt(0).toUpperCase() }}
-                            </div>
-                            <div class="flex flex-col">
-                              <span class="font-medium text-gray-900">{{ dependant.fullName }}</span>
-                              <span
-                                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200">
-                                {{ dependant.relationshipType }}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <span
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-100 to-purple-200 text-indigo-800 border border-indigo-300">
-                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
-                              </path>
-                            </svg>
-                            Dependant
-                          </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                          <span
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-green-100 to-emerald-200 text-green-800 border border-green-300">
-                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Eligible
-                          </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button type="button" @click="selectEmployee({
-                            insuredUuid: dependant.dependantUuid,
-                            fullName: dependant.fullName,
-                            phone: employee.phone,
-                            idNumber: employee.membershipNumber,
-                            position: `Dependant (${dependant.relationshipType})`,
-                            birthDate: '',
-                            eligible: true,
-                            status: 'ACTIVE',
-                            gender: '',
-                            email: employee.email,
-                            address: employee.address,
-                            isDependant: true,
-                            dependantUuid: dependant.dependantUuid,
-                            employeeUuid: employee.insuredUuid,
-                            relationshipType: dependant.relationshipType,
-                            membershipNumber: employee.membershipNumber
-                          })" :class="{
-                              'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg transform scale-105':
-                                selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid,
-                              'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 hover:from-purple-500 hover:to-pink-600 hover:text-white hover:shadow-md transform hover:scale-105':
-                                !(selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid)
-                            }"
-                            class="px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2">
-                            <svg v-if="selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid"
-                              class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                              </path>
-                            </svg>
-                            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            <span>{{ selectedEmployee && selectedEmployee.insuredUuid === dependant.dependantUuid ?
-                              'Selected' : 'Select' }}</span>
-                          </button>
-                        </td>
-                      </tr>
-                    </template>
-                  </template>
-                </template>
-                <template v-else>
-                  <tr>
-                    <td colspan="6" class="px-6 py-12 text-center">
-                      <div class="flex flex-col items-center justify-center space-y-3">
-                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-                          </path>
-                        </svg>
-                        <h3 class="text-lg font-medium text-gray-900">No employees found</h3>
-                        <p class="text-sm text-gray-500">
-                          {{ searchEmployeeQuery
-                            ? 'No matching employees found for your search'
-                            : (isInsurancePayer
-                              ? 'No employees available for the selected institution'
-                              : 'No employees available for the selected contract') }}
-                        </p>
-                        <button v-if="searchEmployeeQuery" @click="searchEmployeeQuery = ''"
-                          class="mt-2 px-3 py-1 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                          Clear search
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <!-- Employee Table Component -->
+        <EmployeeTable
+          :employees="employees"
+          :selected-employee="selectedEmployee"
+          :is-insurance-payer="isInsurancePayer"
+          :error="error"
+          :search-employee-query="searchEmployeeQuery"
+          @select-employee="selectEmployee"
+          @clear-search="searchEmployeeQuery = ''"
+        />
 
         <div v-if="selectedEmployee" class="pt-4 px-6 border-t border-gray-200 flex justify-end space-x-4">
           <Button type="button" @click="props.onCancel"
@@ -1521,85 +1294,15 @@ async function handleSearchItems({ type, query, searchType, insuredUuid, contrac
           />
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-         <div class="space-y-2 mt-6">
-    <label class="block text-sm font-medium text-gray-700">
-      Medical Service Files
-    </label>
-
-    <div 
-      @dragover.prevent="handleFileDragOver"
-      @dragleave.prevent="handleFileDragLeave"
-      @drop.prevent="handleFileDrop"
-      class="border-[1px] bg-[#F6F7FA] border-dashed border-[#75778B] rounded-md items-center justify-center p-6 flex flex-col cursor-pointer hover:border-primary transition-colors duration-200"
-      :class="{ 'border-primary': isDragOver }"
-    >
-      <div v-if="medicalServicePreviews.length" class="w-full grid grid-cols-2 gap-4 mb-4">
-        <div v-for="(file, index) in medicalServicePreviews" :key="index" class="relative border rounded-md p-2 bg-white">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium truncate max-w-[120px]">{{ file.name }}</span>
-            <button 
-              type="button" 
-              @click.stop="removeFile(index)"
-              class="text-red-500 hover:text-red-700 text-sm font-bold"
-            >
-              ×
-            </button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 items-start">
+          <div>
+            <MedicalFilesUploader v-model:previews="medicalServicePreviews" />
           </div>
-          
-          <img 
-            v-if="file.type.startsWith('image/') && file.preview"
-            :src="file.preview" 
-            alt="Preview"
-            class="h-20 w-full object-contain mx-auto"
-          />
-          <div v-else class="flex items-center justify-center h-20 bg-gray-100 rounded">
-            <span class="text-xs text-gray-500">{{ getFileTypeIcon(file.type) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="text-center">
-        <template v-if="!medicalServicePreviews.length">
-          <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <p class="text-sm text-[#75778B] mt-2">Drag your files here to upload</p>
-          <p class="text-sm text-[#75778B] mt-1">or</p>
-        </template>
-        
-        <button 
-          type="button" 
-          @click="triggerMedicalFileBrowse"
-          class="mt-2 px-4 py-2 text-sm font-medium text-[#75778B] border border-[#75778B] rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-        >
-          {{ medicalServicePreviews.length ? 'Add More Files' : 'Browse Files' }}
-        </button>
-        
-        <p v-if="medicalServicePreviews.length" class="text-xs text-gray-500 mt-2">
-          {{ medicalServicePreviews.length }} file(s) selected
-        </p>
-      </div>
-
-      <input 
-        id="medical-service-file-upload" 
-        type="file" 
-        accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" 
-        multiple 
-        class="hidden" 
-        @change="handleMedicalServiceFiles" 
-      />
-    </div>
-    
-    <p class="text-xs text-gray-500 mt-1">
-      Supported formats: images, PDF, Word, Excel. Max file size: 5MB each.
-    </p>
-  </div>
           <div>
             <Input 
               v-model="dispensingDate" 
               name="dispensingDate" 
-              label="Dispensing Date" 
+              label="Dispensing Date"
               validation="required"
               :attributes="{
                 type: 'date',

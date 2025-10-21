@@ -126,11 +126,27 @@ function setAvailableCategories(categories) {
   availableCategories.value = categories || [];
 }
 
+// Reset helper to clear inputs and dropdowns
+function resetAll() {
+  // clear form fields for current tab and hide dropdowns
+  searchForm.value.serviceCode = '';
+  searchForm.value.serviceName = '';
+  searchForm.value.servicePrice = '';
+  searchForm.value.serviceQuantity = 1;
+  searchForm.value.drugCode = '';
+  searchForm.value.drugName = '';
+  searchForm.value.drugPrice = '';
+  searchForm.value.drugQuantity = 1;
+  showCodeDropdown.value = false;
+  showNameDropdown.value = false;
+}
+
 // Expose these methods to parent component
 defineExpose({
   setSearchResults,
   setAvailablePackages,
-  setAvailableCategories
+  setAvailableCategories,
+  resetAll
 });
 
 // Update processedSearchResults to include iligiblSServiceUuid doo inrurance insurance
@@ -164,8 +180,8 @@ const processedSearchResults = computed(() => {
       serviceUuid: item.serviceUuid,
       // Preserve serviceId when present (fallback to serviceUuid or serviceCode)
       serviceId: item.serviceId || item.serviceUuid || item.serviceCode || null,
-      price: item.contractPrice || item.negotiatedPrice || item.price || 0,
-      paymentAmount: `ETB ${(item.contractPrice || item.negotiatedPrice || item.price || 0).toFixed(2)}`,
+      price: (item.contractPrice ?? item.negotiatedPrice ?? item.price ?? item.servicePrice ?? 0),
+      paymentAmount: `ETB ${Number(item.contractPrice ?? item.negotiatedPrice ?? item.price ?? item.servicePrice ?? 0).toFixed(2)}`,
       status: item.status || 'ACTIVE',
       itemType: props.activeTab === 'services' ? 'SERVICE' : 'DRUG',
       serviceName: item.serviceName,
@@ -290,7 +306,7 @@ function selectFromDropdown(item, source = 'name') {
   if (props.activeTab === 'services') {
     searchForm.value.serviceName = item.serviceName || item.item;
     searchForm.value.serviceCode = item.serviceCode || item.itemCode;
-    searchForm.value.servicePrice = item.price || item.contractPrice || item.negotiatedPrice || 0;
+    searchForm.value.servicePrice = (item.price ?? item.contractPrice ?? item.negotiatedPrice ?? item.servicePrice ?? 0);
     
     // Always keep serviceId when present (works for both insurance and non-insurance)
     searchForm.value.serviceId = item.serviceId || item.serviceUuid || item.serviceCode || null;
@@ -304,7 +320,7 @@ function selectFromDropdown(item, source = 'name') {
   } else {
     searchForm.value.drugName = item.drugName || item.item;
     searchForm.value.drugCode = item.drugCode || item.itemCode;
-    searchForm.value.drugPrice = item.price || item.contractPrice || item.negotiatedPrice || 0;
+    searchForm.value.drugPrice = (item.price ?? item.contractPrice ?? item.negotiatedPrice ?? item.servicePrice ?? 0);
     
     // Keep serviceId/identifier for drugs too when available
     searchForm.value.serviceId = item.serviceId || item.serviceUuid || item.drugCode || null;
@@ -353,7 +369,12 @@ function addItem(event) {
     event.stopPropagation();
   }
 
-  if (!currentName.value || !currentPrice.value) {
+  if (
+    !currentName.value ||
+    currentPrice.value === '' ||
+    currentPrice.value === null ||
+    Number.isNaN(Number(currentPrice.value))
+  ) {
     return;
   }
 
@@ -601,15 +622,15 @@ onMounted(() => {
       <!-- Search Form -->
       <div class="p-6">
         <!-- Package/Category Selection -->
-       <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end mb-6">
+       <div class="grid grid-cols-1 md:grid-cols-6 gap-2 items-end mb-4">
   <!-- Package / Category -->
-  <div class="space-y-1 min-w-[14rem]">
+  <div class="space-y-1 min-w-[11rem]">
     <label class="block text-xs font-medium text-gray-700">
       {{ isInsurance ? 'Select Package' : 'Select Category' }}
     </label>
     <select v-if="isInsurance" v-model="localSelectedPackage"
       :disabled="fetchPending || availablePackages.length === 0"
-      class="w-[14rem] px-3 py-4 bg-white border border-gray-300 rounded-lg
+      class="w-[11rem] px-3 py-2 bg-white border border-gray-300 rounded-lg
         focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
         text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400">
       <option value="" disabled>
@@ -622,7 +643,7 @@ onMounted(() => {
 
     <select v-else v-model="localSelectedCategory"
       :disabled="fetchPending || availableCategories.length === 0"
-      class="w-[14rem] px-3 py-4 bg-white border border-gray-300 rounded-lg
+      class="w-[11rem] px-3 py-2 bg-white border border-gray-300 rounded-lg
         focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
         text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400">
       <option value="" disabled>
@@ -635,21 +656,21 @@ onMounted(() => {
   </div>
 
   <!-- Service/Drug Code -->
-  <div class="space-y-1 relative min-w-[14rem]">
+  <div class="space-y-1 relative min-w-[11rem]">
     <label class="block text-xs font-medium text-gray-700">
       {{ activeTab === 'services' ? 'Service Code' : 'Drug Code' }}
     </label>
     <div class="relative">
-      <MagnifyingGlassIcon class="absolute left-3 top-4 h-4 w-4 text-teal-500" />
+      <MagnifyingGlassIcon class="absolute left-3 top-3 h-4 w-4 text-teal-500" />
       <input v-model="currentCode" :placeholder="`Search ${activeTab === 'services' ? 'service' : 'drug'} code`"
-        class="w-[14rem] px-3 py-4 pl-9 bg-white border border-gray-300 rounded-lg
+        class="w-[11rem] px-3 py-2 pl-9 bg-white border border-gray-300 rounded-lg
           focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
           text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400"
         @focus="showCodeDropdown = true" @blur="handleCodeBlur" />
 
       <!-- Code dropdown -->
       <div v-if="showCodeDropdown && processedSearchResults.length > 0"
-        class="absolute z-20 mt-1 w-full bg-white shadow-xl rounded-lg border border-gray-200 max-h-60 overflow-auto">
+        class="absolute z-50 mt-1 w-full bg-white shadow-xl rounded-lg border border-gray-200 max-h-60 overflow-auto">
         <div class="py-1">
           <div v-for="item in processedSearchResults" :key="item.id"
             class="px-4 py-3 text-sm text-gray-700 hover:bg-teal-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-150"
@@ -665,7 +686,7 @@ onMounted(() => {
               </div>
               <div class="text-right">
                 <div class="text-sm font-medium text-teal-600">
-                  ETB {{ (item.price || item.contractPrice || item.negotiatedPrice || 0).toFixed(2) }}
+                  ETB {{ Number(item.price ?? item.contractPrice ?? item.negotiatedPrice ?? item.servicePrice ?? 0).toFixed(2) }}
                 </div>
                 <div class="text-xs text-gray-400">
                   {{ item.status || 'ACTIVE' }}
@@ -679,21 +700,21 @@ onMounted(() => {
   </div>
 
   <!-- Service/Drug Name -->
-  <div class="space-y-1 relative min-w-[16rem]">
+  <div class="space-y-1 relative min-w-[11rem]">
     <label class="block text-xs font-medium text-gray-700">
       {{ activeTab === 'services' ? 'Service Name' : 'Drug Name' }}
     </label>
     <div class="relative">
-      <ClipboardDocumentListIcon class="absolute left-3 top-4 h-4 w-4 text-teal-500" />
+      <ClipboardDocumentListIcon class="absolute left-3 top-3 h-4 w-4 text-teal-500" />
       <input v-model="currentName" :placeholder="`Search ${activeTab === 'services' ? 'service' : 'drug'} name`"
-        class="w-[14rem] px-3 py-4 pl-9 bg-white border border-gray-300 rounded-lg
+        class="w-[11rem] px-3 py-2 pl-9 bg-white border border-gray-300 rounded-lg
           focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
           text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400"
         @focus="showNameDropdown = true" @blur="handleNameBlur" />
 
       <!-- Name dropdown -->
       <div v-if="showNameDropdown && processedSearchResults.length > 0"
-        class="absolute z-20 mt-1 w-full bg-white shadow-xl rounded-lg border border-gray-200 max-h-60 overflow-auto">
+        class="absolute z-50 mt-1 w-full bg-white shadow-xl rounded-lg border border-gray-200 max-h-60 overflow-auto">
         <div class="py-1">
           <div v-for="item in processedSearchResults" :key="item.id"
             class="px-4 py-3 text-sm text-gray-700 hover:bg-teal-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-150"
@@ -709,7 +730,7 @@ onMounted(() => {
               </div>
               <div class="text-right">
                 <div class="text-sm font-medium text-teal-600">
-                  ETB {{ (item.price || item.contractPrice || item.negotiatedPrice || 0).toFixed(2) }}
+                  ETB {{ Number(item.price ?? item.contractPrice ?? item.negotiatedPrice ?? item.servicePrice ?? 0).toFixed(2) }}
                 </div>
                 <div class="text-xs text-gray-400">
                   {{ item.status || 'ACTIVE' }}
@@ -723,13 +744,13 @@ onMounted(() => {
   </div>
 
   <!-- Price + Quantity -->
-  <div class="grid grid-cols-2 gap-2 min-w-[18rem]">
+  <div class="grid grid-cols-2 gap-2 min-w-[14rem]">
     <div class="space-y-1 min-w-[8rem]">
       <label class="block text-xs font-medium text-gray-700">Price (ETB)</label>
       <div class="relative">
-        <BanknotesIcon class="absolute left-3 top-4 h-4 w-4 text-teal-500" />
+        <BanknotesIcon class="absolute left-3 top-3 h-4 w-4 text-teal-500" />
         <input v-model="currentPrice" type="number" step="0.01" placeholder="0.00"
-          class="w-[5rem] px-3 py-4 pl-9 bg-gray-50 border border-gray-200 rounded-lg
+          class="w-[5rem] px-3 py-2 pl-9 bg-gray-50 border border-gray-200 rounded-lg
             focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
             text-gray-700 placeholder-gray-400" readonly />
       </div>
@@ -746,7 +767,7 @@ onMounted(() => {
         max="5"
         readonly
         :class="[
-          'w-[6rem] px-3 py-4 bg-white border rounded-lg text-sm shadow-sm transition-all duration-200',
+          'w-[6rem] px-3 py-2 bg-white border rounded-lg text-sm shadow-sm transition-all duration-200',
           isMaxQuantity 
             ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
             : 'border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500'
@@ -756,14 +777,14 @@ onMounted(() => {
   </div>
 
   <!-- Total + Add Button -->
-  <div class="grid grid-cols-2 gap-2 min-w-[18rem]">
+  <div class="grid grid-cols-2 gap-2 min-w-[16rem]">
     <div class="space-y-1">
       <label class="block text-xs font-medium text-gray-700">Total</label>
-      <div class="w-[6rem] px-3 py-4 bg-gray-100 rounded-lg text-sm font-medium text-center">
+      <div class="w-[6rem] px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-center">
         ETB {{ totalPrice }}
       </div>
     </div>
-    <div class="flex items-center pt-6">
+    <div class="flex items-center pt-4">
       <button type="button" @click="addItem($event)"
         class="w-full px-4 py-2 items-center bg-teal-600 text-white text-sm font-medium rounded-lg
           hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2

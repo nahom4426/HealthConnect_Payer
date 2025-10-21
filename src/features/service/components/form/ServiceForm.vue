@@ -58,7 +58,7 @@ console.log(props.services);
       }"
     />
 
-    <!-- <Input
+    <Input
       name="price"
       validation="required"
       label="Price"
@@ -66,7 +66,7 @@ console.log(props.services);
       :attributes="{
         placeholder: 'Price',
       }"
-    /> -->
+    />
     <div class="col-span-3">
       <Textarea
         name="serviceDescription"

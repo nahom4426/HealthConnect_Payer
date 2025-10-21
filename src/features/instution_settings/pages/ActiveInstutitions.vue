@@ -220,7 +220,7 @@ function handleImageError(event) {
             head: [
               'Payer Name',
               'Contracts',
-              'Payer Admin User',
+              'Payer Email',
               'Contact',
               'Number of Insured',
               'Status',

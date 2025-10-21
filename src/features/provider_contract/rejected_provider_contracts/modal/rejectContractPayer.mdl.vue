@@ -55,7 +55,7 @@ const rejectContractRequest = async () => {
       () => rejectContract(contractHeaderUuid.value, rejectionReason.value, remark.value),
       () => {
         if (req.success) {
-          toasted(true, "Contract rejected successfully");
+          toasted(res.success, "Contract rejected successfully",res.error);
           closeModal();
         } else {
           // toasted(false, req.response.value?.message || "Failed to reject contract");

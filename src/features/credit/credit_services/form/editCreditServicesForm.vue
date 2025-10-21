@@ -4,16 +4,11 @@ import { useForm } from '@/components/new_form_builder/useForm';
 import Form from '@/components/new_form_builder/Form.vue';
 import Button from '@/components/Button.vue';
 import ModalFormSubmitButton from '@/components/new_form_builder/ModalFormSubmitButton.vue';
-import { getActiveInstitutions } from '@/features/instution_settings/api/institutionSettingsApi';
-import { searchInsuredByInstitution } from '@/features/insured_persons/api/insuredPersonsApi';
-import { useAuthStore } from '@/stores/auth';
-import { openModal, closeModal } from "@customizer/modal-x";
+import { closeModal } from "@customizer/modal-x";
 import { toasted } from "@/utils/utils";
 import Spinner from '@/components/Spinner.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import Input from '@/components/new_form_elements/Input.vue';
-import { getAllServices } from '@/features/service/api/serviceApi';
-import { getAllDrugs } from '@/features/service/api/drugApi';
 import selectServices from '../components/EditSelectServices.vue';
 import EmployeeDetails from '../components/EmployeeDetails.vue';
 import { getDispensingDetail, getEligibleServicesAndDrugs, updateDispensingRecord } from '../api/creditServicesApi';
@@ -28,7 +23,7 @@ const props = defineProps({
   onUpdated: { type: Function, default: () => {} },
   onCancel: { type: Function, required: true }
 });
-
+// core refs
 const selectServicesRef = ref(null);
 const payers = ref([]);
 const employees = ref([]);
@@ -37,23 +32,23 @@ const selectedEmployee = ref(null);
 const searchEmployeeQuery = ref('');
 const searchServiceQuery = ref('');
 const searchDrugQuery = ref('');
-const claimUuid =ref('');
+const claimUuid = ref('');
 const fetchPending = ref(false);
 const error = ref(null);
-const currentStep = ref('selectEmployee');
+const currentStep = ref('selectServices');
 const activeTab = ref('services');
 const addedServices = ref([]);
 const addedDrugs = ref([]);
 const primaryDiagnosis = ref('');
 const secondaryDiagnosis = ref('');
-const auth = useAuthStore();
-const providerUuid = ref(auth.auth?.user?.providerUuid || '');
+const providerUuid = ref('');
 const prescriptionNumber = ref('');
 const pharmacyTransactionId = ref('');
 const dispensingDate = ref(new Date().toISOString().split('T')[0]);
 const loading = ref(true);
 const claimData = ref({});
 const remarks = ref({});
+const formEl = ref(null);
 
 
 const employeeDetails = computed(() => {
@@ -76,92 +71,10 @@ const employeeDetails = computed(() => {
   };
 });
 
-const payerOptions = computed(() =>
-  payers.value.map(p => ({
-    label: `${p.payerName} (${p.telephone || p.email || 'N/A'})`,
-    value: p.payerUuid,
-  }))
-);
-
-async function fetchPayers() {
-  try {
-    fetchPending.value = true;
-    const response = await getActiveInstitutions({ page: 1, limit: 100 });
-    payers.value = (response?.data?.content || []).map(item => ({
-      payerUuid: item.payerUuid,
-      payerName: item.payerName || `Unnamed Payer (${item.email})`,
-      email: item.email,
-      telephone: item.telephone
-    }));
-    if (payers.value.length === 0) error.value = 'No payers available';
-  } catch (err) {
-    console.error('Error fetching payers:', err);
-    error.value = 'Failed to load payers';
-  } finally {
-    fetchPending.value = false;
-  }
-}
-
-async function fetchEmployees() {
-  if (!selectedPayer.value) return;
-  try {
-    fetchPending.value = true;
-   const response = await searchInsuredByInstitution(selectedPayer.value, {
-  search: searchEmployeeQuery.value ,
-  page: 1,
-  size: 100000 // Corrected the syntax here
-});
-    const employeesData = Array.isArray(response) ? response :
-      response?.content || response?.data?.content || [];
-
-    employees.value = employeesData.flatMap(emp => {
-      const employeeRecord = {
-        insuredUuid: emp.insuredUuid,
-        fullName: `${emp.firstName || ''} ${emp.fatherName || ''} ${emp.grandFatherName || ''}`.trim(),
-        phone: emp.phone,
-        email: emp.email || 'N/A',
-        gender: emp.gender || 'Unknown',
-        address: emp.address || 'Unknown',
-        eligible: emp.status === 'ACTIVE',
-        position: emp.position || 'Unknown position',
-        idNumber: emp.idNumber || 'N/A',
-        birthDate: emp.birthDate || 'Unknown',
-        profilePictureBase64: emp.profilePictureBase64 || null,
-        status: emp.status || 'UNKNOWN',
-        dependants: emp.dependants || []
-      };
-
-      const dependantRecords = emp.dependants?.map(dep => ({
-        insuredUuid: dep.dependantUuid,
-        fullName: `${dep.dependantFirstName || ''} ${dep.dependantFatherName || ''} ${dep.dependantGrandFatherName || ''}`.trim(),
-        phone: emp.phone,
-        email: emp.email || 'N/A',
-        gender: dep.dependantGender || 'Unknown',
-        address: emp.address || 'Unknown',
-        eligible: dep.dependantStatus === 'ACTIVE',
-        position: `Dependant (${dep.relationship})`,
-        idNumber: 'N/A',
-        birthDate: dep.dependantBirthDate || 'Unknown',
-        profilePictureBase64: null,
-        status: dep.dependantStatus || 'UNKNOWN',
-        isDependant: true,
-        dependantUuid: dep.dependantUuid,
-        employeeUuid: emp.insuredUuid
-      })) || [];
-
-      return [employeeRecord, ...dependantRecords];
-    });
-
-    if (employees.value.length === 0) {
-      error.value = 'No employees found for this payer';
-    }
-  } catch (err) {
-    console.error('Error fetching employees:', err);
-    error.value = 'Failed to load employees';
-  } finally {
-    fetchPending.value = false;
-  }
-}
+const payerOptions = computed(() => payers.value.map(p => ({
+  label: `${p.payerName} (${p.telephone || p.email || 'N/A'})`,
+  value: p.payerUuid,
+})));
 
 function selectEmployee(employee) {
   if (!employee.eligible) return;
@@ -249,7 +162,7 @@ function handleClearItems(tab) {
 }
 
 function validateForm() {
-  if (!selectedPayer.value || !selectedEmployee.value || !dispensingDate.value) {
+  if (!selectedEmployee.value || !dispensingDate.value) {
     error.value = 'Please fill all required fields';
     return false;
   }
@@ -276,45 +189,36 @@ async function handleSubmit() {
   try {
     fetchPending.value = true;
     const payload = {
-      dispensingUuid: props.dispensingUuid,
-      insuredUuid: selectedEmployee.value.isDependant
-        ? selectedEmployee.value.employeeUuid
-        : selectedEmployee.value.insuredUuid,
-      dependantUuid: selectedEmployee.value.isDependant ? selectedEmployee.value.dependantUuid : null,
+      contractHeaderUuid: selectedEmployee.value?.items?.contractHeaderUuid || null,
+      insuredUuid: selectedEmployee.value?.isDependant ? selectedEmployee.value?.employeeUuid : selectedEmployee.value?.insuredUuid,
+      dependantUuid: selectedEmployee.value?.isDependant ? selectedEmployee.value?.dependantUuid : null,
       primaryDiagnosis: primaryDiagnosis.value,
       secondaryDiagnosis: secondaryDiagnosis.value,
-      prescriptionNumber: prescriptionNumber.value,
-      pharmacyTransactionId: pharmacyTransactionId.value,
-      claimStatus: "RESUBMITTED",
-      claimUuid: route.params?.id || "",
+      isInsurance: true,
+      packageUuid: selectedEmployee.value?.items?.contractHeaderUuid || null,
+      dispensingDate: dispensingDate.value,
       medicationItems: [
         ...addedServices.value.map(item => ({
-          contractDetailUuid: item.contractDetailUuid,
           itemUuid: item.itemUuid,
+          contractDetailUuid: item.contractDetailUuid,
+          serviceId: item.itemUuid,
           itemType: 'SERVICE',
           remark: item.remark || '',
-          price: typeof item.paymentAmount === 'string'
-            ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0
-            : Number(item.paymentAmount) || 0,
-          quantity: Number(item.quantity) || 1,
-          primaryDiagnosis: item.primaryDiagnosis || primaryDiagnosis.value,
-          secondaryDiagnosis: item.secondaryDiagnosis || secondaryDiagnosis.value
+          price: typeof item.paymentAmount === 'string' ? parseFloat(item.paymentAmount.replace('ETB ', '')) || 0 : Number(item.paymentAmount) || 0,
+          quantity: Number(item.quantity) || 1
         })),
         ...addedDrugs.value.map(item => ({
+          itemUuid: item.itemUuid,
           contractDetailUuid: item.contractDetailUuid,
-          itemUuid: item.itemUuid ,
+          serviceId: item.itemUuid,
           itemType: 'DRUG',
           remark: item.remark || '',
           price: item.price || 0,
-          quantity: Number(item.quantity) || 1,
-          route: item.route || 'oral',
-          frequency: item.frequency || 'daily',
-          dose: item.dose || '1',
-          duration: item.duration || '7 days',
-          primaryDiagnosis: item.primaryDiagnosis || primaryDiagnosis.value,
-          secondaryDiagnosis: item.secondaryDiagnosis || secondaryDiagnosis.value
+          quantity: Number(item.quantity) || 1
         }))
-      ]
+      ],
+      claimUuid: route.params?.id || "",
+      claimStatus: "RESUBMITTED"
     };
 
     const response = await updateDispensingRecord(props.dispensingUuid, payload);
@@ -336,7 +240,6 @@ async function handleSubmit() {
 onMounted(async () => {
   try {
     loading.value = true;
-    await fetchPayers();
     const response = await getDispensingDetail(props.dispensingUuid);
     if (response.success) {
       claimData.value = response.data;
@@ -349,21 +252,23 @@ onMounted(async () => {
 
       const contractHeaderUuid = claimData.value.items[0]?.contractHeaderUuid;
 
-      if (claimData.value.insuredUuid) {
-        await fetchEmployees();
-        const employee = employees.value.find(e =>
-          e.insuredUuid === claimData.value.insuredUuid ||
-          (e.isDependant && e.dependantUuid === claimData.value.dependantUuid)
-        );
-        if (employee) {
-          selectedEmployee.value = {
-            ...employee,
-            items: {
-              contractHeaderUuid: contractHeaderUuid
-            }
-          };
-          currentStep.value = 'selectServices';
-        }
+      // Derive selected employee directly to avoid extra API calls
+      if (claimData.value.insuredUuid || claimData.value.dependantUuid) {
+        const isDep = !!claimData.value.dependantUuid;
+        selectedEmployee.value = {
+          insuredUuid: isDep ? claimData.value.dependantUuid : claimData.value.insuredUuid,
+          fullName: claimData.value.patientName || '',
+          phone: claimData.value.phone || '',
+          idNumber: claimData.value.employeeId || '',
+          position: isDep ? 'Dependant' : 'Employee',
+          eligible: true,
+          status: 'ACTIVE',
+          isDependant: isDep,
+          dependantUuid: isDep ? claimData.value.dependantUuid : null,
+          employeeUuid: isDep ? claimData.value.insuredUuid : null,
+          items: { contractHeaderUuid }
+        };
+        currentStep.value = 'selectServices';
       }
       if (claimData.value.items) {
         for (const item of claimData.value.items) {
@@ -419,13 +324,7 @@ onMounted(async () => {
   }
 });
 
-watch(searchEmployeeQuery, debounce(() => {
-  if (selectedPayer.value) fetchEmployees();
-}, 300));
-
-watch(selectedPayer, () => {
-  if (selectedPayer.value) fetchEmployees();
-});
+// Disabled employee fetching watchers in edit mode
 </script>
 
 <template>

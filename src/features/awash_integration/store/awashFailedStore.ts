@@ -3,10 +3,10 @@ import { ref } from "vue";
 import { getFailedServicesByStatus, retryFailedService, getFailedClaimsByStatus, retryFailedClaim } from "../api/awashApi.js";
 import { toasted } from "@/utils/utils";
 
-export type StatusType = "ACTIVE" | "INACTIVE";
+export type StatusType = "ACTIVE" | "COMPLETED";
 
 export const useAwashFailedStore = defineStore("awashFailed", () => {
-  const status = ref<StatusType>("INACTIVE");
+  const status = ref<StatusType>("ACTIVE");
   const loading = ref(false);
   const services = ref<any[]>([]);
   const claims = ref<any[]>([]);
