@@ -126,27 +126,11 @@ function setAvailableCategories(categories) {
   availableCategories.value = categories || [];
 }
 
-// Reset helper to clear inputs and dropdowns
-function resetAll() {
-  // clear form fields for current tab and hide dropdowns
-  searchForm.value.serviceCode = '';
-  searchForm.value.serviceName = '';
-  searchForm.value.servicePrice = '';
-  searchForm.value.serviceQuantity = 1;
-  searchForm.value.drugCode = '';
-  searchForm.value.drugName = '';
-  searchForm.value.drugPrice = '';
-  searchForm.value.drugQuantity = 1;
-  showCodeDropdown.value = false;
-  showNameDropdown.value = false;
-}
-
 // Expose these methods to parent component
 defineExpose({
   setSearchResults,
   setAvailablePackages,
-  setAvailableCategories,
-  resetAll
+  setAvailableCategories
 });
 
 // Update processedSearchResults to include iligiblSServiceUuid doo inrurance insurance
@@ -622,15 +606,15 @@ onMounted(() => {
       <!-- Search Form -->
       <div class="p-6">
         <!-- Package/Category Selection -->
-       <div class="grid grid-cols-1 md:grid-cols-6 gap-2 items-end mb-4">
+       <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end mb-4">
   <!-- Package / Category -->
-  <div class="space-y-1 min-w-[11rem]">
+  <div class="space-y-1 min-w-[12rem]">
     <label class="block text-xs font-medium text-gray-700">
       {{ isInsurance ? 'Select Package' : 'Select Category' }}
     </label>
     <select v-if="isInsurance" v-model="localSelectedPackage"
       :disabled="fetchPending || availablePackages.length === 0"
-      class="w-[11rem] px-3 py-2 bg-white border border-gray-300 rounded-lg
+      class="w-[12rem] px-3 py-2 bg-white border border-gray-300 rounded-lg
         focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
         text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400">
       <option value="" disabled>
@@ -643,7 +627,7 @@ onMounted(() => {
 
     <select v-else v-model="localSelectedCategory"
       :disabled="fetchPending || availableCategories.length === 0"
-      class="w-[11rem] px-3 py-2 bg-white border border-gray-300 rounded-lg
+      class="w-[12rem] px-3 py-2 bg-white border border-gray-300 rounded-lg
         focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
         text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400">
       <option value="" disabled>
@@ -656,14 +640,14 @@ onMounted(() => {
   </div>
 
   <!-- Service/Drug Code -->
-  <div class="space-y-1 relative min-w-[11rem]">
+  <div class="space-y-1 relative min-w-[12rem]">
     <label class="block text-xs font-medium text-gray-700">
       {{ activeTab === 'services' ? 'Service Code' : 'Drug Code' }}
     </label>
     <div class="relative">
       <MagnifyingGlassIcon class="absolute left-3 top-3 h-4 w-4 text-teal-500" />
       <input v-model="currentCode" :placeholder="`Search ${activeTab === 'services' ? 'service' : 'drug'} code`"
-        class="w-[11rem] px-3 py-2 pl-9 bg-white border border-gray-300 rounded-lg
+        class="w-[12rem] px-3 py-2 pl-9 bg-white border border-gray-300 rounded-lg
           focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
           text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400"
         @focus="showCodeDropdown = true" @blur="handleCodeBlur" />
@@ -700,14 +684,14 @@ onMounted(() => {
   </div>
 
   <!-- Service/Drug Name -->
-  <div class="space-y-1 relative min-w-[11rem]">
+  <div class="space-y-1 relative min-w-[12rem]">
     <label class="block text-xs font-medium text-gray-700">
       {{ activeTab === 'services' ? 'Service Name' : 'Drug Name' }}
     </label>
     <div class="relative">
       <ClipboardDocumentListIcon class="absolute left-3 top-3 h-4 w-4 text-teal-500" />
       <input v-model="currentName" :placeholder="`Search ${activeTab === 'services' ? 'service' : 'drug'} name`"
-        class="w-[11rem] px-3 py-2 pl-9 bg-white border border-gray-300 rounded-lg
+        class="w-[12rem] px-3 py-2 pl-9 bg-white border border-gray-300 rounded-lg
           focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm
           text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400"
         @focus="showNameDropdown = true" @blur="handleNameBlur" />
@@ -744,7 +728,7 @@ onMounted(() => {
   </div>
 
   <!-- Price + Quantity -->
-  <div class="grid grid-cols-2 gap-2 min-w-[14rem]">
+  <div class="grid grid-cols-2 gap-2 min-w-[16rem]">
     <div class="space-y-1 min-w-[8rem]">
       <label class="block text-xs font-medium text-gray-700">Price (ETB)</label>
       <div class="relative">

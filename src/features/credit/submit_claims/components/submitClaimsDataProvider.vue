@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { getCreditClaimsbyProviderUuid } from "../api/submitClaimsApi";
-import { usePagination } from "@/composables/usePagination";
 import { Status } from "@/types/interface";
 import { claimServices } from "../store/submitClaimsStore";
 import { ref, watch, onMounted, computed, reactive } from "vue";
-import { debounce } from "@/utils/debounce";
-import type { PropType } from "vue";
 import { removeUndefined } from "@/utils/utils";
+import type { PropType } from "vue";
 
 // Props
 const props = defineProps({
@@ -27,88 +25,69 @@ const filters = reactive({
 });
 
 const claimServicesStore = claimServices();
-const currentPage = ref(1);
-const itemsPerPage = ref(25);
-const totalPages = ref(1);
-const totalItems = ref(0);
+const pendingResolve = ref<null | ((value: any) => void)>(null);
 
-const pagination = usePagination({
-  auto: false,
-  cb: async (data: any) => {
-    // DEBUG: log pagination callback invocation and current filters
-    console.log('[DataProvider] pagination.cb called, incoming data:', data);
-    console.log('[DataProvider] current filters:', JSON.parse(JSON.stringify(filters)));
-
-    const params = removeUndefined({
-      ...data,
-      ...(filters.startDate && { startDate: filters.startDate }),
-      ...(filters.endDate && { endDate: filters.endDate }),
-      ...(filters.payerUuid && { payerUuid: filters.payerUuid }),
-      status: "DRAFT",
-      sortBy: "dispensingDate",
-      sortDirection: "desc"
-    });
-
-    console.log('[DataProvider] calling getCreditClaimsbyProviderUuid with params:', params);
-    const response = await getCreditClaimsbyProviderUuid(props.providerUuid, params);
-    console.log('[DataProvider] raw response:', response);
-    const paginated = response?.data || response;
-    console.log('[DataProvider] normalized paginated:', paginated);
-
-    if (paginated?.content) {
-      claimServicesStore.set(paginated.content);
-      currentPage.value = paginated.page ?? 1;
-      itemsPerPage.value = paginated.size ?? 25;
-      totalPages.value = paginated.totalPages ?? 1;
-      totalItems.value = paginated.totalElements ?? paginated.content.length;
-      console.log('[DataProvider] stored content length:', (paginated.content || []).length);
-    } else {
-      claimServicesStore.set(Array.isArray(paginated) ? paginated : []);
-      totalItems.value = Array.isArray(paginated) ? paginated.length : 0;
-      totalPages.value = 1;
-      console.log('[DataProvider] stored fallback length:', totalItems.value);
-    }
-
-    return paginated;
+// Core fetch function (no pagination params)
+const fetchData = async () => {
+  if (!filters.payerUuid) {
+    console.log("[DataProvider] No payerUuid — skipping fetch.");
+    return Promise.resolve({ content: [] });
   }
-});
 
-// Method to update filters and optionally trigger fetch
+  const params = removeUndefined({
+    ...(filters.startDate && { startDate: filters.startDate }),
+    ...(filters.endDate && { endDate: filters.endDate }),
+    ...(filters.payerUuid && { payerUuid: filters.payerUuid }),
+    status: "DRAFT",
+    sortBy: "dispensingDate",
+    sortDirection: "desc"
+    // ❌ no page or size here — handled inside API
+  });
+
+  console.log("[DataProvider] calling getCreditClaimsbyProviderUuid with params:", params);
+
+  const response = await getCreditClaimsbyProviderUuid(props.providerUuid, params);
+  console.log("[DataProvider] raw response:", response);
+
+  const paginated = response?.data || response;
+
+  if (paginated?.content) {
+    claimServicesStore.set(paginated.content);
+  } else {
+    claimServicesStore.set(Array.isArray(paginated) ? paginated : []);
+  }
+
+  if (pendingResolve.value) {
+    try { pendingResolve.value(paginated); } finally { pendingResolve.value = null; }
+  }
+
+  return paginated;
+};
+
+// Set filters and fetch data if payerUuid is set
 const setFilters = (newFilters: {
   startDate?: string;
   endDate?: string;
   payerUuid?: string;
 }) => {
-  console.log('[DataProvider] setFilters called with:', newFilters);
   Object.assign(filters, newFilters);
-  console.log('[DataProvider] filters after assign:', JSON.parse(JSON.stringify(filters)));
-  // Only send when payerUuid exists
-  if (filters.payerUuid) {
-    console.log('[DataProvider] payerUuid present, calling pagination.send()');
-    return pagination.send();
-  }
-  console.log('[DataProvider] payerUuid missing, skipping pagination.send()');
-  // return a resolved promise for caller convenience
-  return Promise.resolve({ content: [] });
+  if (!filters.payerUuid) return Promise.resolve({ content: [] });
+
+  return new Promise((resolve) => {
+    pendingResolve.value = resolve;
+    fetchData();
+  });
 };
 
-// Expose methods (add refresh)
+// Expose refresh & filters to parent
 defineExpose({
-  // refresh explicitly triggers pagination.send and returns the response
   refresh: async () => {
-    console.log('[DataProvider] refresh called, filters:', JSON.parse(JSON.stringify(filters)));
-    if (!filters.payerUuid) {
-      console.log('[DataProvider] refresh aborted - no payerUuid');
-      return Promise.resolve({ content: [] });
-    }
-    const res = await pagination.send();
-    console.log('[DataProvider] refresh result received');
-    return res;
+    if (!filters.payerUuid) return Promise.resolve({ content: [] });
+    return new Promise((resolve) => {
+      pendingResolve.value = resolve;
+      fetchData();
+    });
   },
-  currentPage: computed(() => currentPage.value),
-  itemsPerPage: computed(() => itemsPerPage.value),
-  setPage: pagination.setPage,
-  setLimit: pagination.setLimit,
   setFilters
 });
 </script>
@@ -116,12 +95,7 @@ defineExpose({
 <template>
   <slot
     :claimServices="claimServicesStore.claimServices"
-    :pending="pagination.pending.value"
+    :pending="false"
     :error="null"
-    :search="pagination.search"
-    :currentPage="currentPage"
-    :itemsPerPage="itemsPerPage"
-    :totalPages="totalPages"
-    :totalItems="totalItems"
   />
 </template>

@@ -97,35 +97,40 @@ watch(selectedPayerUuid, (newUuid) => {
   selectedPayerName.value = selected ? selected.name : "";
 });
 
-// Generate claims with filters
+// Generate claims with filters (single awaited call)
 const generateClaims = async () => {
   if (!dataProvider.value || !selectedPayerUuid.value) return;
 
   isGenerating.value = true;
   try {
-    dataProvider.value.setFilters({
+    console.log('[SubmitClaims] Generate clicked with filters:', {
       startDate: fromDate.value,
       endDate: toDate.value,
       payerUuid: selectedPayerUuid.value,
     });
-    await dataProvider.value.refresh();
+    // Await setFilters which triggers the fetch and returns the paginated result
+    const res = await dataProvider.value.setFilters({
+      startDate: fromDate.value,
+      endDate: toDate.value,
+      payerUuid: selectedPayerUuid.value,
+    });
+    console.log('[SubmitClaims] setFilters() resolved. Raw result:', res);
+    // Mark generated and populate table rows immediately from response
     hasGenerated.value = true;
-    // Initialize selectedClaims with all claims when first generated
-    selectedClaims.value = [...claimServicesStore.claimServices];
-  } finally {
-    isGenerating.value = false;
-  }
-};
-async function handleDoubleGenerate() {
-  try {
-    // first run
-    await generateClaims();
-    // only if first run succeeds
-    await generateClaims();
+    const content = res?.content ?? (Array.isArray(res) ? res : []);
+    console.log('[SubmitClaims] normalized content length:', content?.length || 0);
+    selectedClaims.value = content.length > 0
+      ? [...content]
+      : [...claimServicesStore.claimServices];
+    console.log('[SubmitClaims] selectedClaims length after set:', selectedClaims.value.length);
+    console.log('[SubmitClaims] store.claimServices length:', (claimServicesStore.claimServices || []).length);
   } catch (err) {
     console.error("Generate failed:", err);
+  } finally {
+    isGenerating.value = false;
+    console.log('[SubmitClaims] Generate finished. isGenerating:', isGenerating.value);
   }
-}
+};
 
 
 // Remove a claim from selected claims
@@ -312,6 +317,7 @@ function refreshData() {
         <Input
           v-model="fromDate"
           label="From"
+          name="fromDate"
           :validation="'required'"
           :attributes="{
             placeholder: 'Start date',
@@ -322,6 +328,7 @@ function refreshData() {
         <Input
           v-model="toDate"
           label="To"
+          name="toDate"
           :validation="'required'"
           :attributes="{
             placeholder: 'End date',
@@ -334,11 +341,12 @@ function refreshData() {
           <div class="relative">
             <Input
               v-model="payerSearchTerm"
-              type="text"
+              name="payerSearch"
               @focus="handlePayerInputFocus"
               @blur="handlePayerInputBlur"
               :attributes="{
-                placeholder: 'Search payers...'
+                placeholder: 'Search payers...',
+                type: 'text'
               }"
             />
             <button
@@ -385,7 +393,7 @@ function refreshData() {
             :btn-text="'Generate'"
             :disabled="!isPayerSelected"
             :title="!isPayerSelected ? 'Please select a payer first' : ''"
-            @click="handleDoubleGenerate"
+            @click="generateClaims"
             class="bg-[#02676B] hover:bg-[#014F4F] text-white px-4 py-2 h-[42px]"
           />
         </div>

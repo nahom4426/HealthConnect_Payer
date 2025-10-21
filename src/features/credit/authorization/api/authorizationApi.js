@@ -183,6 +183,24 @@ export function getAuthorizationBatch(query = {}) {
   const qs = getQueryFormObject(query);
   return api.addAuthenticationHeader().get(`${basePath}/batch${qs}`);
 }
-export function getAuthorizationDetail(id) {
-  return api.addAuthenticationHeader().get(`${basePath}/medications/${id}`);
+export function getAuthorizationDetail(id, query = {}) {
+  return api.addAuthenticationHeader().get(`${basePath}/medications/${id}`, {
+    params: query,
+  });
+}
+
+export async function getAllAuthorizationDetail(id, pageSize = 200) {
+  const firstRes = await getAuthorizationDetail(id, { page: 0, size: pageSize });
+  const first = firstRes?.data || firstRes;
+  const totalPages = first?.totalPages || 1;
+  let all = [...(first?.content || [])];
+  if (totalPages > 1) {
+    const rest = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, i) =>
+        getAuthorizationDetail(id, { page: i + 1, size: first?.size || pageSize }).then((r) => r?.data || r)
+      )
+    );
+    all = all.concat(...rest.flatMap((p) => p?.content || []));
+  }
+  return all;
 }

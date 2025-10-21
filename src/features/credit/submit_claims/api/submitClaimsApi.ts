@@ -13,19 +13,28 @@ export function getInsuredByContractId(id: string, query = {}) {
 	})
 }
 
-export function getCreditClaimsbyProviderUuid(id: string, query = {}, config = {}) {
-	return api.addAuthenticationHeader().get(`${path}/dispensing/${id}`, {
-		params: query,
-		...config
-	}).then(response => {
-		
-		// Return the response data directly, the component will handle pagination
-		return response.data;
-	}).catch(error => {
-		console.error("API error:", error);
-		throw error;
-	});
+export function getCreditClaimsbyProviderUuid(id, query = {}, config = {}) {
+  // Force default pagination params always
+  const fixedParams = {
+    page: 1,
+    size: 10000000,
+    ...query, // allows additional filters like payerUuid, dates, etc.
+  };
+
+  return api
+    .addAuthenticationHeader()
+    .get(`${path}/dispensing/${id}`, {
+      params: fixedParams,
+      ...config,
+    })
+    .then((res) => res.data)
+    .catch((err) => {
+      console.error("API error:", err);
+      throw err;
+    });
 }
+
+
 export function submitClaimsStatusUpdate(providerUuid: string, dispensingUuids: string[]) {
   return api.addAuthenticationHeader().put(
     `${basePath}/dispensing/update-status/${providerUuid}`,

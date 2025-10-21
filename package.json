@@ -21,6 +21,8 @@
     "axios": "^1.7.5",
     "bootstrap-icons": "^1.11.3",
     "chart.js": "^4.4.9",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "pdfmake": "^0.2.20",
     "pinia": "^2.1.7",
     "postcss": "^8.4.45",
